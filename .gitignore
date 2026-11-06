@@ -1,0 +1,4 @@
+/target
+byard.lock.bak
+*.png
+!docs/**/*.png

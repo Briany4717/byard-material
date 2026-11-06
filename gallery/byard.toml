@@ -1,0 +1,6 @@
+[project]
+name = "material_gallery"
+entry = "src/main.byd"
+
+[dependencies]
+material = { path = ".." }

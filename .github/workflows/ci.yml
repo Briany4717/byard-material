@@ -1,0 +1,30 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  # Once a day against Byard's main, so an engine change that breaks a
+  # component is known the next morning, not at Byard's next release.
+  schedule:
+    - cron: "17 6 * * *"
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Install Byard from main
+        run: cargo install --locked --git https://github.com/Briany4717/byard byard
+
+      - name: Check the package
+        run: byard check
+
+      - name: Check the gallery
+        working-directory: gallery
+        run: |
+          byard get
+          byard check
