@@ -1,3 +1,164 @@
 [package]
 name = "material"
 version = "0.1.0"
+
+# Material Symbols Rounded draws the icons (ligatures; `icons = true` lets `byard bundle` keep
+# only the ones an app uses). Roboto Flex is the text face. From outside they are
+# "material/symbols" and "material/text".
+[assets.fonts]
+symbols = { path = "fonts/MaterialSymbolsRounded.ttf", icons = true }
+text = "fonts/RobotoFlex.ttf"
+
+# The Material 3 baseline scheme, light and dark. A consumer's `[theme] extends = "material"`
+# takes all of it, and a `seed` on top recolours every role.
+[theme]
+name = "material"
+extends = "byard-base"
+scheme = "system"
+transition = 300
+
+[theme.color.light]
+primary = "#6750A4"
+on_primary = "#FFFFFF"
+primary_container = "#EADDFF"
+on_primary_container = "#21005D"
+secondary = "#625B71"
+on_secondary = "#FFFFFF"
+secondary_container = "#E8DEF8"
+on_secondary_container = "#1D192B"
+tertiary = "#7D5260"
+on_tertiary = "#FFFFFF"
+tertiary_container = "#FFD8E4"
+on_tertiary_container = "#31111D"
+error = "#B3261E"
+on_error = "#FFFFFF"
+error_container = "#F9DEDC"
+on_error_container = "#410E0B"
+background = "#FEF7FF"
+on_background = "#1D1B20"
+surface = "#FEF7FF"
+on_surface = "#1D1B20"
+surface_variant = "#E7E0EC"
+on_surface_variant = "#49454F"
+outline = "#79747E"
+outline_variant = "#CAC4D0"
+shadow = "#000000"
+scrim = "#000000"
+inverse_surface = "#322F35"
+inverse_on_surface = "#F5EFF7"
+inverse_primary = "#D0BCFF"
+surface_dim = "#DED8E1"
+surface_bright = "#FEF7FF"
+surface_container_lowest = "#FFFFFF"
+surface_container_low = "#F7F2FA"
+surface_container = "#F3EDF7"
+surface_container_high = "#ECE6F0"
+surface_container_highest = "#E6E0E9"
+primary_fixed = "#EADDFF"
+primary_fixed_dim = "#D0BCFF"
+on_primary_fixed = "#21005D"
+on_primary_fixed_variant = "#4F378B"
+secondary_fixed = "#E8DEF8"
+secondary_fixed_dim = "#CCC2DC"
+on_secondary_fixed = "#1D192B"
+on_secondary_fixed_variant = "#4A4458"
+tertiary_fixed = "#FFD8E4"
+tertiary_fixed_dim = "#EFB8C8"
+on_tertiary_fixed = "#31111D"
+on_tertiary_fixed_variant = "#633B48"
+
+[theme.color.dark]
+primary = "#D0BCFF"
+on_primary = "#381E72"
+primary_container = "#4F378B"
+on_primary_container = "#EADDFF"
+secondary = "#CCC2DC"
+on_secondary = "#332D41"
+secondary_container = "#4A4458"
+on_secondary_container = "#E8DEF8"
+tertiary = "#EFB8C8"
+on_tertiary = "#492532"
+tertiary_container = "#633B48"
+on_tertiary_container = "#FFD8E4"
+error = "#F2B8B5"
+on_error = "#601410"
+error_container = "#8C1D18"
+on_error_container = "#F9DEDC"
+background = "#141218"
+on_background = "#E6E0E9"
+surface = "#141218"
+on_surface = "#E6E0E9"
+surface_variant = "#49454F"
+on_surface_variant = "#CAC4D0"
+outline = "#938F99"
+outline_variant = "#49454F"
+shadow = "#000000"
+scrim = "#000000"
+inverse_surface = "#E6E0E9"
+inverse_on_surface = "#322F35"
+inverse_primary = "#6750A4"
+surface_dim = "#141218"
+surface_bright = "#3B383E"
+surface_container_lowest = "#0F0D13"
+surface_container_low = "#1D1B20"
+surface_container = "#211F26"
+surface_container_high = "#2B2930"
+surface_container_highest = "#36343B"
+primary_fixed = "#EADDFF"
+primary_fixed_dim = "#D0BCFF"
+on_primary_fixed = "#21005D"
+on_primary_fixed_variant = "#4F378B"
+secondary_fixed = "#E8DEF8"
+secondary_fixed_dim = "#CCC2DC"
+on_secondary_fixed = "#1D192B"
+on_secondary_fixed_variant = "#4A4458"
+tertiary_fixed = "#FFD8E4"
+tertiary_fixed_dim = "#EFB8C8"
+on_tertiary_fixed = "#31111D"
+on_tertiary_fixed_variant = "#633B48"
+
+# The Material 3 type scale in Roboto Flex, then the emphasized styles of Material 3 Expressive
+# (same size and spacing; regular becomes medium, medium becomes bold).
+[theme.typography]
+display_large = { size = 57, family = "text", weight = "regular", tracking = -0.25, line_height = 64 }
+display_medium = { size = 45, family = "text", weight = "regular", line_height = 52 }
+display_small = { size = 36, family = "text", weight = "regular", line_height = 44 }
+headline_large = { size = 32, family = "text", weight = "regular", line_height = 40 }
+headline_medium = { size = 28, family = "text", weight = "regular", line_height = 36 }
+headline_small = { size = 24, family = "text", weight = "regular", line_height = 32 }
+title_large = { size = 22, family = "text", weight = "regular", line_height = 28 }
+title_medium = { size = 16, family = "text", weight = "medium", tracking = 0.15, line_height = 24 }
+title_small = { size = 14, family = "text", weight = "medium", tracking = 0.1, line_height = 20 }
+body_large = { size = 16, family = "text", weight = "regular", tracking = 0.5, line_height = 24 }
+body_medium = { size = 14, family = "text", weight = "regular", tracking = 0.25, line_height = 20 }
+body_small = { size = 12, family = "text", weight = "regular", tracking = 0.4, line_height = 16 }
+label_large = { size = 14, family = "text", weight = "medium", tracking = 0.1, line_height = 20 }
+label_medium = { size = 12, family = "text", weight = "medium", tracking = 0.5, line_height = 16 }
+label_small = { size = 11, family = "text", weight = "medium", tracking = 0.5, line_height = 16 }
+display_large_emphasized = { size = 57, family = "text", weight = "medium", tracking = -0.25, line_height = 64 }
+display_medium_emphasized = { size = 45, family = "text", weight = "medium", line_height = 52 }
+display_small_emphasized = { size = 36, family = "text", weight = "medium", line_height = 44 }
+headline_large_emphasized = { size = 32, family = "text", weight = "medium", line_height = 40 }
+headline_medium_emphasized = { size = 28, family = "text", weight = "medium", line_height = 36 }
+headline_small_emphasized = { size = 24, family = "text", weight = "medium", line_height = 32 }
+title_large_emphasized = { size = 22, family = "text", weight = "medium", line_height = 28 }
+title_medium_emphasized = { size = 16, family = "text", weight = "bold", tracking = 0.15, line_height = 24 }
+title_small_emphasized = { size = 14, family = "text", weight = "bold", tracking = 0.1, line_height = 20 }
+body_large_emphasized = { size = 16, family = "text", weight = "medium", tracking = 0.5, line_height = 24 }
+body_medium_emphasized = { size = 14, family = "text", weight = "medium", tracking = 0.25, line_height = 20 }
+body_small_emphasized = { size = 12, family = "text", weight = "medium", tracking = 0.4, line_height = 16 }
+label_large_emphasized = { size = 14, family = "text", weight = "bold", tracking = 0.1, line_height = 20 }
+label_medium_emphasized = { size = 12, family = "text", weight = "bold", tracking = 0.5, line_height = 16 }
+label_small_emphasized = { size = 11, family = "text", weight = "bold", tracking = 0.5, line_height = 16 }
+
+# The shape scale, with the corners Expressive adds.
+[theme.shape]
+corner_none = 0
+corner_xs = 4
+corner_sm = 8
+corner_md = 12
+corner_lg = 16
+corner_lg_increased = 20
+corner_xl = 28
+corner_xl_increased = 32
+corner_xxl = 48
