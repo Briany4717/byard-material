@@ -12,13 +12,22 @@ material = { git = "https://github.com/Briany4717/byard-material", tag = "v0.1.0
 use material as m
 
 View Main() {
-    var wifi = true
-    m.Switch(bind: wifi)
+    var starred = false
+
+    Row #[gap: 12, align: center] {
+        m.Button("Save", icon: "check", on_tap: { save() })
+        m.IconButton("star", label: "Star", variant: .tonal, toggle: true, selected: starred,
+            on_tap: { starred = !starred })
+    }
 }
 ```
 
-It is early. The design is RFC-0050 in Byard's repository. Nothing is released yet, and the
-components above don't exist yet either.
+and, in the app's `byard.toml`, `[theme] extends = "material"` so the colours, type and shapes
+are Material's (a `seed` there recolours all of it).
+
+It is early. The design is RFC-0050 in Byard's repository. So far there are `Button`,
+`IconButton` and `Icon`; the rest of the components are on their way. How a component is
+written here is in [CONVENTIONS.md](CONVENTIONS.md).
 
 This package is also how Byard's package system gets tested for real: it lives in its own
 repository and goes through `byard add`, `byard get`, the lockfile, `byard publish` and
