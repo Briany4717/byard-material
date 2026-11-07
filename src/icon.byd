@@ -1,0 +1,28 @@
+// An icon from Material Symbols Rounded, drawn by name: `Icon("favorite", fill: 1.0)`.
+//
+// The name is a ligature of the font, so a misspelt name draws the letters instead of an
+// error. `fill` is 0 (outline) to 1 (filled) and animates; `weight` is 100 to 700, `grade`
+// -25 to 200, and `size` is also the font's optical size (clamped to 20..48). `color` is the
+// icon's colour and is `on_surface` when left out. An icon with no `label` is decoration and
+// hidden from screen readers; give it a `label` when it stands alone.
+View Icon(name: Str, fill: Float = 0.0, weight: Int = 400, grade: Int = 0, size: Int = 24,
+    color: Int = 0, label: Str = "") {
+    inject Theme as t
+
+    let ink = color == 0 ? t.onSurface : color
+    let opticalSize = size < 20 ? 20 : size > 48 ? 48 : size
+
+    Box #[width: size, height: size, shrink: 0, align: center, justify: center] {
+        Text(name) #[
+            font: "material/symbols",
+            size: size,
+            wrap: false,
+            shrink: 0,
+            color: ink with t.springEffectsFast,
+            a11y_hidden: label == "",
+            a11y_label: label,
+            variations: (FILL: fill with t.springEffectsDefault, wght: weight,
+                GRAD: grade, opsz: opticalSize),
+        ]
+    }
+}

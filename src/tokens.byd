@@ -1,0 +1,18 @@
+// The numbers every Material control shares, named once. Private: a consumer reads the theme,
+// not these.
+//
+// Material 3 state layers: a tint of the content colour laid over the container.
+private let stateHover = 0.08
+private let stateFocus = 0.10
+private let statePress = 0.10
+private let stateDragged = 0.16
+
+// A disabled control: its content at 38%, its container at 12%, both of `on_surface`.
+private let disabledContent = 0.38
+private let disabledContainer = 0.12
+
+// The focus ring: 3 dp thick, `secondary`, floating 2 dp outside the control. A control
+// reserves `focusRingWidth + focusRingOffset` around itself for it, without taking the room.
+private let focusRingWidth = 3
+private let focusRingOffset = 2
+private let focusRingReach = focusRingWidth + focusRingOffset

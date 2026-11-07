@@ -1,0 +1,56 @@
+// The two pieces around a control's face. Neither is public.
+//
+// A control is built like this, from the outside in:
+//
+//     FocusRing                 draws the ring, 2 dp outside, while the keyboard has focus
+//       interactive Box         container, shape, role, tap and the pointer handlers
+//         StateLayer            the hover, focus and press tint over the container
+//           content             icon, label
+//
+// The interactive Box is the only one with handlers, so a press lands on it and the layers
+// above it are never in the way.
+
+// The tint a state puts over a control. Wrap the content in it and give it the same `radius`
+// as the control (it springs with it), the content colour as `color`, and the control's
+// state as three Bools. Only one level shows at a time: dragged, pressed, focused, hovered.
+private View StateLayer(color: Int, radius: Int, hovered: Bool, pressed: Bool, focused: Bool,
+    disabled: Bool = false, dragged: Bool = false, content) {
+    inject Theme as t
+
+    let level = disabled ? 0.0
+        : dragged ? stateDragged
+        : pressed ? statePress
+        : focused ? stateFocus
+        : hovered ? stateHover
+        : 0.0
+
+    Box #[
+        bg: color.alpha(level with t.springEffectsFast),
+        radius: radius with t.springSpatialFast,
+        direction: row,
+        align: center,
+        justify: center,
+    ] {
+        content
+    }
+}
+
+// The focus ring. Wrap the whole control in it: `radius` is the control's own and `visible`
+// is true while the keyboard has focus (a mouse press never shows it). The ring is the
+// border of a Box that is `focusRingReach` bigger on every side and has that much negative
+// margin, so it adds no layout size and takes no clicks.
+private View FocusRing(radius: Int, visible: Bool, content) {
+    inject Theme as t
+
+    Box #[
+        m: -focusRingReach,
+        p: focusRingReach,
+        align_self: start,
+        bg: t.surface.alpha(0.0),
+        radius: (radius + focusRingReach) with t.springSpatialFast,
+        border: visible ? t.secondary : t.secondary.alpha(0.0),
+        border_width: focusRingWidth,
+    ] {
+        content
+    }
+}
