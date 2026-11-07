@@ -4,3 +4,6 @@ entry = "src/main.byd"
 
 [dependencies]
 material = { path = ".." }
+
+[theme]
+extends = "material"

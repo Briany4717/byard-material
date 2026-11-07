@@ -1,0 +1,22 @@
+// Variants that more than one component shares. A component's own variants (`ButtonVariant`)
+// are declared in its own file.
+//
+// A caller writes the short form where the parameter names the enum:
+// `m.Button("Save", size: .l, shape: .square)`.
+
+// The five sizes of Material 3 Expressive's buttons, extra small to extra large. Button,
+// IconButton and the other members of the button family take it.
+enum ButtonSize {
+    xs,
+    s,
+    m,
+    l,
+    xl,
+}
+
+// The resting shape: fully round, or a rounded square. A toggle button swaps them when it is
+// selected; every button morphs to a tighter square while it is pressed.
+enum ButtonShape {
+    round,
+    square,
+}

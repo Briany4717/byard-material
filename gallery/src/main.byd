@@ -1,9 +1,31 @@
 use material as m
 
+// The gallery shows one component page at a time. Change `page` to switch while working;
+// `byard shot --view` will replace it once it lands.
+enum Page {
+    button,
+    iconButton,
+}
+
+let page = Page.button
+
 View Main() {
     inject Theme as t
 
-    Column #[bg: t.surface, p: 24, gap: 16, grow: 1] {
-        Text("Byard Material") #[color: t.onSurface, typo: t.headlineMedium]
+    Column #[bg: t.surface, grow: 1] {
+        Row #[p: (16, 24), gap: 16, align: center, bg: t.surfaceContainer] {
+            Text("Byard Material") #[typo: t.titleLarge, color: t.onSurface]
+            Text(page == Page.button ? "Button" : "IconButton") #[
+                typo: t.titleMedium,
+                color: t.onSurfaceVariant,
+            ]
+        }
+        ScrollView #[grow: 1] {
+            when page == Page.button {
+                ButtonPage()
+            } else when page == Page.iconButton {
+                IconButtonPage()
+            }
+        }
     }
 }

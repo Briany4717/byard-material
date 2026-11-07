@@ -1,0 +1,95 @@
+use material as m
+
+// Every variant, size and state of m.Button.
+
+View ButtonPage() {
+    Column #[p: 24, gap: 32] {
+        Section("Variants and sizes, round") {
+            Line("filled") { SizeRow(variant: m.ButtonVariant.filled) }
+            Line("tonal") { SizeRow(variant: m.ButtonVariant.tonal) }
+            Line("elevated") { SizeRow(variant: m.ButtonVariant.elevated) }
+            Line("outlined") { SizeRow(variant: m.ButtonVariant.outlined) }
+            Line("text") { SizeRow(variant: m.ButtonVariant.text) }
+        }
+        Section("Square, extra small to large") {
+            Line("filled") { SquareRow(variant: m.ButtonVariant.filled) }
+            Line("tonal") { SquareRow(variant: m.ButtonVariant.tonal) }
+            Line("elevated") { SquareRow(variant: m.ButtonVariant.elevated) }
+            Line("outlined") { SquareRow(variant: m.ButtonVariant.outlined) }
+            Line("text") { SquareRow(variant: m.ButtonVariant.text) }
+        }
+        Section("With a leading icon") {
+            Line("filled") { IconRow(variant: m.ButtonVariant.filled) }
+            Line("tonal") { IconRow(variant: m.ButtonVariant.tonal) }
+            Line("elevated") { IconRow(variant: m.ButtonVariant.elevated) }
+            Line("outlined") { IconRow(variant: m.ButtonVariant.outlined) }
+            Line("text") { IconRow(variant: m.ButtonVariant.text) }
+        }
+        Section("Toggle: unselected, then selected; round and square") {
+            Line("filled") { ToggleRow(variant: m.ButtonVariant.filled) }
+            Line("tonal") { ToggleRow(variant: m.ButtonVariant.tonal) }
+            Line("elevated") { ToggleRow(variant: m.ButtonVariant.elevated) }
+            Line("outlined") { ToggleRow(variant: m.ButtonVariant.outlined) }
+        }
+        Section("Disabled") {
+            Line("round") { DisabledRow(shape: m.ButtonShape.round) }
+            Line("square") { DisabledRow(shape: m.ButtonShape.square) }
+        }
+    }
+}
+
+View SizeRow(variant: m.ButtonVariant) {
+    Row #[gap: 16, align: center] {
+        m.Button("Button", variant: variant, size: .xs)
+        m.Button("Button", variant: variant, size: .s)
+        m.Button("Button", variant: variant, size: .m)
+        m.Button("Button", variant: variant, size: .l)
+        m.Button("Button", variant: variant, size: .xl)
+    }
+}
+
+View SquareRow(variant: m.ButtonVariant) {
+    Row #[gap: 16, align: center] {
+        m.Button("Button", variant: variant, size: .xs, shape: .square)
+        m.Button("Button", variant: variant, size: .s, shape: .square)
+        m.Button("Button", variant: variant, size: .m, shape: .square)
+        m.Button("Button", variant: variant, size: .l, shape: .square)
+        m.Button("Button", variant: variant, size: .xl, shape: .square)
+    }
+}
+
+View IconRow(variant: m.ButtonVariant) {
+    Row #[gap: 16, align: center] {
+        m.Button("Button", variant: variant, size: .xs, icon: "add")
+        m.Button("Button", variant: variant, size: .s, icon: "add")
+        m.Button("Button", variant: variant, size: .m, icon: "add")
+        m.Button("Button", variant: variant, size: .l, icon: "add")
+        m.Button("Button", variant: variant, size: .xl, icon: "add")
+    }
+}
+
+// A toggle owns its state here, the way an app would.
+View ToggleRow(variant: m.ButtonVariant) {
+    var a = false
+    var b = true
+    var c = false
+    var d = true
+    Row #[gap: 16, align: center] {
+        m.Button("Star", variant: variant, toggle: true, selected: a, icon: "star", on_tap: { a = !a })
+        m.Button("Star", variant: variant, toggle: true, selected: b, icon: "star", on_tap: { b = !b })
+        m.Button("Star", variant: variant, toggle: true, selected: c, shape: .square, icon: "star", on_tap: { c = !c })
+        m.Button("Star", variant: variant, toggle: true, selected: d, shape: .square, icon: "star", on_tap: { d = !d })
+    }
+}
+
+View DisabledRow(shape: m.ButtonShape) {
+    Row #[gap: 16, align: center] {
+        m.Button("Button", variant: .filled, shape: shape, disabled: true)
+        m.Button("Button", variant: .tonal, shape: shape, disabled: true)
+        m.Button("Button", variant: .elevated, shape: shape, disabled: true)
+        m.Button("Button", variant: .outlined, shape: shape, disabled: true)
+        m.Button("Button", variant: .text, shape: shape, disabled: true)
+        m.Button("Button", variant: .filled, shape: shape, disabled: true, icon: "add")
+        m.Button("Star", variant: .filled, shape: shape, disabled: true, toggle: true, selected: true)
+    }
+}
