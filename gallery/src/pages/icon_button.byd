@@ -1,0 +1,89 @@
+use material as m
+
+// Every variant, size, width and state of m.IconButton.
+
+View IconButtonPage() {
+    Column #[p: 24, gap: 32] {
+        Section("Variants and sizes, default width") {
+            Line("standard") { IconSizeRow(variant: m.IconButtonVariant.standard) }
+            Line("filled") { IconSizeRow(variant: m.IconButtonVariant.filled) }
+            Line("tonal") { IconSizeRow(variant: m.IconButtonVariant.tonal) }
+            Line("outlined") { IconSizeRow(variant: m.IconButtonVariant.outlined) }
+        }
+        Section("Widths: narrow, default, wide (small and medium)") {
+            Line("filled") { WidthRow(variant: m.IconButtonVariant.filled) }
+            Line("tonal") { WidthRow(variant: m.IconButtonVariant.tonal) }
+            Line("outlined") { WidthRow(variant: m.IconButtonVariant.outlined) }
+        }
+        Section("Square") {
+            Line("standard") { SquareIconRow(variant: m.IconButtonVariant.standard) }
+            Line("filled") { SquareIconRow(variant: m.IconButtonVariant.filled) }
+            Line("tonal") { SquareIconRow(variant: m.IconButtonVariant.tonal) }
+            Line("outlined") { SquareIconRow(variant: m.IconButtonVariant.outlined) }
+        }
+        Section("Toggle: unselected, then selected; round and square") {
+            Line("standard") { ToggleIconRow(variant: m.IconButtonVariant.standard) }
+            Line("filled") { ToggleIconRow(variant: m.IconButtonVariant.filled) }
+            Line("tonal") { ToggleIconRow(variant: m.IconButtonVariant.tonal) }
+            Line("outlined") { ToggleIconRow(variant: m.IconButtonVariant.outlined) }
+        }
+        Section("Disabled") {
+            Line("round") { DisabledIconRow(shape: m.ButtonShape.round) }
+            Line("square") { DisabledIconRow(shape: m.ButtonShape.square) }
+        }
+    }
+}
+
+View IconSizeRow(variant: m.IconButtonVariant) {
+    Row #[gap: 16, align: center] {
+        m.IconButton("favorite", label: "Favourite", variant: variant, size: .xs)
+        m.IconButton("favorite", label: "Favourite", variant: variant, size: .s)
+        m.IconButton("favorite", label: "Favourite", variant: variant, size: .m)
+        m.IconButton("favorite", label: "Favourite", variant: variant, size: .l)
+        m.IconButton("favorite", label: "Favourite", variant: variant, size: .xl)
+    }
+}
+
+View WidthRow(variant: m.IconButtonVariant) {
+    Row #[gap: 16, align: center] {
+        m.IconButton("favorite", label: "Favourite", variant: variant, size: .s, width: .narrow)
+        m.IconButton("favorite", label: "Favourite", variant: variant, size: .s)
+        m.IconButton("favorite", label: "Favourite", variant: variant, size: .s, width: .wide)
+        m.IconButton("favorite", label: "Favourite", variant: variant, size: .m, width: .narrow)
+        m.IconButton("favorite", label: "Favourite", variant: variant, size: .m)
+        m.IconButton("favorite", label: "Favourite", variant: variant, size: .m, width: .wide)
+    }
+}
+
+View SquareIconRow(variant: m.IconButtonVariant) {
+    Row #[gap: 16, align: center] {
+        m.IconButton("favorite", label: "Favourite", variant: variant, size: .xs, shape: .square)
+        m.IconButton("favorite", label: "Favourite", variant: variant, size: .s, shape: .square)
+        m.IconButton("favorite", label: "Favourite", variant: variant, size: .m, shape: .square)
+        m.IconButton("favorite", label: "Favourite", variant: variant, size: .l, shape: .square)
+        m.IconButton("favorite", label: "Favourite", variant: variant, size: .xl, shape: .square)
+    }
+}
+
+View ToggleIconRow(variant: m.IconButtonVariant) {
+    var a = false
+    var b = true
+    var c = false
+    var d = true
+    Row #[gap: 16, align: center] {
+        m.IconButton("favorite", label: "Favourite", variant: variant, size: .m, toggle: true, selected: a, on_tap: { a = !a })
+        m.IconButton("favorite", label: "Favourite", variant: variant, size: .m, toggle: true, selected: b, on_tap: { b = !b })
+        m.IconButton("favorite", label: "Favourite", variant: variant, size: .m, shape: .square, toggle: true, selected: c, on_tap: { c = !c })
+        m.IconButton("favorite", label: "Favourite", variant: variant, size: .m, shape: .square, toggle: true, selected: d, on_tap: { d = !d })
+    }
+}
+
+View DisabledIconRow(shape: m.ButtonShape) {
+    Row #[gap: 16, align: center] {
+        m.IconButton("favorite", label: "Favourite", variant: .standard, size: .m, shape: shape, disabled: true)
+        m.IconButton("favorite", label: "Favourite", variant: .filled, size: .m, shape: shape, disabled: true)
+        m.IconButton("favorite", label: "Favourite", variant: .tonal, size: .m, shape: shape, disabled: true)
+        m.IconButton("favorite", label: "Favourite", variant: .outlined, size: .m, shape: shape, disabled: true)
+        m.IconButton("favorite", label: "Favourite", variant: .filled, size: .m, shape: shape, disabled: true, toggle: true, selected: true)
+    }
+}

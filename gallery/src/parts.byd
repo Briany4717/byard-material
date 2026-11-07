@@ -1,0 +1,26 @@
+// Pieces the gallery pages share: a titled section and a row with a caption.
+
+View Section(title: Str, content) {
+    inject Theme as t
+
+    Column #[gap: 16] {
+        Text(title) #[typo: t.titleMedium, color: t.primary]
+        content
+    }
+}
+
+// A caption, then a row of what it names.
+View Line(caption: Str, content) {
+    inject Theme as t
+
+    Row #[gap: 24, align: center] {
+        Text(caption) #[
+            typo: t.labelMedium,
+            color: t.onSurfaceVariant,
+            width: 80,
+            wrap: false,
+            shrink: 0,
+        ]
+        content
+    }
+}
