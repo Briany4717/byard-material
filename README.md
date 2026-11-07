@@ -39,5 +39,14 @@ byard dev
 MIT or Apache-2.0, at your option.
 
 This package implements the public Material 3 guidelines. It is not made by, endorsed by or
-affiliated with Google. Material Symbols, when it is added, is Google's, under the Apache
-License 2.0.
+affiliated with Google.
+
+## Fonts
+
+Two fonts ship in `fonts/`, each with its licence:
+
+- **Material Symbols Rounded**, Google's icon font, under the Apache License 2.0
+  (`fonts/LICENSE-MaterialSymbols`). It is declared as an icon font, so `byard bundle` keeps
+  only the icons an app uses.
+- **Roboto Flex**, the text face, under the SIL Open Font License 1.1
+  (`fonts/OFL-RobotoFlex.txt`).
