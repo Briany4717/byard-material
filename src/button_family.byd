@@ -1,0 +1,52 @@
+// The measurements Material 3 Expressive gives its buttons by size, shared by Button and
+// IconButton (and the other members of the family later). Private.
+//
+//   size  height  icon  label style     square corner  pressed corner  side space  icon gap
+//   xs      32     20   labelLarge          12              8            12          4
+//   s       40     20   labelLarge          12              8            16          8
+//   m       56     24   titleMedium         16             12            24          8
+//   l       96     32   headlineSmall       28             16            48         12
+//   xl     136     40   headlineLarge       28             16            64         16
+//
+// The label style is chosen in `ButtonLabel`, not here: see the note there.
+
+private fn buttonHeight(size: ButtonSize) -> Int =>
+    size == ButtonSize.xs ? 32
+    : size == ButtonSize.s ? 40
+    : size == ButtonSize.m ? 56
+    : size == ButtonSize.l ? 96
+    : 136
+
+private fn buttonIconSize(size: ButtonSize) -> Int =>
+    size == ButtonSize.xs ? 20
+    : size == ButtonSize.s ? 20
+    : size == ButtonSize.m ? 24
+    : size == ButtonSize.l ? 32
+    : 40
+
+private fn buttonSquareRadius(size: ButtonSize) -> Int =>
+    size == ButtonSize.xs ? 12
+    : size == ButtonSize.s ? 12
+    : size == ButtonSize.m ? 16
+    : 28
+
+private fn buttonPressedRadius(size: ButtonSize) -> Int =>
+    size == ButtonSize.xs ? 8
+    : size == ButtonSize.s ? 8
+    : size == ButtonSize.m ? 12
+    : 16
+
+// The space either side of the content, and between the icon and the label.
+private fn buttonPadding(size: ButtonSize) -> Int =>
+    size == ButtonSize.xs ? 12
+    : size == ButtonSize.s ? 16
+    : size == ButtonSize.m ? 24
+    : size == ButtonSize.l ? 48
+    : 64
+
+private fn buttonGap(size: ButtonSize) -> Int =>
+    size == ButtonSize.xs ? 4
+    : size == ButtonSize.s ? 8
+    : size == ButtonSize.m ? 8
+    : size == ButtonSize.l ? 12
+    : 16

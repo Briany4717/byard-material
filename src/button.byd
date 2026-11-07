@@ -1,0 +1,159 @@
+// Material 3 Expressive button: filled, tonal, outlined, elevated and text; five sizes;
+// round or square; a toggle that swaps its shape when selected. The corners spring to a
+// tighter square while it is pressed.
+//
+//     m.Button("Save", icon: "check", on_tap: { save() })
+//     m.Button("Star", variant: .tonal, toggle: true, selected: starred,
+//         on_tap: { starred = !starred })
+//
+// A view takes its action by name (`on_tap`), not as a trailing `=> action`. The text variant
+// has no selected look in Material; `toggle` on it only changes what a screen reader says.
+
+enum ButtonVariant {
+    filled,
+    tonal,
+    outlined,
+    elevated,
+    text,
+}
+
+View Button(label: Str, variant: ButtonVariant = .filled, size: ButtonSize = .s,
+    shape: ButtonShape = .round, icon: Str = "", toggle: Bool = false, selected: Bool = false,
+    disabled: Bool = false, on_tap: Fn() = {}) {
+    inject Theme as t
+
+    // What the pointer and the keyboard are doing. `kbd` is "focus_visible": focus that the
+    // keyboard gave, so a mouse press never draws the ring.
+    var hov = false
+    var down = false
+    var kbd = false
+
+    // A toggle that is on takes the opposite of its resting shape.
+    let on = toggle && selected
+    let flat = variant == ButtonVariant.outlined || variant == ButtonVariant.text
+
+    let h = buttonHeight(size)
+
+    let container = disabled ? (flat ? t.surface.alpha(0.0) : t.onSurface.alpha(disabledContainer))
+        : variant == ButtonVariant.filled ? (toggle && !selected ? t.surfaceContainer : t.primary)
+        : variant == ButtonVariant.tonal ? (toggle && selected ? t.secondary : t.secondaryContainer)
+        : variant == ButtonVariant.elevated ? (toggle && selected ? t.primary : t.surfaceContainerLow)
+        : variant == ButtonVariant.outlined ? (on ? t.inverseSurface : t.surface.alpha(0.0))
+        : t.surface.alpha(0.0)
+    let ink = disabled ? t.onSurface.alpha(disabledContent)
+        : variant == ButtonVariant.filled ? (toggle && !selected ? t.onSurfaceVariant : t.onPrimary)
+        : variant == ButtonVariant.tonal ? (toggle && selected ? t.onSecondary : t.onSecondaryContainer)
+        : variant == ButtonVariant.elevated ? (toggle && selected ? t.onPrimary : t.primary)
+        : variant == ButtonVariant.outlined ? (on ? t.inverseOnSurface : t.onSurfaceVariant)
+        : t.primary
+
+    // The outline of an outlined button, thicker on the large sizes.
+    let outlined = variant == ButtonVariant.outlined && !on
+    let line = disabled ? t.onSurface.alpha(disabledContainer) : t.outlineVariant
+    let lineWidth = size == ButtonSize.l ? 2 : size == ButtonSize.xl ? 3 : 1
+
+    let square = (shape == ButtonShape.square) != on
+    let r = down && !disabled ? buttonPressedRadius(size) : square ? buttonSquareRadius(size) : h / 2
+
+    // Elevation: an elevated button rests at level 1 and rises to level 2 under the pointer; a
+    // filled or tonal one rises to level 1. The engine's presets stand for the levels ("sm" is
+    // 1, "md" is 2): a list of shadow tuples held in a `let`, or chosen by `?:`, is not drawn.
+    let rise = (disabled || flat) ? 0
+        : variant == ButtonVariant.elevated ? (hov ? 2 : 1)
+        : hov ? 1
+        : 0
+
+    let chrome = style {
+        bg: container with t.springEffectsFast
+        radius: r with t.springSpatialFast
+        border: line
+        border_width: outlined ? lineWidth : 0
+        shadow: rise == 2 ? "md" : rise == 1 ? "sm" : ()
+        height: h
+    }
+
+    FocusRing(radius: r, visible: kbd) {
+        // A role is a keyword and cannot be chosen at run time, so a toggle and a plain button
+        // are two roots around the same face.
+        when toggle {
+            Box #[
+                ..chrome,
+                a11y_role: toggle_button,
+                a11y_checked: selected,
+                disabled: disabled,
+                tap => on_tap(),
+                pointer_enter => hov = true,
+                pointer_exit => {
+                    hov = false
+                    down = false
+                },
+                pointer_down => down = true,
+                pointer_up => down = false,
+                focus => kbd = !down,
+                blur => kbd = false,
+            ] {
+                ButtonFace(label: label, icon: icon, ink: ink, radius: r, size: size,
+                    disabled: disabled, hovered: hov, pressed: down, focused: kbd)
+            }
+        } else {
+            Box #[
+                ..chrome,
+                a11y_role: button,
+                disabled: disabled,
+                tap => on_tap(),
+                pointer_enter => hov = true,
+                pointer_exit => {
+                    hov = false
+                    down = false
+                },
+                pointer_down => down = true,
+                pointer_up => down = false,
+                focus => kbd = !down,
+                blur => kbd = false,
+            ] {
+                ButtonFace(label: label, icon: icon, ink: ink, radius: r, size: size,
+                    disabled: disabled, hovered: hov, pressed: down, focused: kbd)
+            }
+        }
+    }
+}
+
+// The inside of a button: the state layer, the optional leading icon and the label.
+private View ButtonFace(label: Str, icon: Str, ink: Int, radius: Int, size: ButtonSize,
+    disabled: Bool, hovered: Bool, pressed: Bool, focused: Bool) {
+    inject Theme as t
+
+    StateLayer(color: ink, radius: radius, hovered: hovered, pressed: pressed, focused: focused,
+        disabled: disabled) {
+        Row #[
+            height: buttonHeight(size),
+            p: (0, buttonPadding(size)),
+            gap: buttonGap(size),
+            align: center,
+            justify: center,
+        ] {
+            when icon != "" {
+                Icon(icon, size: buttonIconSize(size), color: ink)
+            }
+            ButtonLabel(label, ink: ink, size: size)
+        }
+    }
+}
+
+// The label, in the text style of its size. A `typo:` chosen with `?:` loses the style's family
+// and weight today, so each size names its own token.
+private View ButtonLabel(label: Str, ink: Int, size: ButtonSize) {
+    inject Theme as t
+
+    when size == ButtonSize.xs {
+        Text(label) #[typo: t.labelLarge, color: ink with t.springEffectsFast, wrap: false]
+    } else when size == ButtonSize.s {
+        Text(label) #[typo: t.labelLarge, color: ink with t.springEffectsFast, wrap: false]
+    } else when size == ButtonSize.m {
+        Text(label) #[typo: t.titleMedium, color: ink with t.springEffectsFast, wrap: false]
+    } else when size == ButtonSize.l {
+        Text(label) #[typo: t.headlineSmall, color: ink with t.springEffectsFast, wrap: false]
+    } else {
+        Text(label) #[typo: t.headlineLarge, color: ink with t.springEffectsFast, wrap: false]
+    }
+}

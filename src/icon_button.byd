@@ -1,0 +1,132 @@
+// Material 3 Expressive icon button: standard, filled, tonal and outlined; the same five sizes
+// as Button, each in a narrow, default or wide width; round or square; a toggle that fills its
+// icon and swaps its shape when selected.
+//
+//     m.IconButton("search", label: "Search", on_tap: { openSearch() })
+//     m.IconButton("favorite", label: "Favourite", variant: .tonal, toggle: true,
+//         selected: liked, on_tap: { liked = !liked })
+//
+// `label` is what a screen reader says: an icon button has no text of its own.
+
+enum IconButtonVariant {
+    standard,
+    filled,
+    tonal,
+    outlined,
+}
+
+enum IconButtonWidth {
+    narrow,
+    default,
+    wide,
+}
+
+// The container's width: narrow, default (square) and wide, by size. Its height is the size's.
+private fn iconButtonWidth(size: ButtonSize, width: IconButtonWidth) -> Int =>
+    size == ButtonSize.xs ? (width == IconButtonWidth.narrow ? 28 : width == IconButtonWidth.wide ? 40 : 32)
+    : size == ButtonSize.s ? (width == IconButtonWidth.narrow ? 32 : width == IconButtonWidth.wide ? 52 : 40)
+    : size == ButtonSize.m ? (width == IconButtonWidth.narrow ? 48 : width == IconButtonWidth.wide ? 72 : 56)
+    : size == ButtonSize.l ? (width == IconButtonWidth.narrow ? 64 : width == IconButtonWidth.wide ? 128 : 96)
+    : (width == IconButtonWidth.narrow ? 104 : width == IconButtonWidth.wide ? 184 : 136)
+
+View IconButton(icon: Str, label: Str, variant: IconButtonVariant = .standard,
+    size: ButtonSize = .s, width: IconButtonWidth = .default, shape: ButtonShape = .round,
+    toggle: Bool = false, selected: Bool = false, disabled: Bool = false, on_tap: Fn() = {}) {
+    inject Theme as t
+
+    var hov = false
+    var down = false
+    var kbd = false
+
+    let on = toggle && selected
+    let resting = toggle && !selected
+    let bare = variant == IconButtonVariant.standard || variant == IconButtonVariant.outlined
+
+    let h = buttonHeight(size)
+    let w = iconButtonWidth(size, width)
+
+    let container = disabled ? (bare ? t.surface.alpha(0.0) : t.onSurface.alpha(disabledContainer))
+        : variant == IconButtonVariant.filled ? (resting ? t.surfaceContainerHighest : t.primary)
+        : variant == IconButtonVariant.tonal ? (resting ? t.surfaceContainerHighest : t.secondaryContainer)
+        : variant == IconButtonVariant.outlined ? (on ? t.inverseSurface : t.surface.alpha(0.0))
+        : t.surface.alpha(0.0)
+    let ink = disabled ? t.onSurface.alpha(disabledContent)
+        : variant == IconButtonVariant.filled ? (resting ? t.primary : t.onPrimary)
+        : variant == IconButtonVariant.tonal ? (resting ? t.onSurfaceVariant : t.onSecondaryContainer)
+        : variant == IconButtonVariant.outlined ? (on ? t.inverseOnSurface : t.onSurfaceVariant)
+        : (on ? t.primary : t.onSurfaceVariant)
+
+    let outlined = variant == IconButtonVariant.outlined && !on
+    let line = disabled ? t.onSurface.alpha(disabledContainer) : t.outlineVariant
+    let lineWidth = size == ButtonSize.l ? 2 : size == ButtonSize.xl ? 3 : 1
+
+    let square = (shape == ButtonShape.square) != on
+    let r = down && !disabled ? buttonPressedRadius(size) : square ? buttonSquareRadius(size) : h / 2
+
+    let chrome = style {
+        bg: container with t.springEffectsFast
+        radius: r with t.springSpatialFast
+        border: line
+        border_width: outlined ? lineWidth : 0
+        width: w
+        height: h
+        shrink: 0
+    }
+
+    FocusRing(radius: r, visible: kbd) {
+        // Two roots for the two roles, as in Button.
+        when toggle {
+            Box #[
+                ..chrome,
+                a11y_role: toggle_button,
+                a11y_checked: selected,
+                a11y_label: label,
+                disabled: disabled,
+                tap => on_tap(),
+                pointer_enter => hov = true,
+                pointer_exit => {
+                    hov = false
+                    down = false
+                },
+                pointer_down => down = true,
+                pointer_up => down = false,
+                focus => kbd = !down,
+                blur => kbd = false,
+            ] {
+                IconButtonFace(icon: icon, fill: on, ink: ink, radius: r, size: size, width: w,
+                    disabled: disabled, hovered: hov, pressed: down, focused: kbd)
+            }
+        } else {
+            Box #[
+                ..chrome,
+                a11y_role: button,
+                a11y_label: label,
+                disabled: disabled,
+                tap => on_tap(),
+                pointer_enter => hov = true,
+                pointer_exit => {
+                    hov = false
+                    down = false
+                },
+                pointer_down => down = true,
+                pointer_up => down = false,
+                focus => kbd = !down,
+                blur => kbd = false,
+            ] {
+                IconButtonFace(icon: icon, fill: on, ink: ink, radius: r, size: size, width: w,
+                    disabled: disabled, hovered: hov, pressed: down, focused: kbd)
+            }
+        }
+    }
+}
+
+// The inside of an icon button: the state layer over the container and the icon in its middle.
+private View IconButtonFace(icon: Str, fill: Bool, ink: Int, radius: Int, size: ButtonSize,
+    width: Int, disabled: Bool, hovered: Bool, pressed: Bool, focused: Bool) {
+    StateLayer(color: ink, radius: radius, hovered: hovered, pressed: pressed, focused: focused,
+        disabled: disabled) {
+        Box #[width: width, height: buttonHeight(size), align: center, justify: center] {
+            Icon(icon, fill: fill ? 1.0 : 0.0, size: buttonIconSize(size), color: ink)
+        }
+    }
+}

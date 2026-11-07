@@ -45,7 +45,6 @@ private View FocusRing(radius: Int, visible: Bool, content) {
     Box #[
         m: -focusRingReach,
         p: focusRingReach,
-        align_self: start,
         bg: t.surface.alpha(0.0),
         radius: (radius + focusRingReach) with t.springSpatialFast,
         border: visible ? t.secondary : t.secondary.alpha(0.0),
