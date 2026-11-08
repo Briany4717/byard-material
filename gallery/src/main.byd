@@ -7,6 +7,7 @@ enum Page {
     index,
     button,
     iconButton,
+    switch,
 }
 
 View Main() {
@@ -26,11 +27,14 @@ View Main() {
                 ButtonPage()
             } else when page == Page.iconButton {
                 IconButtonPage()
+            } else when page == Page.switch {
+                SwitchPage()
             } else {
                 Column #[p: 24, gap: 16, align: start] {
                     Text("Components") #[typo: t.titleMedium, color: t.primary]
                     m.Button("Button", variant: .tonal, on_tap: { page = Page.button })
                     m.Button("IconButton", variant: .tonal, on_tap: { page = Page.iconButton })
+                    m.Button("Switch", variant: .tonal, on_tap: { page = Page.switch })
                 }
             }
         }

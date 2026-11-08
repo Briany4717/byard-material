@@ -1,0 +1,80 @@
+use material as m
+
+// Every state of m.Switch: off and on, with and without icons, pressed size, disabled.
+
+View SwitchPage() {
+    inject Theme as t
+    Column #[p: 24, gap: 32, bg: t.surface, grow: 1] {
+        Section("Off, then on") {
+            Line("plain") { PlainSwitchRow() }
+            Line("icons") { IconSwitchRow() }
+            Line("custom icon") { CustomSwitchRow() }
+        }
+        Section("Disabled") {
+            Line("plain") { DisabledSwitchRow(icons: false) }
+            Line("icons") { DisabledSwitchRow(icons: true) }
+        }
+        Section("With a label") {
+            Line("list") { LabelledSwitchRow() }
+        }
+    }
+}
+
+View PlainSwitchRow() {
+    var a = false
+    var b = true
+    Row #[gap: 24, align: center] {
+        m.Switch(bind: a, label: "Off")
+        m.Switch(bind: b, label: "On")
+    }
+}
+
+View IconSwitchRow() {
+    var a = false
+    var b = true
+    Row #[gap: 24, align: center] {
+        m.Switch(bind: a, label: "Off with icon", icons: true)
+        m.Switch(bind: b, label: "On with icon", icons: true)
+    }
+}
+
+View CustomSwitchRow() {
+    var a = false
+    var b = true
+    Row #[gap: 24, align: center] {
+        m.Switch(bind: a, label: "Mode off", icon: "light_mode")
+        m.Switch(bind: b, label: "Mode on", icon: "dark_mode")
+    }
+}
+
+View DisabledSwitchRow(icons: Bool) {
+    var a = false
+    var b = true
+    Row #[gap: 24, align: center] {
+        m.Switch(bind: a, label: "Off", icons: icons, disabled: true)
+        m.Switch(bind: b, label: "On", icons: icons, disabled: true)
+    }
+}
+
+View LabelledSwitchRow() {
+    inject Theme as t
+    var a = true
+    Row #[gap: 16, align: center, width: 320, justify: between] {
+        Text("Wi-Fi") #[typo: t.bodyLarge, color: t.onSurface]
+        m.Switch(bind: a, label: "Wi-Fi")
+    }
+}
+
+// A few switches with names of their own, for `tests/switch.toml`.
+View SwitchScenarios() {
+    inject Theme as t
+    var wifi = false
+    var dark = true
+    var locked = true
+    Column #[p: 24, gap: 16, align: start, bg: t.surface, grow: 1] {
+        m.Switch(bind: wifi, label: "Wi-Fi")
+        m.Switch(bind: dark, label: "Dark", icons: true)
+        m.Switch(bind: locked, label: "Locked", disabled: true)
+        Text("Wi-Fi is {wifi ? "on" : "off"}, dark is {dark ? "on" : "off"}")
+    }
+}
