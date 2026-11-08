@@ -1,0 +1,65 @@
+# Scenarios for the chips, on the ChipsScenarios view.
+view = "ChipsScenarios"
+size = "440x500"
+
+[[test]]
+name = "each chip is named, with its role and state"
+exact = [
+    'Button "Directions" [focusable]',
+    'ToggleButton "Open now" [focusable]',
+    'Button "Ana" [focusable]',
+    'Button "Remove Ana" [focusable]',
+    'Button "Sounds good" [focusable]',
+    'Button "Archive" [focusable disabled]',
+    'Button "Ben" [focusable disabled]',
+    'Button "Remove Ben" [focusable disabled]',
+]
+
+[[test]]
+name = "a tap presses an assist or suggestion chip"
+steps = [{ tap = 'Button "Directions"' }, { tap = 'Button "Sounds good"' }]
+expect = ['Label "Taps: 11"']
+
+[[test]]
+name = "a filter chip toggles on a tap, and back"
+steps = [
+    { tap = 'ToggleButton "Open now"' },
+    { expect = ['ToggleButton "Open now" [focusable focused checked]'] },
+    { tap = 'ToggleButton "Open now"' },
+]
+
+[[test]]
+name = "an input chip taps and removes separately"
+steps = [{ tap = 'Button "Ana"' }, { tap = 'Button "Remove Ana"' }, { tap = 'Button "Remove Ana"' }]
+expect = ['Label "Edits: 1"', 'Label "Removed: 2"']
+
+[[test]]
+name = "disabled chips do nothing"
+steps = [{ tap = 'Button "Archive"' }, { tap = 'Button "Remove Ben"' }]
+expect = ['Label "Taps: 0"', 'Label "Removed: 0"']
+
+[[test]]
+name = "Tab reaches the first chip and Space presses it"
+steps = [{ key = "Tab" }, { key = "Space" }]
+expect = ['Button "Directions" [focusable focused]', 'Label "Taps: 1"']
+
+[[test]]
+name = "Space flips a focused filter chip"
+steps = [{ key = "Tab" }, { key = "Tab" }, { key = "Space" }]
+expect = ['ToggleButton "Open now" [focusable focused checked]']
+
+[[test]]
+name = "Tab reaches the remove button, and Space removes"
+steps = [{ key = "Tab" }, { key = "Tab" }, { key = "Tab" }, { key = "Tab" }, { key = "Space" }]
+expect = ['Button "Remove Ana" [focusable focused]', 'Label "Removed: 1"']
+
+[[test]]
+name = "Tab skips disabled chips and wraps"
+steps = [{ key = "Tab" }, { key = "Tab" }, { key = "Tab" }, { key = "Tab" }, { key = "Tab" }, { key = "Tab" }]
+expect = ['Button "Directions" [focusable focused]']
+
+[[test]]
+name = "the same in the dark scheme"
+scheme = "dark"
+steps = [{ key = "Tab" }, { key = "Space" }]
+expect = ['Label "Taps: 1"']
