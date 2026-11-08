@@ -28,3 +28,7 @@ jobs:
         run: |
           byard get
           byard check
+
+      - name: Test the gallery
+        working-directory: gallery
+        run: byard test

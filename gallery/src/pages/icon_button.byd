@@ -3,7 +3,8 @@ use material as m
 // Every variant, size, width and state of m.IconButton.
 
 View IconButtonPage() {
-    Column #[p: 24, gap: 32] {
+    inject Theme as t
+    Column #[p: 24, gap: 32, bg: t.surface, grow: 1] {
         Section("Variants and sizes, default width") {
             Line("standard") { IconSizeRow(variant: m.IconButtonVariant.standard) }
             Line("filled") { IconSizeRow(variant: m.IconButtonVariant.filled) }
@@ -85,5 +86,18 @@ View DisabledIconRow(shape: m.ButtonShape) {
         m.IconButton("favorite", label: "Favourite", variant: .tonal, size: .m, shape: shape, disabled: true)
         m.IconButton("favorite", label: "Favourite", variant: .outlined, size: .m, shape: shape, disabled: true)
         m.IconButton("favorite", label: "Favourite", variant: .filled, size: .m, shape: shape, disabled: true, toggle: true, selected: true)
+    }
+}
+
+// A few icon buttons with names of their own, for `tests/icon_button.toml` to find by name.
+View IconButtonScenarios() {
+    inject Theme as t
+    var taps = 0
+    var liked = false
+    Column #[p: 24, gap: 16, align: start, bg: t.surface, grow: 1] {
+        m.IconButton("search", label: "Search", on_tap: { taps += 1 })
+        m.IconButton("favorite", label: "Like", variant: .filled, toggle: true, selected: liked, on_tap: { liked = !liked })
+        m.IconButton("delete", label: "Delete", disabled: true, on_tap: { taps += 100 })
+        Text("Taps: {taps}")
     }
 }
