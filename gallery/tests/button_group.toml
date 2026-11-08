@@ -1,0 +1,35 @@
+# Scenarios for m.ButtonGroup, on the ButtonGroupScenarios view.
+view = "ButtonGroupScenarios"
+size = "440x520"
+
+[[test]]
+name = "the group and its items are named, with state"
+expect = [
+    'Group',
+    'ToggleButton "Day" [focusable checked]',
+    'ToggleButton "Week" [focusable]',
+    'ToggleButton "Bold" [focusable]',
+    'Button "Cut" [focusable]',
+    'Label "Range: 0"',
+]
+
+[[test]]
+name = "single select moves the selection"
+steps = [{ tap = 'ToggleButton "Week"' }]
+expect = ['Label "Range: 1"', 'ToggleButton "Week" [focusable focused checked]']
+not = ['ToggleButton "Day" [focusable checked]']
+
+[[test]]
+name = "multi select adds and removes"
+steps = [{ tap = 'ToggleButton "Bold"' }, { tap = 'ToggleButton "Italic"' }, { expect = ['Label "Styles: 2"'] }, { tap = 'ToggleButton "Bold"' }]
+expect = ['Label "Styles: 1"']
+
+[[test]]
+name = "a group with no selection only reports taps"
+steps = [{ tap = 'Button "Copy"' }, { tap = 'Button "Cut"' }]
+expect = ['Label "Taps: 2"']
+
+[[test]]
+name = "Tab reaches the first item and Space selects the next"
+steps = [{ key = "Tab" }, { expect = ['ToggleButton "Day" [focusable focused checked]'] }, { key = "Tab" }, { key = "Space" }]
+expect = ['Label "Range: 1"']
