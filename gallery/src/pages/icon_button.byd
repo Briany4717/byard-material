@@ -87,3 +87,15 @@ View DisabledIconRow(shape: m.ButtonShape) {
         m.IconButton("favorite", label: "Favourite", variant: .filled, size: .m, shape: shape, disabled: true, toggle: true, selected: true)
     }
 }
+
+// A few icon buttons with names of their own, for `tests/icon_button.toml` to find by name.
+View IconButtonScenarios() {
+    var taps = 0
+    var liked = false
+    Column #[p: 24, gap: 16, align: start] {
+        m.IconButton("search", label: "Search", on_tap: { taps += 1 })
+        m.IconButton("favorite", label: "Like", variant: .filled, toggle: true, selected: liked, on_tap: { liked = !liked })
+        m.IconButton("delete", label: "Delete", disabled: true, on_tap: { taps += 100 })
+        Text("Taps: {taps}")
+    }
+}

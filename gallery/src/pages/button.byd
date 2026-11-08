@@ -93,3 +93,15 @@ View DisabledRow(shape: m.ButtonShape) {
         m.Button("Star", variant: .filled, shape: shape, disabled: true, toggle: true, selected: true)
     }
 }
+
+// A few buttons with names of their own, for `tests/button.toml` to find by name.
+View ButtonScenarios() {
+    var taps = 0
+    var starred = false
+    Column #[p: 24, gap: 16, align: start] {
+        m.Button("Save", on_tap: { taps += 1 })
+        m.Button("Star", variant: .tonal, toggle: true, selected: starred, icon: "star", on_tap: { starred = !starred })
+        m.Button("Archive", disabled: true, on_tap: { taps += 100 })
+        Text("Taps: {taps}")
+    }
+}

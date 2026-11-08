@@ -1,0 +1,57 @@
+# Scenarios for m.Button, on the ButtonScenarios view. `byard test` runs every file in tests/.
+view = "ButtonScenarios"
+size = "440x400"
+
+[[test]]
+name = "each button is named, with its role and state"
+exact = [
+    'Button "Save" [focusable]',
+    'ToggleButton "Star" [focusable]',
+    'Button "Archive" [focusable disabled]',
+]
+
+[[test]]
+name = "a tap presses the button"
+steps = [{ tap = 'Button "Save"' }]
+expect = ['Label "Taps: 1"']
+
+[[test]]
+name = "a toggle flips on a tap, and back"
+steps = [
+    { tap = 'ToggleButton "Star"' },
+    { expect = ['ToggleButton "Star" [focusable focused checked]'] },
+    { tap = 'ToggleButton "Star"' },
+]
+exact = ['ToggleButton "Star" [focusable focused]']
+
+[[test]]
+name = "a disabled button cannot be tapped"
+steps = [{ tap = 'Button "Archive"' }]
+expect = ['Label "Taps: 0"']
+
+[[test]]
+name = "Tab reaches the first button"
+steps = [{ key = "Tab" }]
+expect = ['Button "Save" [focusable focused]']
+
+[[test]]
+name = "Space presses the focused button"
+steps = [{ key = "Tab" }, { key = "Space" }, { key = "Space" }]
+expect = ['Label "Taps: 2"']
+
+[[test]]
+name = "Space flips a focused toggle"
+steps = [{ key = "Tab" }, { key = "Tab" }, { key = "Space" }]
+expect = ['ToggleButton "Star" [focusable focused checked]']
+
+[[test]]
+name = "Tab skips a disabled button"
+steps = [{ key = "Tab" }, { key = "Tab" }, { key = "Tab" }, { key = "Space" }]
+expect = ['Label "Taps: 1"']
+not = ['Archive" [focusable disabled focused']
+
+[[test]]
+name = "the same in the dark scheme"
+scheme = "dark"
+steps = [{ key = "Tab" }, { key = "Space" }]
+expect = ['Label "Taps: 1"']

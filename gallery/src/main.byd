@@ -1,30 +1,37 @@
 use material as m
 
-// The gallery shows one component page at a time. Change `page` to switch while working;
-// `byard shot --view` will replace it once it lands.
+// The gallery: an index of the components, and a page for each. Every page is a view of its
+// own, so `byard shot . --view ButtonPage` draws it without going through the index, and
+// `tests/` drives it the same way.
 enum Page {
+    index,
     button,
     iconButton,
 }
 
-let page = Page.button
-
 View Main() {
     inject Theme as t
+
+    var page = Page.index
 
     Column #[bg: t.surface, grow: 1] {
         Row #[p: (16, 24), gap: 16, align: center, bg: t.surfaceContainer] {
             Text("Byard Material") #[typo: t.titleLarge, color: t.onSurface]
-            Text(page == Page.button ? "Button" : "IconButton") #[
-                typo: t.titleMedium,
-                color: t.onSurfaceVariant,
-            ]
+            when page != Page.index {
+                m.Button("All components", variant: .text, size: .xs, on_tap: { page = Page.index })
+            }
         }
         ScrollView #[grow: 1] {
             when page == Page.button {
                 ButtonPage()
             } else when page == Page.iconButton {
                 IconButtonPage()
+            } else {
+                Column #[p: 24, gap: 16, align: start] {
+                    Text("Components") #[typo: t.titleMedium, color: t.primary]
+                    m.Button("Button", variant: .tonal, on_tap: { page = Page.button })
+                    m.Button("IconButton", variant: .tonal, on_tap: { page = Page.iconButton })
+                }
             }
         }
     }

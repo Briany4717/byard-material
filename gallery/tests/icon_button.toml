@@ -1,0 +1,47 @@
+# Scenarios for m.IconButton, on the IconButtonScenarios view.
+view = "IconButtonScenarios"
+size = "440x400"
+
+[[test]]
+name = "each icon button is named by its label, not its icon"
+exact = [
+    'Button "Search" [focusable]',
+    'ToggleButton "Like" [focusable]',
+    'Button "Delete" [focusable disabled]',
+]
+not = ['(unnamed)', '"favorite"', '"search"']
+
+[[test]]
+name = "a tap presses the button"
+steps = [{ tap = 'Button "Search"' }]
+expect = ['Label "Taps: 1"']
+
+[[test]]
+name = "a toggle flips on a tap, and back"
+steps = [
+    { tap = 'ToggleButton "Like"' },
+    { expect = ['ToggleButton "Like" [focusable focused checked]'] },
+    { tap = 'ToggleButton "Like"' },
+]
+exact = ['ToggleButton "Like" [focusable focused]']
+
+[[test]]
+name = "a disabled icon button cannot be tapped"
+steps = [{ tap = 'Button "Delete"' }]
+expect = ['Label "Taps: 0"']
+
+[[test]]
+name = "Tab reaches the first icon button and Space presses it"
+steps = [{ key = "Tab" }, { key = "Space" }]
+expect = ['Button "Search" [focusable focused]', 'Label "Taps: 1"']
+
+[[test]]
+name = "Space flips a focused toggle"
+steps = [{ key = "Tab" }, { key = "Tab" }, { key = "Space" }]
+expect = ['ToggleButton "Like" [focusable focused checked]']
+
+[[test]]
+name = "Tab skips a disabled icon button"
+steps = [{ key = "Tab" }, { key = "Tab" }, { key = "Tab" }, { key = "Space" }]
+expect = ['Label "Taps: 1"']
+not = ['Delete" [focusable disabled focused']
