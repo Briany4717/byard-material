@@ -1,0 +1,60 @@
+// The measurements of the floating action buttons, shared by Fab, ExtendedFab and FabMenu.
+// Private. Material 3 Expressive; the starred columns are values I was not sure of.
+//
+//   Fab      size    container  corner  icon  pressed corner*
+//            small      40        12     24        8
+//            medium     56        16     24       12
+//            large      96        28     36       20
+//
+//   Extended size    height  corner  icon  side space*  icon gap*  label style*
+//            small      56      16     24      16           8     titleMedium
+//            medium     80      20     28      26          12     titleLarge
+//            large      96      28     36      28          16     headlineSmall
+
+enum FabSize {
+    small,
+    medium,
+    large,
+}
+
+// The colour sets: the three container colours of the baseline, and the three filled ones
+// Expressive adds.
+enum FabColor {
+    primaryContainer,
+    secondaryContainer,
+    tertiaryContainer,
+    primary,
+    secondary,
+    tertiary,
+}
+
+private fn fabSize(size: FabSize) -> Int =>
+    size == FabSize.small ? 40 : size == FabSize.medium ? 56 : 96
+
+private fn fabRadius(size: FabSize) -> Int =>
+    size == FabSize.small ? 12 : size == FabSize.medium ? 16 : 28
+
+private fn fabPressedRadius(size: FabSize) -> Int =>
+    size == FabSize.small ? 8 : size == FabSize.medium ? 12 : 20
+
+private fn fabIconSize(size: FabSize) -> Int =>
+    size == FabSize.large ? 36 : 24
+
+private fn extendedHeight(size: FabSize) -> Int =>
+    size == FabSize.small ? 56 : size == FabSize.medium ? 80 : 96
+
+private fn extendedRadius(size: FabSize) -> Int =>
+    size == FabSize.small ? 16 : size == FabSize.medium ? 20 : 28
+
+private fn extendedIconSize(size: FabSize) -> Int =>
+    size == FabSize.small ? 24 : size == FabSize.medium ? 28 : 36
+
+private fn extendedPadding(size: FabSize) -> Int =>
+    size == FabSize.small ? 16 : size == FabSize.medium ? 26 : 28
+
+private fn extendedGap(size: FabSize) -> Int =>
+    size == FabSize.small ? 8 : size == FabSize.medium ? 12 : 16
+
+// What a collapsed extended FAB pads with so that it is as wide as it is tall.
+private fn extendedCollapsedPadding(size: FabSize) -> Int =>
+    size == FabSize.small ? 16 : size == FabSize.medium ? 26 : 30

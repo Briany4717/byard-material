@@ -1,0 +1,98 @@
+use material as m
+
+// m.Fab in its sizes and colour sets, m.ExtendedFab expanded and collapsed, and m.FabMenu.
+
+View FabPage() {
+    inject Theme as t
+    Column #[p: 24, gap: 32, bg: t.surface, grow: 1] {
+        Section("Fab: small, medium, large") {
+            Line("primary c.") { FabRow(color: m.FabColor.primaryContainer, lowered: false) }
+            Line("secondary c.") { FabRow(color: m.FabColor.secondaryContainer, lowered: false) }
+            Line("tertiary c.") { FabRow(color: m.FabColor.tertiaryContainer, lowered: false) }
+            Line("primary") { FabRow(color: m.FabColor.primary, lowered: false) }
+            Line("secondary") { FabRow(color: m.FabColor.secondary, lowered: false) }
+            Line("tertiary") { FabRow(color: m.FabColor.tertiary, lowered: false) }
+            Line("lowered") { FabRow(color: m.FabColor.primaryContainer, lowered: true) }
+        }
+        Section("ExtendedFab: small, medium, large") {
+            Line("primary c.") { ExtendedRow(color: m.FabColor.primaryContainer) }
+            Line("secondary c.") { ExtendedRow(color: m.FabColor.secondaryContainer) }
+            Line("tertiary c.") { ExtendedRow(color: m.FabColor.tertiaryContainer) }
+            Line("primary") { ExtendedRow(color: m.FabColor.primary) }
+            Line("secondary") { ExtendedRow(color: m.FabColor.secondary) }
+            Line("tertiary") { ExtendedRow(color: m.FabColor.tertiary) }
+        }
+        Section("ExtendedFab collapsed") {
+            Line("s, m, l") { CollapsedRow() }
+            Line("toggle") { CollapseToggle() }
+        }
+        Section("FabMenu (tap it)") {
+            Line("menu") { MenuDemo() }
+        }
+    }
+}
+
+View FabRow(color: m.FabColor, lowered: Bool) {
+    Row #[gap: 24, align: center] {
+        m.Fab("edit", label: "Compose", size: .small, color: color, lowered: lowered)
+        m.Fab("edit", label: "Compose", color: color, lowered: lowered)
+        m.Fab("edit", label: "Compose", size: .large, color: color, lowered: lowered)
+    }
+}
+
+View ExtendedRow(color: m.FabColor) {
+    Row #[gap: 24, align: center] {
+        m.ExtendedFab("Compose", icon: "edit", size: .small, color: color)
+        m.ExtendedFab("Compose", icon: "edit", color: color)
+        m.ExtendedFab("Compose", icon: "edit", size: .large, color: color)
+    }
+}
+
+View CollapsedRow() {
+    Row #[gap: 24, align: center] {
+        m.ExtendedFab("Compose", icon: "edit", size: .small, expanded: false)
+        m.ExtendedFab("Compose", icon: "edit", expanded: false)
+        m.ExtendedFab("Compose", icon: "edit", size: .large, expanded: false)
+    }
+}
+
+View CollapseToggle() {
+    var expanded = true
+    Row #[gap: 24, align: center] {
+        m.ExtendedFab("Compose", icon: "edit", expanded: expanded, on_tap: { expanded = !expanded })
+    }
+}
+
+View MenuDemo() {
+    var open = false
+    var picked = "nothing"
+    Row #[gap: 24, align: center, height: 300, width: 400] {
+        Column #[justify: end, align: end, grow: 1, height: 300] {
+            m.FabMenu(["Photo", "Video", "File"], icons: ["photo_camera", "videocam", "attach_file"],
+                bind: open, label: "Add", on_select: {|i| picked = "item {i}" })
+        }
+        Text("Picked: {picked}")
+    }
+}
+
+// For `tests/fab.toml`.
+View FabScenarios() {
+    inject Theme as t
+    var taps = 0
+    var expanded = true
+    var open = false
+    var picked = -1
+    Column #[p: 24, gap: 16, align: start, bg: t.surface, grow: 1] {
+        Row #[gap: 16, align: center] {
+            m.Fab("edit", label: "Compose", on_tap: { taps += 1 })
+            m.ExtendedFab("Share", icon: "share", expanded: expanded, on_tap: { expanded = !expanded })
+        }
+        Text("Taps: {taps}")
+        Text("Picked: {picked}")
+        Text("Open: {open ? "yes" : "no"}")
+        Row #[height: 240, width: 392, align: end, justify: end] {
+            m.FabMenu(["Photo", "Video"], icons: ["photo_camera", "videocam"], bind: open, label: "Add",
+                on_select: {|i| picked = i })
+        }
+    }
+}

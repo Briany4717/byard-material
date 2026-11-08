@@ -1,0 +1,114 @@
+// Material 3 Expressive FAB menu: a FAB that opens into a vertical list of labelled items and
+// turns into a close button. The list hangs above the button, anchored to it with an `Overlay`;
+// a tap outside it or Escape closes it.
+//
+//     m.FabMenu(["Photo", "Video", "File"], icons: ["photo_camera", "videocam", "attach_file"],
+//         bind: open, label: "Add", on_select: {|i| attach(i) })
+//
+// Put the button where a FAB goes (the bottom end of a screen) and the list opens upwards from
+// it, lined up with its end. Choosing an item closes the menu and calls `on_select(index)`.
+//
+// The items take the colour set's container colour and the close button its filled colour:
+// primary containers give primary, secondary secondary, and a filled set stays itself. I was not
+// sure of this pairing, nor of the 4 dp between items; see the notes.
+
+View FabMenu(items: List<Str>, bind open: Bool, icons: List<Str> = [], icon: Str = "add",
+    label: Str = "Menu", color: FabColor = .primaryContainer, size: FabSize = .medium,
+    on_select: Fn(Int) = {|_| }) {
+    inject Theme as t
+
+    let d = fabSize(size)
+
+    // Closed: the colour set as it is. Open: the filled colour of the same family.
+    let closed = color == FabColor.primaryContainer ? t.primaryContainer
+        : color == FabColor.secondaryContainer ? t.secondaryContainer
+        : color == FabColor.tertiaryContainer ? t.tertiaryContainer
+        : color == FabColor.primary ? t.primary
+        : color == FabColor.secondary ? t.secondary
+        : t.tertiary
+    let closedInk = color == FabColor.primaryContainer ? t.onPrimaryContainer
+        : color == FabColor.secondaryContainer ? t.onSecondaryContainer
+        : color == FabColor.tertiaryContainer ? t.onTertiaryContainer
+        : color == FabColor.primary ? t.onPrimary
+        : color == FabColor.secondary ? t.onSecondary
+        : t.onTertiary
+    let isPrimary = color == FabColor.primaryContainer || color == FabColor.primary
+    let isSecondary = color == FabColor.secondaryContainer || color == FabColor.secondary
+    let container = open ? (isPrimary ? t.primary : isSecondary ? t.secondary : t.tertiary) : closed
+    let ink = open ? (isPrimary ? t.onPrimary : isSecondary ? t.onSecondary : t.onTertiary) : closedInk
+
+    // The items.
+    let itemContainer = isPrimary ? t.primaryContainer : isSecondary ? t.secondaryContainer : t.tertiaryContainer
+    let itemInk = isPrimary ? t.onPrimaryContainer : isSecondary ? t.onSecondaryContainer : t.onTertiaryContainer
+
+    Box #[
+        bg: container with t.springEffectsFast,
+        radius: (open ? d / 2 : fabRadius(size)) with t.springSpatialFast,
+        shadow: "lg",
+        width: d,
+        height: d,
+        shrink: 0,
+        align: center,
+        justify: center,
+        a11y_role: button,
+        a11y_label: open ? "Close menu" : label,
+        a11y_expanded: open,
+        tap => open = !open,
+    ] as menuFab {
+        on hover { overlay: ink.alpha(stateHover) with t.springEffectsFast }
+        on focus_visible {
+            overlay: ink.alpha(stateFocus) with t.springEffectsFast
+            outline: t.secondary
+            outline_width: focusRingWidth
+            outline_offset: focusRingOffset
+        }
+        on pressed { overlay: ink.alpha(statePress) with t.springEffectsFast }
+
+        Icon(open ? "close" : icon, size: fabIconSize(size), color: ink)
+    }
+
+    when open {
+        Overlay #[modal: false] {
+            Column #[
+                anchor_to: "menuFab",
+                anchor_edge: above,
+                anchor_align: end,
+                anchor_gap: 8,
+                gap: 4,
+                align: end,
+                a11y_role: menu,
+                dismiss => open = false,
+            ] {
+                for i, item in items {
+                    Row #[
+                        bg: itemContainer,
+                        radius: 28,
+                        height: 56,
+                        p: (0, 20),
+                        gap: 8,
+                        align: center,
+                        a11y_role: menu_item,
+                        tap => {
+                            open = false
+                            on_select(i)
+                        },
+                    ] {
+                        on hover { overlay: itemInk.alpha(stateHover) with t.springEffectsFast }
+                        on focus_visible {
+                            overlay: itemInk.alpha(stateFocus) with t.springEffectsFast
+                            outline: t.secondary
+                            outline_width: focusRingWidth
+                            outline_offset: focusRingOffset
+                        }
+                        on pressed { overlay: itemInk.alpha(statePress) with t.springEffectsFast }
+
+                        when icons.len > i {
+                            Icon(icons[i], size: 24, color: itemInk)
+                        }
+                        Text(item) #[typo: t.titleMedium, color: itemInk, wrap: false]
+                    }
+                }
+            }
+        }
+    }
+}
