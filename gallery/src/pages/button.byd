@@ -3,7 +3,8 @@ use material as m
 // Every variant, size and state of m.Button.
 
 View ButtonPage() {
-    Column #[p: 24, gap: 32] {
+    inject Theme as t
+    Column #[p: 24, gap: 32, bg: t.surface, grow: 1] {
         Section("Variants and sizes, round") {
             Line("filled") { SizeRow(variant: m.ButtonVariant.filled) }
             Line("tonal") { SizeRow(variant: m.ButtonVariant.tonal) }
@@ -96,9 +97,10 @@ View DisabledRow(shape: m.ButtonShape) {
 
 // A few buttons with names of their own, for `tests/button.toml` to find by name.
 View ButtonScenarios() {
+    inject Theme as t
     var taps = 0
     var starred = false
-    Column #[p: 24, gap: 16, align: start] {
+    Column #[p: 24, gap: 16, align: start, bg: t.surface, grow: 1] {
         m.Button("Save", on_tap: { taps += 1 })
         m.Button("Star", variant: .tonal, toggle: true, selected: starred, icon: "star", on_tap: { starred = !starred })
         m.Button("Archive", disabled: true, on_tap: { taps += 100 })
