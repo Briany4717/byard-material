@@ -9,6 +9,7 @@ enum Page {
     iconButton,
     switch,
     checkbox,
+    radio,
 }
 
 View Main() {
@@ -32,6 +33,8 @@ View Main() {
                 SwitchPage()
             } else when page == Page.checkbox {
                 CheckboxPage()
+            } else when page == Page.radio {
+                RadioPage()
             } else {
                 Column #[p: 24, gap: 16, align: start] {
                     Text("Components") #[typo: t.titleMedium, color: t.primary]
@@ -39,6 +42,7 @@ View Main() {
                     m.Button("IconButton", variant: .tonal, on_tap: { page = Page.iconButton })
                     m.Button("Switch", variant: .tonal, on_tap: { page = Page.switch })
                     m.Button("Checkbox", variant: .tonal, on_tap: { page = Page.checkbox })
+                    m.Button("Radio", variant: .tonal, on_tap: { page = Page.radio })
                 }
             }
         }
