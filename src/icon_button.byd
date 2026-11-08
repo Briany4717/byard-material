@@ -74,16 +74,16 @@ View IconButton(icon: Str, label: Str, variant: IconButtonVariant = .standard,
         disabled: disabled,
         tap => on_tap(),
     ] {
-        on hover { overlay: ink.alpha((disabled ? 0.0 : stateHover) with t.springEffectsFast) }
+        on hover { overlay: ink.alpha(stateHover) with t.springEffectsFast }
         on focus_visible {
-            overlay: ink.alpha((disabled ? 0.0 : stateFocus) with t.springEffectsFast)
+            overlay: ink.alpha(stateFocus) with t.springEffectsFast
             outline: t.secondary
             outline_width: focusRingWidth
             outline_offset: focusRingOffset
         }
         on pressed {
-            overlay: ink.alpha((disabled ? 0.0 : statePress) with t.springEffectsFast)
-            radius: (disabled ? r : buttonPressedRadius(size)) with t.springSpatialFast
+            overlay: ink.alpha(statePress) with t.springEffectsFast
+            radius: buttonPressedRadius(size) with t.springSpatialFast
         }
 
         Icon(icon, fill: on ? 1.0 : 0.0, size: buttonIconSize(size), color: ink)

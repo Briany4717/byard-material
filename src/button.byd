@@ -53,7 +53,7 @@ View Button(label: Str, variant: ButtonVariant = .filled, size: ButtonSize = .s,
     // filled or tonal one rises to level 1. The presets stand for the levels ("sm" is 1,
     // "md" is 2).
     let restShadow = !disabled && variant == ButtonVariant.elevated ? "sm" : ()
-    let hoverShadow = (disabled || flat) ? () : variant == ButtonVariant.elevated ? "md" : "sm"
+    let hoverShadow = flat ? () : variant == ButtonVariant.elevated ? "md" : "sm"
 
     Row #[
         bg: container with t.springEffectsFast,
@@ -71,16 +71,16 @@ View Button(label: Str, variant: ButtonVariant = .filled, size: ButtonSize = .s,
         disabled: disabled,
         tap => on_tap(),
     ] {
-        on hover { overlay: ink.alpha((disabled ? 0.0 : stateHover) with t.springEffectsFast), shadow: hoverShadow }
+        on hover { overlay: ink.alpha(stateHover) with t.springEffectsFast, shadow: hoverShadow }
         on focus_visible {
-            overlay: ink.alpha((disabled ? 0.0 : stateFocus) with t.springEffectsFast)
+            overlay: ink.alpha(stateFocus) with t.springEffectsFast
             outline: t.secondary
             outline_width: focusRingWidth
             outline_offset: focusRingOffset
         }
         on pressed {
-            overlay: ink.alpha((disabled ? 0.0 : statePress) with t.springEffectsFast)
-            radius: (disabled ? r : buttonPressedRadius(size)) with t.springSpatialFast
+            overlay: ink.alpha(statePress) with t.springEffectsFast
+            radius: buttonPressedRadius(size) with t.springSpatialFast
         }
 
         when icon != "" {

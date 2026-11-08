@@ -75,16 +75,16 @@ Row #[
     disabled: disabled,
     tap => on_tap(),
 ] {
-    on hover { overlay: ink.alpha((disabled ? 0.0 : stateHover) with t.springEffectsFast), shadow: hoverShadow }
+    on hover { overlay: ink.alpha(stateHover) with t.springEffectsFast, shadow: hoverShadow }
     on focus_visible {
-        overlay: ink.alpha((disabled ? 0.0 : stateFocus) with t.springEffectsFast)
+        overlay: ink.alpha(stateFocus) with t.springEffectsFast
         outline: t.secondary
         outline_width: focusRingWidth
         outline_offset: focusRingOffset
     }
     on pressed {
-        overlay: ink.alpha((disabled ? 0.0 : statePress) with t.springEffectsFast)
-        radius: (disabled ? r : buttonPressedRadius(size)) with t.springSpatialFast
+        overlay: ink.alpha(statePress) with t.springEffectsFast
+        radius: buttonPressedRadius(size) with t.springSpatialFast
     }
 
     // children: Icon, Text
@@ -93,8 +93,8 @@ Row #[
 
 - **State layer**: `overlay:` in `on hover`, `on focus_visible`, `on pressed`, the content colour
   at `stateHover`, `stateFocus`, `statePress` (`tokens.byd`). Write them in that order: on a tie
-  the later block wins, and a press outranks focus outranks hover. A disabled control still gets
-  the pointer, so its level is 0.
+  the later block wins, and a press outranks focus outranks hover. A disabled control is never
+  hovered, pressed or focused, so none of them applies to it and no guard is needed.
 - **Focus ring**: `outline` in `on focus_visible`, keyboard focus only (a click draws none), with
   `focusRingWidth` and `focusRingOffset`. It sits outside the shape, follows `radius` and takes
   no room. An ancestor's `Clip` or `ScrollView` cuts it, so leave a gap.
@@ -105,7 +105,7 @@ Row #[
 - **Elevation**: the presets `"sm"` and `"md"` stand for levels 1 and 2. A `let` holding a preset
   or `()` is fine, as is a `?:`.
 - **Disabled**: `disabled: disabled` on the root. The dump shows `[focusable disabled]`, a tap does
-  nothing and Tab skips it. The disabled colours are `disabledContainer` and `disabledContent`
+  nothing, Tab skips it and no state block applies (`on disabled` is the only one that does). The disabled colours are `disabledContainer` and `disabledContent`
   of `on_surface`.
 - **Toggle icon**: `Icon(icon, fill: on ? 1.0 : 0.0, ...)`, filled when selected, outline when not;
   `Icon` animates the change.
