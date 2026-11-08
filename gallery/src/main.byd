@@ -8,6 +8,7 @@ enum Page {
     button,
     iconButton,
     textField,
+    chips,
 }
 
 View Main() {
@@ -29,12 +30,15 @@ View Main() {
                 IconButtonPage()
             } else when page == Page.textField {
                 TextFieldPage()
+            } else when page == Page.chips {
+                ChipsPage()
             } else {
                 Column #[p: 24, gap: 16, align: start] {
                     Text("Components") #[typo: t.titleMedium, color: t.primary]
                     m.Button("Button", variant: .tonal, on_tap: { page = Page.button })
                     m.Button("IconButton", variant: .tonal, on_tap: { page = Page.iconButton })
                     m.Button("TextField", variant: .tonal, on_tap: { page = Page.textField })
+                    m.Button("Chips", variant: .tonal, on_tap: { page = Page.chips })
                 }
             }
         }

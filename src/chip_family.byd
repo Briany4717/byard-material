@@ -1,0 +1,15 @@
+// The measurements Material 3 gives its chips, shared by AssistChip, FilterChip, InputChip and
+// SuggestionChip. Private.
+//
+//   container height 32, corner small (8), outline 1 (outline_variant), icon 18, label label_large
+//   padding: 16 each side; 8 on a side with an icon; 8 between icon and label
+//   an avatar on an input chip is 24 and the chip is fully round (corner 16); its padding is 4
+//   elevation: an elevated chip rests at level 1 and rises to level 2 under the pointer
+
+private let chipHeight = 32
+private let chipIconSize = 18
+private let chipAvatarSize = 24
+private let chipGap = 8
+private let chipLineWidth = 1
+
+private fn chipPad(side: Int, hasIcon: Bool) -> Int => hasIcon ? side : 16

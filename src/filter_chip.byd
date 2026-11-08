@@ -1,0 +1,75 @@
+// Material 3 filter chip: a toggle that narrows content. Selected, it takes the secondary
+// container and a check icon grows in as its leading icon. Flat (outlined) or elevated; an
+// optional own leading icon (shown while unselected, the check replaces it), and an optional
+// trailing dropdown arrow for a chip that opens a menu.
+//
+//     m.FilterChip("Open now", selected: openNow, on_tap: { openNow = !openNow })
+//     m.FilterChip("Cuisine", dropdown: true, expanded: menu, on_tap: { menu = !menu })
+//
+// The role is a toggle button with a checked state, which a reader says as "pressed"; Material
+// Web uses the same (a listbox option is for a chip inside a chosen set, which this is not).
+
+View FilterChip(label: Str, look: ChipLook = .flat, selected: Bool = false, icon: Str = "",
+    dropdown: Bool = false, expanded: Bool = false, disabled: Bool = false, on_tap: Fn() = {}) {
+    inject Theme as t
+
+    let elevated = look == ChipLook.elevated
+    // The check, or the chip's own icon while unselected, leads.
+    let lead = selected || icon != ""
+    let leadName = selected ? "check" : icon
+
+    let container = disabled ? (selected ? t.onSurface.alpha(disabledContainer) : elevated ? t.onSurface.alpha(disabledContainer) : t.surface.alpha(0.0))
+        : selected ? t.secondaryContainer
+        : elevated ? t.surfaceContainerLow : t.surface.alpha(0.0)
+    let ink = disabled ? t.onSurface.alpha(disabledContent)
+        : selected ? t.onSecondaryContainer : t.onSurfaceVariant
+    let iconInk = disabled ? t.onSurface.alpha(disabledContent)
+        : selected ? t.onSecondaryContainer : t.primary
+    let line = disabled ? t.onSurface.alpha(disabledContainer) : t.outlineVariant
+    let outlined = !elevated && !selected
+    let restShadow = elevated && !disabled ? "sm" : ()
+    let hoverShadow = elevated ? "md" : ()
+
+    Row #[
+        bg: container with t.springEffectsFast,
+        radius: t.cornerSm,
+        border: line,
+        border_width: outlined ? chipLineWidth : 0,
+        shadow: restShadow,
+        height: chipHeight,
+        pl: lead ? 8 : 16,
+        pr: dropdown ? 8 : 16,
+        shrink: 0,
+        align: center,
+        a11y_role: toggle_button,
+        a11y_checked: selected,
+        a11y_expanded: dropdown ? expanded : (),
+        disabled: disabled,
+        tap => on_tap(),
+    ] {
+        on hover { overlay: ink.alpha(stateHover) with t.springEffectsFast, shadow: hoverShadow }
+        on focus_visible {
+            overlay: ink.alpha(stateFocus) with t.springEffectsFast
+            outline: t.secondary
+            outline_width: focusRingWidth
+            outline_offset: focusRingOffset
+        }
+        on pressed { overlay: ink.alpha(statePress) with t.springEffectsFast }
+
+        // The leading slot opens to the icon's width plus the gap, so the label slides over.
+        Box #[width: lead ? chipIconSize + chipGap : 0, height: chipIconSize, shrink: 0] {
+            Box #[
+                opacity: (lead ? 1.0 : 0.0) with t.springEffectsFast,
+                scale: (lead ? 1.0 : 0.6) with t.springSpatialFast,
+            ] {
+                Icon(leadName, size: chipIconSize, color: iconInk, fill: selected ? 1.0 : 0.0)
+            }
+        }
+        Text(label) #[typo: t.labelLarge, color: ink with t.springEffectsFast, wrap: false]
+        when dropdown {
+            Box #[ml: chipGap] {
+                Icon("arrow_drop_down", size: chipIconSize, color: ink)
+            }
+        }
+    }
+}

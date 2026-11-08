@@ -1,0 +1,54 @@
+// Material 3 assist chip: a smart or automated action, with an optional leading icon. Flat
+// (outlined) or elevated.
+//
+//     m.AssistChip("Add to calendar", icon: "event", on_tap: { addEvent() })
+
+enum ChipLook {
+    flat,
+    elevated,
+}
+
+View AssistChip(label: Str, look: ChipLook = .flat, icon: Str = "", disabled: Bool = false,
+    on_tap: Fn() = {}) {
+    inject Theme as t
+
+    let elevated = look == ChipLook.elevated
+    let container = disabled ? (elevated ? t.onSurface.alpha(disabledContainer) : t.surface.alpha(0.0))
+        : elevated ? t.surfaceContainerLow : t.surface.alpha(0.0)
+    let ink = disabled ? t.onSurface.alpha(disabledContent) : t.onSurface
+    let iconInk = disabled ? t.onSurface.alpha(disabledContent) : t.primary
+    let line = disabled ? t.onSurface.alpha(disabledContainer) : t.outlineVariant
+    let restShadow = elevated && !disabled ? "sm" : ()
+    let hoverShadow = elevated ? "md" : ()
+
+    Row #[
+        bg: container with t.springEffectsFast,
+        radius: t.cornerSm,
+        border: line,
+        border_width: elevated ? 0 : chipLineWidth,
+        shadow: restShadow,
+        height: chipHeight,
+        pl: chipPad(8, icon != ""),
+        pr: 16,
+        gap: chipGap,
+        shrink: 0,
+        align: center,
+        a11y_role: button,
+        disabled: disabled,
+        tap => on_tap(),
+    ] {
+        on hover { overlay: t.onSurface.alpha(stateHover) with t.springEffectsFast, shadow: hoverShadow }
+        on focus_visible {
+            overlay: t.onSurface.alpha(stateFocus) with t.springEffectsFast
+            outline: t.secondary
+            outline_width: focusRingWidth
+            outline_offset: focusRingOffset
+        }
+        on pressed { overlay: t.onSurface.alpha(statePress) with t.springEffectsFast }
+
+        when icon != "" {
+            Icon(icon, size: chipIconSize, color: iconInk)
+        }
+        Text(label) #[typo: t.labelLarge, color: ink with t.springEffectsFast, wrap: false]
+    }
+}
