@@ -11,8 +11,7 @@ private let stateDragged = 0.16
 private let disabledContent = 0.38
 private let disabledContainer = 0.12
 
-// The focus ring: 3 dp thick, `secondary`, floating 2 dp outside the control. A control
-// reserves `focusRingWidth + focusRingOffset` around itself for it, without taking the room.
+// The focus ring: 3 dp thick, `secondary`, floating 2 dp outside the control. Drawn by the
+// control's `outline`, so it takes no room.
 private let focusRingWidth = 3
 private let focusRingOffset = 2
-private let focusRingReach = focusRingWidth + focusRingOffset
