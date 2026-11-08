@@ -1,0 +1,72 @@
+use material as m
+
+// Every line count, leading and trailing part and state of m.ListItem, and m.Divider.
+
+View ListPage() {
+    inject Theme as t
+    Column #[p: 24, gap: 32, bg: t.surface, grow: 1] {
+        Section("One, two and three lines") {
+            m.List(label: "Lines") {
+                m.ListItem("One line")
+                m.Divider(inset: .start)
+                m.ListItem("Two lines", supporting: "Supporting text")
+                m.Divider(inset: .start)
+                m.ListItem("Three lines", overline: "Overline", supporting: "Supporting text that is long enough to run onto a second line when the list is narrow")
+            }
+        }
+        Section("Leading and trailing") {
+            m.List(label: "Parts") {
+                m.ListItem("Icon", supporting: "Leading and trailing icons", leading_icon: "folder", trailing_icon: "chevron_right")
+                m.Divider(inset: .start)
+                m.ListItem("Avatar", supporting: "Trailing text", leading_avatar: "A", trailing_text: "10:24")
+                m.Divider(inset: .start)
+                m.ListItem("Three lines", overline: "Top aligned", supporting: "The leading and trailing parts sit at the top of the item", leading_avatar: "B", trailing_text: "Now")
+                m.Divider(inset: .start)
+                m.ListItem("Trailing control", supporting: "A slot after the text", leading_icon: "wifi") {
+                    IconButton("more_vert", label: "More")
+                }
+            }
+        }
+        Section("States") {
+            m.List(label: "States") {
+                m.ListItem("Clickable", supporting: "Hover, press, focus", leading_icon: "star", clickable: true)
+                m.ListItem("Selected", supporting: "Secondary container", leading_icon: "check", selected: true, clickable: true)
+                m.ListItem("Disabled", supporting: "Does nothing", leading_icon: "block", clickable: true, disabled: true)
+            }
+        }
+        Section("Dividers") {
+            Column #[gap: 12, width: 360] {
+                m.Divider()
+                m.Divider(inset: .start)
+                m.Divider(inset: .end)
+                m.Divider(inset: .middle)
+                Row #[gap: 16, height: 48, align: stretch] {
+                    Text("left") #[typo: t.bodyMedium, color: t.onSurface]
+                    m.Divider(orientation: .vertical)
+                    Text("right") #[typo: t.bodyMedium, color: t.onSurface]
+                    m.Divider(orientation: .vertical, inset: .middle)
+                    Text("inset") #[typo: t.bodyMedium, color: t.onSurface]
+                }
+            }
+        }
+    }
+}
+
+View IconButton(icon: Str, label: Str) {
+    m.IconButton(icon, label: label)
+}
+
+View ListScenarios() {
+    inject Theme as t
+    var picked = 0
+    var chosen = false
+    Column #[p: 24, gap: 16, align: start, bg: t.surface, grow: 1] {
+        m.List(label: "Inbox") {
+            m.ListItem("Plain", supporting: "Not interactive")
+            m.ListItem("Open", supporting: "Tap me", clickable: true, selected: chosen, on_tap: { picked += 1 chosen = !chosen })
+            m.ListItem("Locked", clickable: true, disabled: true, on_tap: { picked += 100 })
+        }
+        m.Divider()
+        Text("Picked: {picked}")
+    }
+}

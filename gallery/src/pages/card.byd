@@ -1,0 +1,47 @@
+use material as m
+
+// Every variant and state of m.Card.
+
+View CardPage() {
+    inject Theme as t
+    Column #[p: 24, gap: 32, bg: t.surface, grow: 1] {
+        Section("Inert") {
+            Line("elevated") { m.Card(variant: .elevated) { Sample("Elevated", "Not interactive") } }
+            Line("filled") { m.Card(variant: .filled) { Sample("Filled", "Not interactive") } }
+            Line("outlined") { m.Card(variant: .outlined) { Sample("Outlined", "Not interactive") } }
+        }
+        Section("Clickable") {
+            Line("elevated") { m.Card(variant: .elevated, clickable: true, label: "Elevated card") { Sample("Elevated", "Tap me") } }
+            Line("filled") { m.Card(variant: .filled, clickable: true, label: "Filled card") { Sample("Filled", "Tap me") } }
+            Line("outlined") { m.Card(variant: .outlined, clickable: true, label: "Outlined card") { Sample("Outlined", "Tap me") } }
+        }
+        Section("Disabled") {
+            Line("elevated") { m.Card(variant: .elevated, clickable: true, disabled: true, label: "Elevated off") { Sample("Elevated", "Disabled") } }
+            Line("filled") { m.Card(variant: .filled, clickable: true, disabled: true, label: "Filled off") { Sample("Filled", "Disabled") } }
+            Line("outlined") { m.Card(variant: .outlined, clickable: true, disabled: true, label: "Outlined off") { Sample("Outlined", "Disabled") } }
+        }
+    }
+}
+
+View Sample(title: Str, body: Str) {
+    inject Theme as t
+    Column #[gap: 4, width: 200] {
+        Text(title) #[typo: t.titleMedium, color: t.onSurface]
+        Text(body) #[typo: t.bodyMedium, color: t.onSurfaceVariant]
+    }
+}
+
+View CardScenarios() {
+    inject Theme as t
+    var opened = 0
+    Column #[p: 24, gap: 16, align: start, bg: t.surface, grow: 1] {
+        m.Card(variant: .outlined) { Sample("Static", "Just text") }
+        m.Card(variant: .elevated, clickable: true, label: "Open trip", on_tap: { opened += 1 }) {
+            Sample("Trip", "Lisbon")
+        }
+        m.Card(variant: .filled, clickable: true, disabled: true, label: "Locked", on_tap: { opened += 100 }) {
+            Sample("Locked", "Disabled")
+        }
+        Text("Opened: {opened}")
+    }
+}

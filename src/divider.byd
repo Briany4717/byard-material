@@ -1,0 +1,50 @@
+// Material 3 divider: a 1 dp line in `outline_variant`, horizontal or vertical, full-bleed or
+// inset from the start, the end or both ends by 16 dp.
+//
+//     m.Divider()
+//     m.Divider(inset: .start)
+//     m.Divider(orientation: .vertical)
+//
+// A horizontal divider takes the width of its column, a vertical one the height of its row.
+// Decorative: hidden from screen readers.
+
+enum DividerOrientation {
+    horizontal,
+    vertical,
+}
+
+enum DividerInset {
+    full,
+    start,
+    end,
+    middle,
+}
+
+private let dividerThickness = 1
+private let dividerInset = 16
+
+View Divider(orientation: DividerOrientation = .horizontal, inset: DividerInset = .full) {
+    inject Theme as t
+
+    let before = (inset == DividerInset.start || inset == DividerInset.middle) ? dividerInset : 0
+    let after = (inset == DividerInset.end || inset == DividerInset.middle) ? dividerInset : 0
+
+    when orientation == DividerOrientation.horizontal {
+        Box #[
+            bg: t.outlineVariant,
+            height: dividerThickness,
+            ml: before,
+            mr: after,
+            a11y_hidden: true,
+        ] {}
+    } else {
+        Box #[
+            bg: t.outlineVariant,
+            width: dividerThickness,
+            mt: before,
+            mb: after,
+            align_self: stretch,
+            a11y_hidden: true,
+        ] {}
+    }
+}

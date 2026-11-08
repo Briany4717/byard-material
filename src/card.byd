@@ -1,0 +1,73 @@
+// Material 3 Expressive card: elevated, filled and outlined, with a slot for its content.
+//
+//     m.Card(variant: .outlined) { Text("Hello") }
+//     m.Card(clickable: true, label: "Open trip", on_tap: { open() }) { ... }
+//
+// A card that is `clickable` has a state layer on hover, focus and press, a keyboard ring, the
+// role of a button and `label` for its name (its text when `label` is empty), and runs
+// `on_tap`. Any other card is inert: no state layer, no role, not focusable. `clickable` is a
+// parameter because a view cannot tell whether its caller passed `on_tap`.
+//
+// A disabled card dims its container and outline; the content in its slot is the caller's and
+// is not dimmed.
+
+enum CardVariant {
+    elevated,
+    filled,
+    outlined,
+}
+
+View Card(variant: CardVariant = .elevated, clickable: Bool = false, disabled: Bool = false,
+    label: Str = "", padding: Int = 16, on_tap: Fn() = {}, content) {
+    inject Theme as t
+
+    let elevated = variant == CardVariant.elevated
+    let outlined = variant == CardVariant.outlined
+
+    // Containers: elevated surface_container_low, filled surface_container_highest, outlined
+    // surface. Disabled: the same roles at 38% (my reading of the spec, see the notes).
+    let container = variant == CardVariant.filled ? t.surfaceContainerHighest
+        : outlined ? t.surface : t.surfaceContainerLow
+    let shown = disabled ? container.alpha(0.38) : container
+    let line = disabled ? t.outline.alpha(disabledContainer) : t.outlineVariant
+
+    // Elevation: elevated rests at level 1 and rises to 2 under the pointer; filled rises from
+    // 0 to 1; outlined stays flat. "sm" is level 1, "md" level 2.
+    let restShadow = elevated && !disabled ? "sm" : ()
+    let hoverShadow = elevated ? "md" : outlined ? () : "sm"
+
+    // The look is the stack; a clickable card lays a transparent layer over its content that
+    // carries the role, the tap and the state layer. (A `content` slot cannot sit inside a
+    // `when`, so the two forms cannot be two roots.) Controls inside a clickable card are
+    // covered by that layer and do not receive taps.
+    ZStack #[
+        bg: shown with t.springEffectsFast,
+        radius: t.cornerMd,
+        border: line,
+        border_width: outlined ? 1 : 0,
+        shadow: restShadow,
+    ] {
+        on hover { shadow: clickable && !disabled ? hoverShadow : restShadow }
+
+        Column #[p: padding] { content }
+        when clickable {
+            Box #[
+                grow: 1,
+                radius: t.cornerMd,
+                a11y_role: button,
+                a11y_label: label,
+                disabled: disabled,
+                tap => on_tap(),
+            ] {
+                on hover { overlay: t.onSurface.alpha(stateHover) with t.springEffectsFast }
+                on focus_visible {
+                    overlay: t.onSurface.alpha(stateFocus) with t.springEffectsFast
+                    outline: t.secondary
+                    outline_width: focusRingWidth
+                    outline_offset: focusRingOffset
+                }
+                on pressed { overlay: t.onSurface.alpha(statePress) with t.springEffectsFast }
+            }
+        }
+    }
+}

@@ -1,0 +1,133 @@
+// Material 3 list item: one, two or three lines (headline, supporting text, overline), a
+// leading icon, avatar or image, a trailing icon or text, and a slot for a trailing control.
+//
+//     m.ListItem("Photos", supporting: "Jan 9, 2026", leading_icon: "image")
+//     m.ListItem("Brunch", overline: "Saturday", supporting: "Bring the good coffee",
+//         leading_avatar: "B", trailing_text: "10:00", clickable: true, on_tap: { open() })
+//
+// The lines follow the text you give: a headline alone is one line, with supporting text two,
+// with an overline as well three. `lines: 3` makes it three where the supporting text wraps.
+// In a three-line item the leading and trailing parts sit at the top.
+//
+// `content` is the trailing slot: a switch, a checkbox, an IconButton. It sits after
+// `trailing_text` and `trailing_icon`. A `clickable` item has a state layer, a keyboard ring,
+// and runs `on_tap`; any other is inert. `selected` takes the secondary container colour.
+// Either way its role is a list item, named by its headline.
+
+private fn listLines(supporting: Str, overline: Str, lines: Int) -> Int =>
+    lines > 0 ? lines : supporting == "" ? 1 : overline == "" ? 2 : 3
+
+View ListItem(headline: Str, supporting: Str = "", overline: Str = "", leading_icon: Str = "",
+    leading_avatar: Str = "", leading_image: Str = "", trailing_icon: Str = "",
+    trailing_text: Str = "", lines: Int = 0, selected: Bool = false, clickable: Bool = false,
+    disabled: Bool = false, on_tap: Fn() = {}, content) {
+    inject Theme as t
+
+    let n = listLines(supporting, overline, lines)
+    let top = n >= 3
+
+    // Material: 56 dp for one line, 72 for two, 88 for three; 16 dp before the leading part
+    // and 24 after the trailing one, 16 between parts, 8 above and below (12 for three lines).
+    let container = selected && !disabled ? t.secondaryContainer : t.surface
+    let ink = disabled ? t.onSurface.alpha(disabledContent) : selected ? t.onSecondaryContainer : t.onSurface
+    let quiet = disabled ? t.onSurface.alpha(disabledContent) : selected ? t.onSecondaryContainer : t.onSurfaceVariant
+
+    // As in Card: the stack is the look, a clickable item lays a transparent layer over it.
+    // An inert item is the list item itself; a clickable one is the layer.
+    ZStack #[
+        bg: container with t.springEffectsFast,
+        a11y_role: clickable ? () : list_item,
+        a11y_label: clickable ? "" : headline,
+        a11y_selected: selected,
+        a11y_disabled: disabled,
+    ] {
+        Row #[
+            align_self: stretch,
+            height: n == 1 ? 56 : n == 2 ? 72 : (),
+            p: (top ? 12 : 8, 24, top ? 12 : 8, 16),
+            gap: 16,
+            align: top ? start : center,
+        ] {
+            ListItemBody(headline, supporting, overline, leading_icon, leading_avatar,
+                leading_image, trailing_icon, trailing_text, ink, quiet, disabled) { content }
+        }
+        when clickable {
+            Box #[
+                grow: 1,
+                a11y_role: list_item,
+                a11y_label: headline,
+                a11y_selected: selected,
+                disabled: disabled,
+                tap => on_tap(),
+                focus => {},
+            ] {
+                on hover { overlay: t.onSurface.alpha(stateHover) with t.springEffectsFast }
+                on focus_visible {
+                    overlay: t.onSurface.alpha(stateFocus) with t.springEffectsFast
+                    outline: t.secondary
+                    outline_width: focusRingWidth
+                    outline_offset: focusRingOffset
+                }
+                on pressed { overlay: t.onSurface.alpha(statePress) with t.springEffectsFast }
+            }
+        }
+    }
+}
+
+// The parts of an item, shared by its clickable and inert forms.
+private View ListItemBody(headline: Str, supporting: Str, overline: Str, leading_icon: Str,
+    leading_avatar: Str, leading_image: Str, trailing_icon: Str, trailing_text: Str, ink: Int,
+    quiet: Int, disabled: Bool, content) {
+    inject Theme as t
+
+    when leading_icon != "" {
+        Icon(leading_icon, color: quiet)
+    }
+    when leading_avatar != "" {
+        Box #[
+            width: 40,
+            height: 40,
+            radius: 20,
+            shrink: 0,
+            bg: disabled ? t.onSurface.alpha(disabledContainer) : t.primaryContainer,
+            align: center,
+            justify: center,
+            a11y_hidden: true,
+        ] {
+            Text(leading_avatar) #[
+                typo: t.titleMedium,
+                color: disabled ? t.onSurface.alpha(disabledContent) : t.onPrimaryContainer,
+                wrap: false,
+            ]
+        }
+    }
+    when leading_image != "" {
+        Clip #[rrect: t.cornerXs, width: 56, height: 56, shrink: 0] {
+            Image(leading_image) #[width: 56, height: 56, a11y_hidden: true]
+        }
+    }
+    Column #[grow: 1, shrink: 1] {
+        when overline != "" {
+            Text(overline) #[typo: t.labelSmall, color: quiet]
+        }
+        Text(headline) #[typo: t.bodyLarge, color: ink]
+        when supporting != "" {
+            Text(supporting) #[typo: t.bodyMedium, color: quiet]
+        }
+    }
+    when trailing_text != "" {
+        Text(trailing_text) #[typo: t.labelSmall, color: quiet, wrap: false, shrink: 0]
+    }
+    when trailing_icon != "" {
+        Icon(trailing_icon, color: quiet)
+    }
+    content
+}
+
+// A list: its items in a column, announced as a list. Put a `Divider` between items where
+// you want one.
+View List(label: Str = "", content) {
+    Column #[a11y_role: list, a11y_label: label] {
+        content
+    }
+}

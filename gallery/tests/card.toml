@@ -1,0 +1,38 @@
+# Scenarios for m.Card, on the CardScenarios view.
+view = "CardScenarios"
+size = "440x400"
+
+[[test]]
+name = "a clickable card is a named button and an inert one has no role"
+expect = [
+    'Button "Open trip" [focusable]',
+    'Button "Locked" [focusable disabled]',
+    'Label "Static"',
+]
+not = ['Button "Static"']
+
+[[test]]
+name = "a tap opens the card"
+steps = [{ tap = 'Button "Open trip"' }]
+expect = ['Label "Opened: 1"']
+
+[[test]]
+name = "a disabled card cannot be tapped"
+steps = [{ tap = 'Button "Locked"' }]
+expect = ['Label "Opened: 0"']
+
+[[test]]
+name = "Tab reaches the clickable card, skipping the inert one"
+steps = [{ key = "Tab" }]
+expect = ['Button "Open trip" [focusable focused]']
+
+[[test]]
+name = "Space and Enter press the focused card"
+steps = [{ key = "Tab" }, { key = "Space" }, { key = "Enter" }]
+expect = ['Label "Opened: 2"']
+
+[[test]]
+name = "the same in the dark scheme"
+scheme = "dark"
+steps = [{ key = "Tab" }, { key = "Space" }]
+expect = ['Label "Opened: 1"']

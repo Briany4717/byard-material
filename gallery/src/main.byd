@@ -7,6 +7,9 @@ enum Page {
     index,
     button,
     iconButton,
+    card,
+    list,
+    badge,
 }
 
 View Main() {
@@ -26,11 +29,20 @@ View Main() {
                 ButtonPage()
             } else when page == Page.iconButton {
                 IconButtonPage()
+            } else when page == Page.card {
+                CardPage()
+            } else when page == Page.list {
+                ListPage()
+            } else when page == Page.badge {
+                BadgePage()
             } else {
                 Column #[p: 24, gap: 16, align: start] {
                     Text("Components") #[typo: t.titleMedium, color: t.primary]
                     m.Button("Button", variant: .tonal, on_tap: { page = Page.button })
                     m.Button("IconButton", variant: .tonal, on_tap: { page = Page.iconButton })
+                    m.Button("Card", variant: .tonal, on_tap: { page = Page.card })
+                    m.Button("ListItem and Divider", variant: .tonal, on_tap: { page = Page.list })
+                    m.Button("Badge", variant: .tonal, on_tap: { page = Page.badge })
                 }
             }
         }

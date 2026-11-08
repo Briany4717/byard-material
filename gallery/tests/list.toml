@@ -1,0 +1,40 @@
+# Scenarios for m.ListItem, m.List and m.Divider, on the ListScenarios view.
+view = "ListScenarios"
+size = "440x400"
+
+[[test]]
+name = "the list and its items are named, and the divider is hidden"
+expect = [
+    'List "Inbox"',
+    'ListItem "Plain"',
+    'ListItem "Open" [focusable]',
+    'ListItem "Locked" [focusable disabled]',
+]
+not = ['ListItem "Plain" [focusable']
+
+[[test]]
+name = "a tap acts and selects"
+steps = [{ tap = 'ListItem "Open"' }]
+expect = ['Label "Picked: 1"', 'ListItem "Open" [focusable focused selected]']
+
+[[test]]
+name = "a second tap deselects"
+steps = [{ tap = 'ListItem "Open"' }, { tap = 'ListItem "Open"' }]
+expect = ['Label "Picked: 2"']
+not = ['selected']
+
+[[test]]
+name = "a disabled item cannot be tapped"
+steps = [{ tap = 'ListItem "Locked"' }]
+expect = ['Label "Picked: 0"']
+
+[[test]]
+name = "Tab reaches the clickable item and Space presses it"
+steps = [{ key = "Tab" }, { key = "Space" }]
+expect = ['ListItem "Open" [focusable focused selected]', 'Label "Picked: 1"']
+
+[[test]]
+name = "Tab skips the disabled item and wraps to the first"
+steps = [{ key = "Tab" }, { key = "Tab" }]
+expect = ['ListItem "Open" [focusable focused']
+not = ['"Locked" [focusable disabled focused']

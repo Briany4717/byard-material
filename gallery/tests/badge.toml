@@ -1,0 +1,13 @@
+# Scenarios for m.Badge and m.BadgedIcon, on the BadgeScenarios view.
+view = "BadgeScenarios"
+size = "440x400"
+
+[[test]]
+name = "a badge says its count and what it counts"
+exact = [
+    'Image "New alerts"',
+    'Image "7 unread messages"',
+    'Image "more than 999 unread messages"',
+    'Label "Mail"',
+    'Image "3 unread messages"',
+]
