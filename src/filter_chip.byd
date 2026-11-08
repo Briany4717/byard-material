@@ -4,13 +4,13 @@
 // trailing dropdown arrow for a chip that opens a menu.
 //
 //     m.FilterChip("Open now", selected: openNow, on_tap: { openNow = !openNow })
-//     m.FilterChip("Cuisine", dropdown: true, on_tap: { menu = true })
+//     m.FilterChip("Cuisine", dropdown: true, expanded: menu, on_tap: { menu = !menu })
 //
 // The role is a toggle button with a checked state, which a reader says as "pressed"; Material
 // Web uses the same (a listbox option is for a chip inside a chosen set, which this is not).
 
 View FilterChip(label: Str, look: ChipLook = .flat, selected: Bool = false, icon: Str = "",
-    dropdown: Bool = false, disabled: Bool = false, on_tap: Fn() = {}) {
+    dropdown: Bool = false, expanded: Bool = false, disabled: Bool = false, on_tap: Fn() = {}) {
     inject Theme as t
 
     let elevated = look == ChipLook.elevated
@@ -43,7 +43,7 @@ View FilterChip(label: Str, look: ChipLook = .flat, selected: Bool = false, icon
         align: center,
         a11y_role: toggle_button,
         a11y_checked: selected,
-        a11y_expanded: dropdown ? false : (),
+        a11y_expanded: dropdown ? expanded : (),
         disabled: disabled,
         tap => on_tap(),
     ] {
