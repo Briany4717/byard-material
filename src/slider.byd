@@ -1,0 +1,90 @@
+// Material 3 Expressive slider: standard, centered and vertical, five track heights, stop
+// indicators for a stepped value, an inset icon on the taller tracks, and a value bubble
+// above the handle while it has focus.
+//
+//     m.Slider(bind: volume, label: "Volume", min: 0.0, max: 100.0, step: 10.0)
+//     m.Slider(bind: balance, label: "Balance", min: -1.0, max: 1.0, centered: true)
+//     m.Slider(bind: level, label: "Level", size: .l, icon: "volume_up")
+//     m.Slider(bind: level, label: "Level", vertical: true, length: 160)
+//
+// `length` is how long the slider is (how tall when vertical) and is fixed: the handle is
+// placed from it. A `step` above 0 snaps the value, draws a stop for each step (`stops: false`
+// leaves them out; at most 41), and 0.0 is continuous. Pointer drag, a tap on the track and the
+// arrow keys (by `step`, or a tenth of the range) are the built-in `Slider`'s. Home and End are
+// not handled, and a vertical slider answers the keys but not the pointer: see the notes.
+//
+// Why built on the built-in `Slider`: a composed control cannot read where the pointer is
+// (`pointer_down` and `pointer_move` carry no position), so the drag, the tap on the track,
+// the keys and the `slider` role with its value all come from a real `Slider` laid over the
+// drawing at `opacity: 0.0`; the drawing under it is Material's. The two agree because the
+// hidden slider spans exactly the handle's travel: 8 dp in from each end. The sizes and the
+// drawing are in `slider_family.byd`.
+
+View Slider(bind value: Float, label: Str, min: Float = 0.0, max: Float = 1.0, step: Float = 0.0,
+    size: SliderSize = .s, length: Int = 280, centered: Bool = false, vertical: Bool = false,
+    icon: Str = "", stops: Bool = true, disabled: Bool = false) {
+    inject Theme as t
+
+    var foc = false
+
+    let span = length * 1.0
+    let travel = span - 16.0
+    let raw = max > min ? (value - min) / (max - min) : 0.0
+    let frac = raw < 0.0 ? 0.0 : raw > 1.0 ? 1.0 : raw
+    let handleX = 8.0 + frac * travel
+    let mid = 8.0 + travel / 2.0
+
+    // Standard: the active part runs from the start to the handle. Centered: from the middle to it.
+    let lead = centered ? (handleX < mid ? handleX : mid) : 0.0
+    let stop = centered ? (handleX < mid ? mid : handleX) : handleX
+    let lower = centered && handleX < mid
+    let steps = (stops && step > 0.0) ? ((max - min) / step).round() + 1 : 0
+
+    let hh = sliderHandle(size)
+    let label_ = step > 0.0 && step >= 1.0 ? "{value:.0}" : "{value:.2}"
+
+    // The slider is drawn lying down; a vertical one is that, turned a quarter and moved
+    // back into its own box. The bubble stays outside the turn so its digits stand upright.
+    ZStack #[
+        width: vertical ? hh : span,
+        height: vertical ? span : hh,
+        alignment: top_start,
+        shrink: 0,
+    ] {
+        when vertical {
+            ZStack #[
+                width: span,
+                height: hh,
+                alignment: start,
+                rotate: -90deg,
+                origin: center,
+                translate: ((hh - span) / 2.0, (span - hh) / 2.0),
+            ] {
+                SliderPlane(bind value: value, bind focus: foc, size: size, span: span, lead: lead,
+                    stop: stop, lower: lower, steps: steps, disabled: disabled, icon: "", lo: min,
+                    hi: max, step: step, label: label)
+            }
+        } else {
+            SliderPlane(bind value: value, bind focus: foc, size: size, span: span, lead: lead,
+                stop: stop, lower: lower, steps: steps, disabled: disabled, icon: icon, lo: min,
+                hi: max, step: step, label: label)
+        }
+        Box #[
+            width: 48,
+            height: 44,
+            radius: 22,
+            bg: t.inverseSurface,
+            align: center,
+            justify: center,
+            opacity: foc && !disabled ? 1.0 : 0.0 with t.springEffectsFast,
+            translate: vertical ? (hh + 4.0, span - handleX - 22.0) : (handleX - 24.0, -48.0),
+        ] {
+            Text(label_) #[
+                typo: t.labelLarge,
+                color: t.inverseOnSurface,
+                wrap: false,
+                a11y_hidden: true,
+            ]
+        }
+    }
+}

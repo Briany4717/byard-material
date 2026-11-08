@@ -26,7 +26,7 @@ and, in the app's `byard.toml`, `[theme] extends = "material"` so the colours, t
 are Material's (a `seed` there recolours all of it).
 
 It is early. The design is RFC-0050 in Byard's repository. So far there are `Button`,
-`IconButton` and `Icon`; the rest of the components are on their way. How a component is
+`IconButton`, `Icon`, `Switch`, `Checkbox`, `Radio`, `RadioGroup`, `Slider` and `RangeSlider`; the rest of the components are on their way. How a component is
 written here is in [CONVENTIONS.md](CONVENTIONS.md).
 
 This package is also how Byard's package system gets tested for real: it lives in its own

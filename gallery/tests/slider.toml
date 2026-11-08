@@ -1,0 +1,71 @@
+# Scenarios for m.Slider and m.RangeSlider, on the SliderScenarios view. A slider is 280 long
+# at x 32, so its hidden slider covers x 40 to 304: a tap at x = 40 + 264 * t sets t.
+view = "SliderScenarios"
+size = "440x400"
+
+[[test]]
+name = "each slider has the slider role, a name and its value"
+expect = [
+    'Slider "Volume" = 50 in 0..100 step 10 [focusable]',
+    'Slider "Level" = 0.5 in 0..1 [focusable]',
+    'Slider "Range start" = 20',
+    'Slider "Range end" = 80',
+    'Slider "Locked" = "0.5" [disabled]',
+    'Label "Volume 50, level 0.50, range 20 to 80"',
+]
+
+[[test]]
+name = "a tap on the track sets the value, snapped to the step"
+steps = [{ tap = [251, 70] }]
+expect = ['Slider "Volume" = 80', 'Label "Volume 80, level 0.50, range 20 to 80"']
+
+[[test]]
+name = "a tap on a continuous track sets it where it lands"
+steps = [{ tap = [106, 170] }]
+expect = ['Slider "Level" = 0.25']
+
+[[test]]
+name = "Tab reaches the first slider and Right steps it"
+steps = [{ key = "Tab" }, { key = "Right" }]
+expect = ['Slider "Volume" = 60 in 0..100 step 10 [focusable focused]']
+
+[[test]]
+name = "Left steps down, and the value stops at the minimum"
+steps = [{ key = "Tab" }, { key = "Left" }, { key = "Left" }, { key = "Left" }, { key = "Left" }, { key = "Left" }, { key = "Left" }]
+expect = ['Slider "Volume" = 0']
+
+[[test]]
+name = "a continuous slider steps by a tenth of its range"
+steps = [{ key = "Tab" }, { key = "Tab" }, { key = "Right" }]
+expect = ['Slider "Level" = 0.6']
+
+[[test]]
+name = "the range's two handles are two sliders, Tab visits both"
+steps = [{ key = "Tab" }, { key = "Tab" }, { key = "Tab" }, { key = "Right" }]
+expect = ['Slider "Range start" = 30 in 0..50 step 10 [focusable focused]', 'Label "Volume 50, level 0.50, range 30 to 80"']
+
+[[test]]
+name = "the end handle moves on its own"
+steps = [{ key = "Tab" }, { key = "Tab" }, { key = "Tab" }, { key = "Tab" }, { key = "Left" }]
+expect = ['Slider "Range end" = 70', 'Label "Volume 50, level 0.50, range 20 to 70"']
+
+[[test]]
+name = "a tap near the start handle moves the start, one near the end moves the end"
+steps = [{ tap = [60, 270] }, { tap = [290, 270] }]
+expect = ['Slider "Range start" = 10', 'Slider "Range end" = 90']
+
+[[test]]
+name = "the start handle stops one step short of the end handle"
+steps = [{ key = "Tab" }, { key = "Tab" }, { key = "Tab" }, { key = "Right" }, { key = "Right" }, { key = "Right" }, { key = "Right" }, { key = "Right" }, { key = "Right" }, { key = "Right" }, { key = "Right" }]
+expect = ['Slider "Range start" = 70', 'Slider "Range end" = 80', 'Label "Volume 50, level 0.50, range 70 to 80"']
+
+[[test]]
+name = "a disabled slider is skipped by Tab and cannot be tapped"
+steps = [{ tap = [172, 370] }]
+expect = ['Slider "Locked" = "0.5" [disabled]']
+
+[[test]]
+name = "the same in the dark scheme"
+scheme = "dark"
+steps = [{ key = "Tab" }, { key = "Right" }]
+expect = ['Slider "Volume" = 60']
