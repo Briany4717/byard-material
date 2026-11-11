@@ -1,0 +1,52 @@
+# Scenarios for m.TextField, on the TextFieldScenarios view.
+view = "TextFieldScenarios"
+size = "440x560"
+
+[[test]]
+name = "each field is named by its label, with its text"
+exact = [
+    'TextInput "Name" = "" [focusable]',
+    'Label "Your full name"',
+    'TextInput "Note" = "" [focusable disabled]',
+    'TextInput "Email" = "oops" [focusable]',
+    'Label "Not an address"',
+    'TextInput "Bio" = "" [focusable]',
+    'Label "0/5"',
+    'Label "Name: "',
+]
+
+[[test]]
+name = "Tab reaches the first field and typing fills it"
+steps = [{ key = "Tab" }, { type = "Ada" }]
+expect = [
+    'TextInput "Name" = "Ada" [focusable focused]',
+    'Label "Name: Ada"',
+]
+
+[[test]]
+name = "the label stays the name once the field has text"
+steps = [{ key = "Tab" }, { type = "Ada" }, { key = "Tab" }]
+expect = ['TextInput "Name" = "Ada" [focusable]']
+
+[[test]]
+name = "Tab skips the disabled field"
+steps = [{ key = "Tab" }, { key = "Tab" }]
+expect = ['TextInput "Email" = "oops" [focusable focused]']
+
+[[test]]
+name = "the error text is in the tree after its field"
+expect = ['Label "Not an address"']
+
+[[test]]
+name = "max_length cuts the text and the counter follows"
+steps = [{ key = "Tab" }, { key = "Tab" }, { key = "Tab" }, { type = "abcdefgh" }]
+expect = [
+    'TextInput "Bio" = "abcde" [focusable focused]',
+    'Label "5/5"',
+]
+
+[[test]]
+name = "the same in the dark scheme"
+scheme = "dark"
+steps = [{ key = "Tab" }, { type = "x" }]
+expect = ['Label "Name: x"']

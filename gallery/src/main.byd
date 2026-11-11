@@ -10,6 +10,7 @@ enum Page {
     buttonGroup,
     splitButton,
     fab,
+    textField,
     chips,
 }
 
@@ -36,6 +37,8 @@ View Main() {
                 SplitButtonPage()
             } else when page == Page.fab {
                 FabPage()
+            } else when page == Page.textField {
+                TextFieldPage()
             } else when page == Page.chips {
                 ChipsPage()
             } else {
@@ -46,6 +49,7 @@ View Main() {
                     m.Button("ButtonGroup", variant: .tonal, on_tap: { page = Page.buttonGroup })
                     m.Button("SplitButton", variant: .tonal, on_tap: { page = Page.splitButton })
                     m.Button("Fab", variant: .tonal, on_tap: { page = Page.fab })
+                    m.Button("TextField", variant: .tonal, on_tap: { page = Page.textField })
                     m.Button("Chips", variant: .tonal, on_tap: { page = Page.chips })
                 }
             }
