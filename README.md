@@ -25,7 +25,7 @@ View Main() {
 and, in the app's `byard.toml`, `[theme] extends = "material"` so the colours, type and shapes
 are Material's (a `seed` there recolours all of it).
 
-It is early. The design is RFC-0050 in Byard's repository. So far there are `Button`, `ButtonGroup`, `SplitButton`, `Fab`, `ExtendedFab`, `FabMenu`,
+It is early. The design is RFC-0050 in Byard's repository. So far there are `Button`, `ButtonGroup`, `SplitButton`, `Fab`, `ExtendedFab`, `FabMenu`, the four chips (`AssistChip`, `FilterChip`, `InputChip`, `SuggestionChip`),
 `IconButton` and `Icon`; the rest of the components are on their way. How a component is
 written here is in [CONVENTIONS.md](CONVENTIONS.md).
 
