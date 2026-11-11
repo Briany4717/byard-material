@@ -1,0 +1,71 @@
+use material as m
+
+// Filled and outlined m.TextField in each state.
+
+View TextFieldPage() {
+    inject Theme as t
+    var empty = ""
+    var typed = "Ada Lovelace"
+    var phone = "555"
+    var bad = "not-an-address"
+    var counted = "Hello"
+    var cleared = "Clear me"
+    var e2 = ""
+    var typed2 = "Ada Lovelace"
+    var phone2 = "555"
+    var bad2 = "not-an-address"
+    var counted2 = "Hello"
+    var cleared2 = "Clear me"
+    var dis = ""
+    var dis2 = "Locked"
+    Column #[p: 24, gap: 32, bg: t.surface, grow: 1] {
+        Section("Filled") {
+            Row #[gap: 24, align: start] {
+                m.TextField(bind: empty, label: "Empty", supporting_text: "Supporting text")
+                m.TextField(bind: typed, label: "Name", supporting_text: "As on your passport")
+                m.TextField(bind: phone, label: "Phone", leading_icon: "call", prefix: "+34", suffix: "ext", placeholder: "600 000 000")
+            }
+            Row #[gap: 24, align: start] {
+                m.TextField(bind: bad, label: "Email", error: true, error_text: "Not an address", leading_icon: "mail")
+                m.TextField(bind: counted, label: "Bio", max_length: 20, supporting_text: "A few words")
+                m.TextField(bind: cleared, label: "Search", trailing_icon: "close", trailing_label: "Clear", on_trailing_tap: { cleared = "" })
+            }
+            Row #[gap: 24, align: start] {
+                m.TextField(bind: dis, label: "Disabled", disabled: true, supporting_text: "Not editable")
+                m.TextField(bind: dis2, label: "Disabled", disabled: true, leading_icon: "lock")
+            }
+        }
+        Section("Outlined") {
+            Row #[gap: 24, align: start] {
+                m.TextField(bind: e2, variant: .outlined, label: "Empty", supporting_text: "Supporting text")
+                m.TextField(bind: typed2, variant: .outlined, label: "Name", supporting_text: "As on your passport")
+                m.TextField(bind: phone2, variant: .outlined, label: "Phone", leading_icon: "call", prefix: "+34", suffix: "ext", placeholder: "600 000 000")
+            }
+            Row #[gap: 24, align: start] {
+                m.TextField(bind: bad2, variant: .outlined, label: "Email", error: true, error_text: "Not an address", leading_icon: "mail")
+                m.TextField(bind: counted2, variant: .outlined, label: "Bio", max_length: 20, supporting_text: "A few words")
+                m.TextField(bind: cleared2, variant: .outlined, label: "Search", trailing_icon: "close", trailing_label: "Clear", on_trailing_tap: { cleared2 = "" })
+            }
+            Row #[gap: 24, align: start] {
+                m.TextField(bind: dis, variant: .outlined, label: "Disabled", disabled: true, supporting_text: "Not editable")
+                m.TextField(bind: dis2, variant: .outlined, label: "Disabled", disabled: true, leading_icon: "lock")
+            }
+        }
+    }
+}
+
+// A few fields with names of their own, for `tests/text_field.toml`.
+View TextFieldScenarios() {
+    inject Theme as t
+    var name = ""
+    var note = ""
+    var mail = "oops"
+    var bio = ""
+    Column #[p: 24, gap: 16, align: start, bg: t.surface, grow: 1] {
+        m.TextField(bind: name, label: "Name", supporting_text: "Your full name")
+        m.TextField(bind: note, label: "Note", variant: .outlined, disabled: true)
+        m.TextField(bind: mail, label: "Email", variant: .outlined, error: true, error_text: "Not an address")
+        m.TextField(bind: bio, label: "Bio", max_length: 5)
+        Text("Name: {name}")
+    }
+}

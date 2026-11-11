@@ -25,8 +25,9 @@ View Main() {
 and, in the app's `byard.toml`, `[theme] extends = "material"` so the colours, type and shapes
 are Material's (a `seed` there recolours all of it).
 
-It is early. The design is RFC-0050 in Byard's repository. So far there are `Button`, the four chips (`AssistChip`, `FilterChip`, `InputChip`, `SuggestionChip`),
-`IconButton` and `Icon`; the rest of the components are on their way. How a component is
+It is early. The design is RFC-0050 in Byard's repository. So far there are `Button`,
+`IconButton`, `TextField`, the four chips (`AssistChip`, `FilterChip`, `InputChip`, `SuggestionChip`)
+and `Icon`; the rest of the components are on their way. How a component is
 written here is in [CONVENTIONS.md](CONVENTIONS.md).
 
 This package is also how Byard's package system gets tested for real: it lives in its own
