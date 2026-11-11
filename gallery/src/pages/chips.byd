@@ -1,0 +1,112 @@
+use material as m
+
+// Every type and look of the chips, with their states.
+
+View ChipsPage() {
+    inject Theme as t
+    Column #[p: 24, gap: 32, bg: t.surface, grow: 1] {
+        Section("AssistChip") {
+            Line("flat") { AssistRow(look: m.ChipLook.flat) }
+            Line("elevated") { AssistRow(look: m.ChipLook.elevated) }
+        }
+        Section("FilterChip: unselected, then selected, then with a dropdown") {
+            Line("flat") { FilterRow(look: m.ChipLook.flat) }
+            Line("elevated") { FilterRow(look: m.ChipLook.elevated) }
+        }
+        Section("InputChip: plain, icon, avatar, selected, disabled") {
+            Line("flat") { InputRow() }
+        }
+        Section("SuggestionChip") {
+            Line("flat") { SuggestionRow(look: m.ChipLook.flat) }
+            Line("elevated") { SuggestionRow(look: m.ChipLook.elevated) }
+        }
+        Section("A chip set") { ChipSet() }
+    }
+}
+
+View AssistRow(look: m.ChipLook) {
+    Row #[gap: 12, align: center] {
+        m.AssistChip("Add to calendar", look: look)
+        m.AssistChip("Add to calendar", look: look, icon: "event")
+        m.AssistChip("Add to calendar", look: look, icon: "event", disabled: true)
+    }
+}
+
+View FilterRow(look: m.ChipLook) {
+    var a = false
+    var b = true
+    var c = false
+    Row #[gap: 12, align: center] {
+        m.FilterChip("Open now", look: look, selected: a, on_tap: { a = !a })
+        m.FilterChip("Open now", look: look, selected: b, on_tap: { b = !b })
+        m.FilterChip("Cuisine", look: look, selected: c, dropdown: true, on_tap: { c = !c })
+        m.FilterChip("Open now", look: look, disabled: true)
+        m.FilterChip("Open now", look: look, selected: true, disabled: true)
+    }
+}
+
+View InputRow() {
+    var s = false
+    Column #[gap: 12] {
+        Row #[gap: 12, align: center] {
+            m.InputChip("Ana")
+            m.InputChip("Ana", icon: "person")
+            m.InputChip("Ana", avatar: "A")
+            m.InputChip("Ana", selected: s, on_tap: { s = !s })
+            m.InputChip("Ana", selected: true, avatar: "A")
+        }
+        Row #[gap: 12, align: center] {
+            m.InputChip("Ana", disabled: true)
+            m.InputChip("Ana", selected: true, disabled: true)
+            m.InputChip("Ana", icon: "person", disabled: true)
+        }
+    }
+}
+
+View SuggestionRow(look: m.ChipLook) {
+    Row #[gap: 12, align: center] {
+        m.SuggestionChip("Sounds good", look: look)
+        m.SuggestionChip("Sounds good", look: look, icon: "thumb_up")
+        m.SuggestionChip("Sounds good", look: look, disabled: true)
+    }
+}
+
+// Several chips together, as a set. A Row does not wrap, so it is two rows.
+View ChipSet() {
+    inject Theme as t
+    Column #[gap: 8] {
+        Row #[gap: 8, align: center] {
+            m.FilterChip("Vegetarian", selected: true)
+            m.FilterChip("Gluten free")
+            m.FilterChip("Open now", look: m.ChipLook.elevated)
+            m.AssistChip("Directions", icon: "directions")
+            m.SuggestionChip("Cheap eats")
+        }
+        Row #[gap: 8, align: center] {
+            m.InputChip("Ana", avatar: "A")
+            m.InputChip("Ben", icon: "person")
+            m.InputChip("Chloe", selected: true)
+            Text("3 people") #[typo: t.labelMedium, color: t.onSurfaceVariant]
+        }
+    }
+}
+
+// Chips with names of their own, for `tests/chips.toml`.
+View ChipsScenarios() {
+    inject Theme as t
+    var taps = 0
+    var open = false
+    var tapped = 0
+    var removed = 0
+    Column #[p: 24, gap: 16, align: start, bg: t.surface, grow: 1] {
+        m.AssistChip("Directions", icon: "directions", on_tap: { taps += 1 })
+        m.FilterChip("Open now", selected: open, on_tap: { open = !open })
+        m.InputChip("Ana", icon: "person", on_tap: { tapped += 1 }, on_remove: { removed += 1 })
+        m.SuggestionChip("Sounds good", on_tap: { taps += 10 })
+        m.AssistChip("Archive", disabled: true, on_tap: { taps += 1000 })
+        m.InputChip("Ben", disabled: true, on_remove: { removed += 1000 })
+        Text("Taps: {taps}")
+        Text("Edits: {tapped}")
+        Text("Removed: {removed}")
+    }
+}
