@@ -1,0 +1,138 @@
+// Material 3 Expressive split button: a leading action and a trailing menu button, side by side
+// with a hairline between. The menu itself is not here: `on_menu` runs when the trailing button
+// is pressed, and `open` says whether the app's menu is showing, which turns the chevron over
+// and rounds the trailing button fully.
+//
+//     m.SplitButton("Save", icon: "save", open: menuOpen, on_tap: { save() },
+//         on_menu: { menuOpen = !menuOpen })
+//
+// Sizes xs to xl, filled, tonal, outlined and elevated. `menu_label` is what a screen reader
+// calls the trailing button.
+//
+// Measurements (starred: not sure of them)
+//   size  trailing width*  inner corner*
+//   xs         22              4
+//   s          22              4
+//   m          26              4
+//   l          38              8
+//   xl         50             12
+
+enum SplitButtonVariant {
+    filled,
+    tonal,
+    outlined,
+    elevated,
+}
+
+private fn splitTrailingWidth(size: ButtonSize) -> Int =>
+    size == ButtonSize.xs ? 22 : size == ButtonSize.s ? 22 : size == ButtonSize.m ? 26 : size == ButtonSize.l ? 38 : 50
+
+private fn splitInnerRadius(size: ButtonSize) -> Int =>
+    size == ButtonSize.l ? 8 : size == ButtonSize.xl ? 12 : 4
+
+View SplitButton(label: Str, variant: SplitButtonVariant = .filled, size: ButtonSize = .s,
+    icon: Str = "", open: Bool = false, disabled: Bool = false, menu_label: Str = "More options",
+    on_tap: Fn() = {}, on_menu: Fn() = {}) {
+    inject Theme as t
+
+    let h = buttonHeight(size)
+    let full = h / 2
+    let inner = splitInnerRadius(size)
+    let outlined = variant == SplitButtonVariant.outlined
+    let lineWidth = size == ButtonSize.l ? 2 : size == ButtonSize.xl ? 3 : 1
+    let line = disabled ? t.onSurface.alpha(disabledContainer) : t.outlineVariant
+
+    let container = disabled ? (outlined ? t.surface.alpha(0.0) : t.onSurface.alpha(disabledContainer))
+        : variant == SplitButtonVariant.filled ? t.primary
+        : variant == SplitButtonVariant.tonal ? t.secondaryContainer
+        : variant == SplitButtonVariant.elevated ? t.surfaceContainerLow
+        : t.surface.alpha(0.0)
+    let ink = disabled ? t.onSurface.alpha(disabledContent)
+        : variant == SplitButtonVariant.filled ? t.onPrimary
+        : variant == SplitButtonVariant.tonal ? t.onSecondaryContainer
+        : variant == SplitButtonVariant.elevated ? t.primary
+        : t.onSurfaceVariant
+
+    let restShadow = !disabled && variant == SplitButtonVariant.elevated ? "sm" : ()
+    let hoverShadow = outlined ? () : variant == SplitButtonVariant.elevated ? "md" : "sm"
+
+    // The trailing button's inner corners, and its outer ones: round when the menu is open.
+    let trailInner = open ? full : inner
+
+    Row #[gap: 2, align: center, shrink: 0] {
+        Row #[
+            bg: container with t.springEffectsFast,
+            radius: (full, inner, inner, full),
+            border: line,
+            border_width: outlined ? lineWidth : 0,
+            shadow: restShadow,
+            height: h,
+            p: (0, buttonPadding(size)),
+            gap: buttonGap(size),
+            align: center,
+            justify: center,
+            a11y_role: button,
+            disabled: disabled,
+            tap => on_tap(),
+        ] {
+            on hover { overlay: ink.alpha(stateHover) with t.springEffectsFast, shadow: hoverShadow }
+            on focus_visible {
+                overlay: ink.alpha(stateFocus) with t.springEffectsFast
+                outline: t.secondary
+                outline_width: focusRingWidth
+                outline_offset: focusRingOffset
+            }
+            on pressed {
+                overlay: ink.alpha(statePress) with t.springEffectsFast
+                radius: (inner, inner, inner, inner)
+            }
+
+            when icon != "" {
+                Icon(icon, size: buttonIconSize(size), color: ink)
+            }
+            Text(label) #[
+                typo: (size == ButtonSize.xs || size == ButtonSize.s) ? t.labelLarge : size == ButtonSize.m ? t.titleMedium : size == ButtonSize.l ? t.headlineSmall : t.headlineLarge,
+                color: ink with t.springEffectsFast,
+                wrap: false,
+            ]
+        }
+        Box #[
+            bg: container with t.springEffectsFast,
+            radius: (trailInner, full, full, trailInner),
+            border: line,
+            border_width: outlined ? lineWidth : 0,
+            shadow: restShadow,
+            width: splitTrailingWidth(size),
+            height: h,
+            shrink: 0,
+            align: center,
+            justify: center,
+            a11y_role: button,
+            a11y_label: menu_label,
+            a11y_expanded: open,
+            disabled: disabled,
+            tap => on_menu(),
+        ] {
+            on hover { overlay: ink.alpha(stateHover) with t.springEffectsFast, shadow: hoverShadow }
+            on focus_visible {
+                overlay: ink.alpha(stateFocus) with t.springEffectsFast
+                outline: t.secondary
+                outline_width: focusRingWidth
+                outline_offset: focusRingOffset
+            }
+            on pressed {
+                overlay: ink.alpha(statePress) with t.springEffectsFast
+                radius: (trailInner, trailInner, trailInner, trailInner)
+            }
+
+            Box #[
+                width: buttonIconSize(size),
+                height: buttonIconSize(size),
+                origin: center,
+                rotate: open ? 180deg : 0deg with t.springSpatialFast,
+            ] {
+                Icon("keyboard_arrow_down", size: buttonIconSize(size), color: ink)
+            }
+        }
+    }
+}

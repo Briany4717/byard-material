@@ -1,0 +1,61 @@
+use material as m
+
+// Every size and variant of m.SplitButton, closed and open, and disabled.
+
+View SplitButtonPage() {
+    inject Theme as t
+    Column #[p: 24, gap: 32, bg: t.surface, grow: 1] {
+        Section("Variants and sizes") {
+            Line("filled") { SplitRow(variant: m.SplitButtonVariant.filled) }
+            Line("tonal") { SplitRow(variant: m.SplitButtonVariant.tonal) }
+            Line("elevated") { SplitRow(variant: m.SplitButtonVariant.elevated) }
+            Line("outlined") { SplitRow(variant: m.SplitButtonVariant.outlined) }
+        }
+        Section("Menu open: the chevron turns and the trailing button rounds") {
+            Line("filled") { OpenRow(variant: m.SplitButtonVariant.filled) }
+            Line("outlined") { OpenRow(variant: m.SplitButtonVariant.outlined) }
+        }
+        Section("Disabled") {
+            Line("filled") { DisabledSplitRow(variant: m.SplitButtonVariant.filled) }
+            Line("outlined") { DisabledSplitRow(variant: m.SplitButtonVariant.outlined) }
+        }
+    }
+}
+
+View SplitRow(variant: m.SplitButtonVariant) {
+    Row #[gap: 16, align: center] {
+        m.SplitButton("Save", variant: variant, size: .xs)
+        m.SplitButton("Save", variant: variant, size: .s, icon: "save")
+        m.SplitButton("Save", variant: variant, size: .m, icon: "save")
+        m.SplitButton("Save", variant: variant, size: .l, icon: "save")
+    }
+}
+
+View OpenRow(variant: m.SplitButtonVariant) {
+    var a = true
+    var b = true
+    Row #[gap: 16, align: center] {
+        m.SplitButton("Save", variant: variant, open: a, on_menu: { a = !a })
+        m.SplitButton("Save", variant: variant, size: .m, icon: "save", open: b, on_menu: { b = !b })
+    }
+}
+
+View DisabledSplitRow(variant: m.SplitButtonVariant) {
+    Row #[gap: 16, align: center] {
+        m.SplitButton("Save", variant: variant, disabled: true)
+        m.SplitButton("Save", variant: variant, size: .m, icon: "save", disabled: true)
+    }
+}
+
+// For `tests/split_button.toml`.
+View SplitButtonScenarios() {
+    inject Theme as t
+    var saves = 0
+    var open = false
+    Column #[p: 24, gap: 16, align: start, bg: t.surface, grow: 1] {
+        m.SplitButton("Save", icon: "save", open: open, on_tap: { saves += 1 }, on_menu: { open = !open })
+        m.SplitButton("Send", variant: .tonal, disabled: true, menu_label: "Send options", on_tap: { saves += 100 })
+        Text("Saves: {saves}")
+        Text("Menu: {open ? "open" : "closed"}")
+    }
+}
