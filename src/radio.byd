@@ -1,0 +1,89 @@
+// Material 3 radio button and its group.
+//
+//     m.RadioGroup(label: "Plan") {
+//         m.Radio("free", bind: plan, label: "Free")
+//         m.Radio("pro", bind: plan, label: "Pro")
+//         m.Radio("team", bind: plan, label: "Team", disabled: true)
+//     }
+//
+// A radio is selected when the var it binds equals its `value`; a tap writes its value. The
+// group is the `radio_group` a screen reader announces, and the arrow keys move through it:
+// the engine focuses the next radio and selects it, skipping disabled ones.
+//
+// Why `bind` on each radio as well as the group: a view's slot (`content`) is the caller's
+// own code, so a group cannot hand its var down to the radios written inside it. Each radio
+// binds the same var, as with the built-in `RadioButton`, which is also why the group takes
+// no `bind`.
+//
+// Why composed, not the built-in `RadioButton`: it draws its own ring in colours of its own,
+// has no state layer or label. This is a `Row` with role `radio`.
+//
+//   ring 20 (outline 2), dot 10 (scales in), state layer 40 (the Row's own overlay)
+
+View RadioGroup(label: Str = "", content) {
+    Column #[a11y_role: radio_group, a11y_label: label, align: start] {
+        content
+    }
+}
+
+View Radio(value: Str, bind selected: Str, label: Str = "", name: Str = "",
+    disabled: Bool = false) {
+    inject Theme as t
+
+    let on = selected == value
+
+    let ring = disabled ? t.onSurface.alpha(disabledContent)
+        : on ? t.primary
+        : t.onSurfaceVariant
+    let ink = on ? t.primary : t.onSurface
+
+    Row #[
+        radius: 20,
+        height: 40,
+        shrink: 0,
+        p: (0, label == "" ? 0 : 16, 0, 0),
+        align: center,
+        a11y_role: radio,
+        a11y_checked: on,
+        a11y_label: label != "" ? label : name,
+        disabled: disabled,
+        tap => selected = value,
+    ] {
+        on hover { overlay: ink.alpha(stateHover) with t.springEffectsFast }
+        on focus_visible {
+            overlay: ink.alpha(stateFocus) with t.springEffectsFast
+            outline: t.secondary
+            outline_width: focusRingWidth
+            outline_offset: focusRingOffset
+        }
+        on pressed { overlay: ink.alpha(statePress) with t.springEffectsFast }
+
+        Box #[
+            width: 20,
+            height: 20,
+            m: 10,
+            shrink: 0,
+            radius: 10,
+            border: ring with t.springEffectsFast,
+            border_width: 2,
+            align: center,
+            justify: center,
+        ] {
+            Box #[
+                width: 10,
+                height: 10,
+                radius: 5,
+                bg: ring with t.springEffectsFast,
+                scale: on ? 1.0 : 0.0 with t.springSpatialFast,
+                origin: center,
+            ] {}
+        }
+        when label != "" {
+            Text(label) #[
+                typo: t.bodyLarge,
+                color: disabled ? t.onSurface.alpha(disabledContent) : t.onSurface,
+                wrap: false,
+            ]
+        }
+    }
+}

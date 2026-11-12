@@ -1,0 +1,108 @@
+// Material 3 Expressive switch: a 52 x 32 track and a handle that grows when it is on and
+// again while it is pressed. The handle can carry an icon (a check when on, a close when off,
+// or one of your own).
+//
+//     m.Switch(bind: wifi, label: "Wi-Fi")
+//     m.Switch(bind: wifi, label: "Wi-Fi", icons: true)
+//     m.Switch(bind: wifi, label: "Dark", icons: true, icon: "dark_mode")
+//
+// `label` is what a screen reader says. Space or Enter flips it.
+//
+// Why composed, not the built-in `Toggle`: `Toggle` draws its own thumb with no way to size,
+// recolour, put an icon on, or grow it. This is a `Row` with role `switch` and `bind on`.
+//
+// The handle and its 40 dp state layer are children of the track, and a child cannot read its
+// parent's `on hover` / `on pressed`, so those three states are tracked in `var`s here (the
+// only control that needs it); the track's own states (focus ring) are declared as usual.
+//
+//   handle          off 16 (24 with an icon), on 24, pressed 28
+//   track           52 x 32, outline 2 dp when off
+//   state layer     40 dp circle around the handle
+
+private fn switchHandle(on: Bool, icon: Bool, pressed: Bool) -> Int =>
+    pressed ? 28 : on ? 24 : icon ? 24 : 16
+
+View Switch(bind on: Bool, label: Str = "", icons: Bool = false, icon: Str = "",
+    disabled: Bool = false) {
+    inject Theme as t
+
+    var hov = false
+    var pressing = false
+    var foc = false
+
+    let lit = hov || pressing || foc
+    let hasIcon = icons || icon != ""
+
+    let track = disabled ? (on ? t.onSurface.alpha(disabledContainer) : t.surfaceContainerHighest.alpha(disabledContainer))
+        : on ? t.primary : t.surfaceContainerHighest
+    let line = disabled ? t.onSurface.alpha(disabledContainer) : t.outline
+    let handle = disabled ? (on ? t.surface : t.onSurface.alpha(disabledContent))
+        : on ? (lit ? t.primaryContainer : t.onPrimary)
+        : (lit ? t.onSurfaceVariant : t.outline)
+    let glyph = disabled ? (on ? t.onSurface.alpha(disabledContent) : t.surfaceContainerHighest.alpha(disabledContent))
+        : on ? t.onPrimaryContainer : t.surfaceContainerHighest
+    let layer = on ? t.primary : t.onSurface
+    let layerAlpha = pressing ? statePress : foc ? stateFocus : hov ? stateHover : 0.0
+
+    // The handle is drawn 28 across and scaled to its size, so growing it is a transform.
+    let size = switchHandle(on, hasIcon, pressing)
+    let grow = size / 28.0
+    // Its centre: 16 from the left when off, 16 from the right when on.
+    let shift = on ? 16 : -4
+
+    Row #[
+        bg: track with t.springEffectsFast,
+        radius: 16,
+        border: line with t.springEffectsFast,
+        border_width: on ? 0 : 2,
+        width: 52,
+        height: 32,
+        shrink: 0,
+        align: center,
+        a11y_role: switch,
+        a11y_checked: on,
+        a11y_label: label,
+        disabled: disabled,
+        focused: foc,
+        tap => on = !on,
+        pointer_enter => hov = true,
+        pointer_exit => { hov = false pressing = false },
+        pointer_down => pressing = true,
+        pointer_up => pressing = false,
+    ] {
+        on focus_visible {
+            outline: t.secondary
+            outline_width: focusRingWidth
+            outline_offset: focusRingOffset
+        }
+
+        Box #[
+            width: 40,
+            height: 40,
+            shrink: 0,
+            radius: 20,
+            bg: layer.alpha(layerAlpha) with t.springEffectsFast,
+            translate: (shift, 0) with t.springSpatialFast,
+            align: center,
+            justify: center,
+        ] {
+            Box #[
+                width: 28,
+                height: 28,
+                radius: 14,
+                bg: handle with t.springEffectsFast,
+                scale: grow with t.springSpatialFast,
+                origin: center,
+                align: center,
+                justify: center,
+            ] {
+                when hasIcon {
+                    Box #[scale: 1.0 / grow with t.springSpatialFast, origin: center] {
+                        Icon(icon != "" ? icon : on ? "check" : "close", size: 16, weight: 600,
+                            color: glyph)
+                    }
+                }
+            }
+        }
+    }
+}

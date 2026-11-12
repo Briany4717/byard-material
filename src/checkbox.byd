@@ -1,0 +1,100 @@
+// Material 3 checkbox: an 18 dp box in a 40 dp state layer, unchecked, checked or
+// indeterminate, in the error colours or disabled. The check mark draws in.
+//
+//     m.Checkbox(bind: agree, label: "I accept")
+//     m.Checkbox(bind: all, indeterminate: someChosen, label: "Select all")
+//     m.Checkbox(bind: ok, error: missing, label: "Required")
+//
+// `name` is what a screen reader says when there is no visible `label`.
+//
+// `indeterminate` and `error` are display states the app decides; a tap flips `bind` as it
+// does for any checkbox, so an app that shows the mixed state clears it when it handles the
+// change. With a `label` the whole row is the control, as in a Material list; without one the
+// control is just the box. Space flips it (Enter does nothing, as for a checkbox in a
+// browser).
+//
+// Why composed, not the built-in `Checkbox`: it draws its own square and tick in colours of
+// its own and has no error state, no state layer and no label. This is a `Row` with role
+// `checkbox`, `bind checked`, and the mixed state as `a11y_mixed`.
+//
+//   box 18, corner 2, outline 2 (unchecked), state layer 40 (the Row's own overlay)
+//   the mark draws in by scaling and fading up with the effects spring: Byard cannot animate
+//   a clip's width, so it is not a stroke being drawn
+
+View Checkbox(bind checked: Bool, label: Str = "", name: Str = "", indeterminate: Bool = false,
+    error: Bool = false, disabled: Bool = false) {
+    inject Theme as t
+
+    let filled = checked || indeterminate
+
+    let fill = disabled ? (filled ? t.onSurface.alpha(disabledContent) : t.surface.alpha(0.0))
+        : filled ? (error ? t.error : t.primary)
+        : t.surface.alpha(0.0)
+    let line = disabled ? t.onSurface.alpha(disabledContent)
+        : error ? t.error
+        : filled ? t.primary
+        : t.onSurfaceVariant
+    let mark = disabled ? t.surface : error ? t.onError : t.onPrimary
+    let ink = error ? t.error : filled ? t.primary : t.onSurface
+
+    Row #[
+        radius: 20,
+        height: 40,
+        shrink: 0,
+        p: (0, label == "" ? 0 : 16, 0, 0),
+        gap: 0,
+        align: center,
+        a11y_role: checkbox,
+        a11y_checked: checked,
+        a11y_mixed: indeterminate,
+        a11y_label: label != "" ? label : name,
+        disabled: disabled,
+        tap => checked = !checked,
+    ] {
+        on hover { overlay: ink.alpha(stateHover) with t.springEffectsFast }
+        on focus_visible {
+            overlay: ink.alpha(stateFocus) with t.springEffectsFast
+            outline: t.secondary
+            outline_width: focusRingWidth
+            outline_offset: focusRingOffset
+        }
+        on pressed { overlay: ink.alpha(statePress) with t.springEffectsFast }
+
+        Box #[
+            width: 18,
+            height: 18,
+            m: 11,
+            shrink: 0,
+            radius: 2,
+            bg: fill with t.springEffectsFast,
+            border: line with t.springEffectsFast,
+            border_width: filled ? 0 : 2,
+        ] {
+            ZStack #[width: 18, height: 18] {
+                Box #[
+                    opacity: checked && !indeterminate ? 1.0 : 0.0 with t.springEffectsFast,
+                    scale: checked && !indeterminate ? 1.0 : 0.4 with t.springSpatialFast,
+                    origin: center,
+                ] {
+                    Icon("check", size: 18, weight: 700, color: mark)
+                }
+                Box #[
+                    width: 10,
+                    height: 2,
+                    radius: 1,
+                    bg: mark,
+                    opacity: indeterminate ? 1.0 : 0.0 with t.springEffectsFast,
+                    scale: indeterminate ? 1.0 : 0.4 with t.springSpatialFast,
+                    origin: center,
+                ] {}
+            }
+        }
+        when label != "" {
+            Text(label) #[
+                typo: t.bodyLarge,
+                color: disabled ? t.onSurface.alpha(disabledContent) : t.onSurface,
+                wrap: false,
+            ]
+        }
+    }
+}

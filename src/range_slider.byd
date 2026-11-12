@@ -1,0 +1,90 @@
+// Material 3 Expressive range slider: two handles, the track between them active.
+//
+//     m.RangeSlider(bind lower: priceMin, bind upper: priceMax, label: "Price", min: 0.0,
+//         max: 100.0, step: 5.0)
+//
+// Each handle is a `Slider` underneath, named "<label> start" and "<label> end" for a screen
+// reader, with the arrow keys and Tab as for `Slider`. The built-in `Slider` has one thumb, so
+// the track is shared between two of them split at the value halfway between the handles
+// (rounded down to a step): the left one is the lower value over `min` to that point, the right
+// one the upper value over that point to `max`. A handle can be dragged right up to the other
+// but not past it, and the split follows as they move.
+//
+// `lower` and `upper` are the two bound values; `size`, `length`, `step`, `stops` and
+// `disabled` are as for Slider.
+
+View RangeSlider(bind lower: Float, bind upper: Float, label: Str, min: Float = 0.0,
+    max: Float = 1.0, step: Float = 0.0, size: SliderSize = .s, length: Int = 280,
+    stops: Bool = true, disabled: Bool = false) {
+    inject Theme as t
+
+    var focLow = false
+    var focHigh = false
+
+    let span = length * 1.0
+    let travel = span - 16.0
+    let range = max > min ? max - min : 1.0
+    let toLow = (lower - min) / range
+    let toHigh = (upper - min) / range
+    let lowFrac = toLow < 0.0 ? 0.0 : toLow > 1.0 ? 1.0 : toLow
+    let highFrac = toHigh < 0.0 ? 0.0 : toHigh > 1.0 ? 1.0 : toHigh
+    let lowX = 8.0 + lowFrac * travel
+    let highX = 8.0 + highFrac * travel
+    let steps = (stops && step > 0.0) ? ((max - min) / step).round() + 1 : 0
+
+    // Where the two sliders meet, as a value, and how long the left one is.
+    let half = (lower + upper) / 2.0
+    let split = step > 0.0 ? min + step * ((half - min) / step).floor() : half
+    let leftLength = travel * (split - min) / range
+
+    let hh = sliderHandle(size)
+
+    ZStack #[width: span, height: hh, alignment: top_start, shrink: 0] {
+        ZStack #[width: span, height: hh, alignment: start] {
+            SliderDrawing(size, span, lowX, highX, true, false, steps, disabled)
+            Box #[ml: 8] {
+                SliderInput(bind value: lower, lo: min, hi: split, step: step, length: leftLength,
+                    label: "{label} start", disabled: disabled, bind focus: focLow)
+            }
+            Box #[ml: 8.0 + leftLength] {
+                SliderInput(bind value: upper, lo: split, hi: max, step: step,
+                    length: travel - leftLength, label: "{label} end", disabled: disabled,
+                    bind focus: focHigh)
+            }
+        }
+        Box #[
+            width: 48,
+            height: 44,
+            radius: 22,
+            bg: t.inverseSurface,
+            align: center,
+            justify: center,
+            opacity: focLow && !disabled ? 1.0 : 0.0 with t.springEffectsFast,
+            translate: (lowX - 24.0, -48.0),
+        ] {
+            Text(step >= 1.0 ? "{lower:.0}" : "{lower:.2}") #[
+                typo: t.labelLarge,
+                color: t.inverseOnSurface,
+                wrap: false,
+                a11y_hidden: true,
+            ]
+        }
+        Box #[
+            width: 48,
+            height: 44,
+            radius: 22,
+            bg: t.inverseSurface,
+            align: center,
+            justify: center,
+            opacity: focHigh && !disabled ? 1.0 : 0.0 with t.springEffectsFast,
+            translate: (highX - 24.0, -48.0),
+        ] {
+            Text(step >= 1.0 ? "{upper:.0}" : "{upper:.2}") #[
+                typo: t.labelLarge,
+                color: t.inverseOnSurface,
+                wrap: false,
+                a11y_hidden: true,
+            ]
+        }
+    }
+}

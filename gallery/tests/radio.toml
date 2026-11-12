@@ -1,0 +1,63 @@
+# Scenarios for m.Radio in a m.RadioGroup, on the RadioScenarios view.
+view = "RadioScenarios"
+size = "440x400"
+
+[[test]]
+name = "the group and each radio have their role, name and state"
+expect = [
+    'RadioGroup "Size"',
+    'RadioButton "Small" [focusable]',
+    'RadioButton "Medium" [focusable checked]',
+    'RadioButton "Large" [focusable disabled]',
+    'RadioButton "Extra large" [focusable]',
+    'Label "Size is m"',
+]
+
+[[test]]
+name = "a tap selects the radio and deselects the one that was"
+steps = [{ tap = 'RadioButton "Small"' }]
+expect = ['RadioButton "Small" [focusable focused checked]', 'RadioButton "Medium" [focusable]', 'Label "Size is s"']
+
+[[test]]
+name = "a disabled radio cannot be tapped"
+steps = [{ tap = 'RadioButton "Large"' }]
+expect = ['Label "Size is m"']
+
+# A radio group is one Tab stop (WAI-ARIA): Tab lands on the selected radio, the arrows move
+# through the group and select as they go, skipping disabled ones, and the next Tab leaves.
+
+[[test]]
+name = "Tab enters the group at the selected radio"
+steps = [{ key = "Tab" }]
+expect = ['RadioButton "Medium" [focusable focused checked]', 'Label "Size is m"']
+
+[[test]]
+name = "Up moves to the previous radio and selects it"
+steps = [{ key = "Tab" }, { key = "Up" }]
+expect = ['RadioButton "Small" [focusable focused checked]', 'RadioButton "Medium" [focusable]', 'Label "Size is s"']
+
+[[test]]
+name = "the arrows skip a disabled radio"
+steps = [{ key = "Tab" }, { key = "Down" }]
+expect = ['RadioButton "Extra large" [focusable focused checked]', 'Label "Size is xl"']
+
+[[test]]
+name = "the arrows wrap, Down from the last goes to the first"
+steps = [{ key = "Tab" }, { key = "Down" }, { key = "Down" }]
+expect = ['RadioButton "Small" [focusable focused checked]', 'Label "Size is s"']
+
+[[test]]
+name = "Left and Right move through the group too"
+steps = [{ key = "Tab" }, { key = "Right" }, { key = "Left" }]
+expect = ['RadioButton "Medium" [focusable focused checked]']
+
+[[test]]
+name = "the next Tab leaves the group"
+steps = [{ key = "Tab" }, { key = "Tab" }]
+expect = ['RadioButton "Medium" [focusable checked]', 'Button "Done" [focusable focused]']
+
+[[test]]
+name = "the same in the dark scheme"
+scheme = "dark"
+steps = [{ key = "Tab" }, { key = "Down" }]
+expect = ['Label "Size is xl"']
