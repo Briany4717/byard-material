@@ -11,6 +11,9 @@ enum Page {
     checkbox,
     radio,
     slider,
+    buttonGroup,
+    splitButton,
+    fab,
     textField,
     chips,
 }
@@ -40,6 +43,12 @@ View Main() {
                 RadioPage()
             } else when page == Page.slider {
                 SliderPage()
+            } else when page == Page.buttonGroup {
+                ButtonGroupPage()
+            } else when page == Page.splitButton {
+                SplitButtonPage()
+            } else when page == Page.fab {
+                FabPage()
             } else when page == Page.textField {
                 TextFieldPage()
             } else when page == Page.chips {
@@ -53,6 +62,9 @@ View Main() {
                     m.Button("Checkbox", variant: .tonal, on_tap: { page = Page.checkbox })
                     m.Button("Radio", variant: .tonal, on_tap: { page = Page.radio })
                     m.Button("Slider", variant: .tonal, on_tap: { page = Page.slider })
+                    m.Button("ButtonGroup", variant: .tonal, on_tap: { page = Page.buttonGroup })
+                    m.Button("SplitButton", variant: .tonal, on_tap: { page = Page.splitButton })
+                    m.Button("Fab", variant: .tonal, on_tap: { page = Page.fab })
                     m.Button("TextField", variant: .tonal, on_tap: { page = Page.textField })
                     m.Button("Chips", variant: .tonal, on_tap: { page = Page.chips })
                 }

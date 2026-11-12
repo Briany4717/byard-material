@@ -1,0 +1,64 @@
+// Material 3 Expressive floating action button: small, medium (the default) and large; the
+// three container colours and the three filled ones; a lowered option for a FAB that sits on
+// a surface of its own.
+//
+//     m.Fab("edit", label: "Compose", on_tap: { compose() })
+//     m.Fab("add", label: "New", size: .large, color: .tertiary, lowered: true)
+//
+// `label` is what a screen reader says: a FAB has no text of its own. A FAB is not disabled in
+// Material: hide it instead.
+//
+// Elevation: Material rests a FAB at level 3 and lifts it to level 4 under the pointer, lowered
+// 1 and 2. The shadow presets stop at "lg" (3), so hover does not lift a raised FAB; a lowered
+// one goes from "sm" to "md".
+
+View Fab(icon: Str, label: Str, size: FabSize = .medium, color: FabColor = .primaryContainer,
+    lowered: Bool = false, on_tap: Fn() = {}) {
+    inject Theme as t
+
+    let d = fabSize(size)
+
+    let container = color == FabColor.primaryContainer ? t.primaryContainer
+        : color == FabColor.secondaryContainer ? t.secondaryContainer
+        : color == FabColor.tertiaryContainer ? t.tertiaryContainer
+        : color == FabColor.primary ? t.primary
+        : color == FabColor.secondary ? t.secondary
+        : t.tertiary
+    let ink = color == FabColor.primaryContainer ? t.onPrimaryContainer
+        : color == FabColor.secondaryContainer ? t.onSecondaryContainer
+        : color == FabColor.tertiaryContainer ? t.onTertiaryContainer
+        : color == FabColor.primary ? t.onPrimary
+        : color == FabColor.secondary ? t.onSecondary
+        : t.onTertiary
+
+    Box #[
+        bg: container with t.springEffectsFast,
+        radius: fabRadius(size) with t.springSpatialFast,
+        shadow: lowered ? "sm" : "lg",
+        width: d,
+        height: d,
+        shrink: 0,
+        align: center,
+        justify: center,
+        a11y_role: button,
+        a11y_label: label,
+        tap => on_tap(),
+    ] {
+        on hover {
+            overlay: ink.alpha(stateHover) with t.springEffectsFast
+            shadow: lowered ? "md" : "lg"
+        }
+        on focus_visible {
+            overlay: ink.alpha(stateFocus) with t.springEffectsFast
+            outline: t.secondary
+            outline_width: focusRingWidth
+            outline_offset: focusRingOffset
+        }
+        on pressed {
+            overlay: ink.alpha(statePress) with t.springEffectsFast
+            radius: fabPressedRadius(size) with t.springSpatialFast
+        }
+
+        Icon(icon, size: fabIconSize(size), color: ink)
+    }
+}

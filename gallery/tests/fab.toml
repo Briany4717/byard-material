@@ -1,0 +1,51 @@
+# Scenarios for m.Fab, m.ExtendedFab and m.FabMenu, on the FabScenarios view.
+view = "FabScenarios"
+size = "440x560"
+
+[[test]]
+name = "each is a named button"
+expect = ['Button "Compose" [focusable]', 'Button "Share" [focusable]', 'Button "Add" [focusable collapsed]']
+
+[[test]]
+name = "a tap presses the fab"
+steps = [{ tap = 'Button "Compose"' }]
+expect = ['Label "Taps: 1"']
+
+[[test]]
+name = "Tab and Space press the fab"
+steps = [{ key = "Tab" }, { key = "Space" }]
+expect = ['Label "Taps: 1"', 'Button "Compose" [focusable focused]']
+
+[[test]]
+name = "collapsing the extended fab shrinks it"
+steps = [{ tap = 'Button "Share"' }]
+expect = ['Button "Share" [focusable focused] @ 96,24 80x80']
+
+[[test]]
+name = "the menu opens, listing its items, and the fab becomes a close button"
+steps = [{ tap = 'Button "Add"' }]
+expect = ['Label "Open: yes"', 'Button "Close menu" [focusable focused expanded]', 'MenuItem "Photo"', 'MenuItem "Video"']
+
+[[test]]
+name = "choosing an item closes the menu and reports it"
+steps = [{ tap = 'Button "Add"' }, { tap = 'MenuItem "Video"' }]
+expect = ['Label "Picked: 1"', 'Label "Open: no"']
+not = ['MenuItem']
+
+[[test]]
+name = "Escape closes the menu"
+steps = [{ tap = 'Button "Add"' }, { key = "Escape" }]
+expect = ['Label "Open: no"']
+not = ['MenuItem']
+
+[[test]]
+name = "a tap outside closes the menu"
+steps = [{ tap = 'Button "Add"' }, { tap = 'Label "Taps: 0"' }]
+expect = ['Label "Open: no"']
+not = ['MenuItem']
+
+[[test]]
+name = "the same in the dark scheme"
+scheme = "dark"
+steps = [{ tap = 'Button "Add"' }]
+expect = ['MenuItem "Photo"']

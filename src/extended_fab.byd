@@ -1,0 +1,67 @@
+// Material 3 Expressive extended FAB: an icon and a label, small, medium and large, in the same
+// colour sets as Fab. `expanded: false` collapses it to the size of a FAB.
+//
+//     m.ExtendedFab("Compose", icon: "edit", expanded: !scrolled, on_tap: { compose() })
+//
+// The label goes when it collapses and the container follows at once: a width cannot be animated
+// in Byard yet (see the notes), so it snaps rather than slides. The label stays the accessible
+// name when collapsed.
+
+View ExtendedFab(label: Str, icon: Str, size: FabSize = .medium, color: FabColor = .primaryContainer,
+    expanded: Bool = true, lowered: Bool = false, on_tap: Fn() = {}) {
+    inject Theme as t
+
+    let h = extendedHeight(size)
+
+    let container = color == FabColor.primaryContainer ? t.primaryContainer
+        : color == FabColor.secondaryContainer ? t.secondaryContainer
+        : color == FabColor.tertiaryContainer ? t.tertiaryContainer
+        : color == FabColor.primary ? t.primary
+        : color == FabColor.secondary ? t.secondary
+        : t.tertiary
+    let ink = color == FabColor.primaryContainer ? t.onPrimaryContainer
+        : color == FabColor.secondaryContainer ? t.onSecondaryContainer
+        : color == FabColor.tertiaryContainer ? t.onTertiaryContainer
+        : color == FabColor.primary ? t.onPrimary
+        : color == FabColor.secondary ? t.onSecondary
+        : t.onTertiary
+
+    Row #[
+        bg: container with t.springEffectsFast,
+        radius: extendedRadius(size) with t.springSpatialFast,
+        shadow: lowered ? "sm" : "lg",
+        height: h,
+        p: (0, expanded ? extendedPadding(size) : extendedCollapsedPadding(size)),
+        gap: extendedGap(size),
+        shrink: 0,
+        align: center,
+        justify: center,
+        a11y_role: button,
+        a11y_label: label,
+        tap => on_tap(),
+    ] {
+        on hover {
+            overlay: ink.alpha(stateHover) with t.springEffectsFast
+            shadow: lowered ? "md" : "lg"
+        }
+        on focus_visible {
+            overlay: ink.alpha(stateFocus) with t.springEffectsFast
+            outline: t.secondary
+            outline_width: focusRingWidth
+            outline_offset: focusRingOffset
+        }
+        on pressed {
+            overlay: ink.alpha(statePress) with t.springEffectsFast
+            radius: fabPressedRadius(size) with t.springSpatialFast
+        }
+
+        Icon(icon, size: extendedIconSize(size), color: ink)
+        when expanded {
+            Text(label) #[
+                typo: size == FabSize.small ? t.titleMedium : size == FabSize.medium ? t.titleLarge : t.headlineSmall,
+                color: ink,
+                wrap: false,
+            ]
+        }
+    }
+}

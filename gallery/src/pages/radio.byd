@@ -58,5 +58,6 @@ View RadioScenarios() {
             m.Radio("xl", bind: size, label: "Extra large")
         }
         Text("Size is {size}")
+        m.Button("Done", variant: .text)
     }
 }
