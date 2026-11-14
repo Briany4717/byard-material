@@ -1,5 +1,6 @@
-// What Slider and RangeSlider share, all private: the sizes, the hidden built-in `Slider` that
-// takes the input, and the drawing of the track, the stops and the handles.
+// What Slider and RangeSlider share, all private: the sizes, what a pointer or a key makes of
+// the value, and the drawing of the track and the stops (the handles are the controls and live
+// in each view).
 //
 //   size   track  handle     stop 4 dp, handle 4 dp wide, 6 dp gap around the handle
 //   xs      16     44        inner corners 2 dp, outer corners fully round
@@ -31,52 +32,44 @@ private fn stopHidden(i: Int, spacing: Float, lead: Float, stop: Float, atLead: 
     (atStop && (8.0 + i * spacing - stop) * (8.0 + i * spacing - stop) < 81.0)
     || (atLead && (8.0 + i * spacing - lead) * (8.0 + i * spacing - lead) < 81.0)
 
-// What the hidden slider is: a real `Slider` with or without a step (a step of 0 would divide
-// by zero), exposing its focus.
-private View SliderInput(bind value: Float, lo: Float, hi: Float, step: Float, length: Float,
-    label: Str, disabled: Bool, bind focus: Bool) {
-    when disabled {
-        // A disabled built-in `Slider` ignores `opacity: 0.0` and paints itself, so a disabled
-        // one is only what a screen reader needs: a slider that is disabled, with its value.
-        Box #[
-            width: length,
-            height: 40,
-            a11y_role: slider,
-            a11y_label: label,
-            a11y_value: "{value}",
-            a11y_disabled: true,
-        ] {}
-    } else when step > 0.0 {
-        Slider #[
-            bind: value,
-            min: lo,
-            max: hi,
-            step: step,
-            width: length,
-            height: 40,
-            opacity: 0.0,
-            a11y_label: label,
-            focused: focus,
-        ]
-    } else {
-        Slider #[
-            bind: value,
-            min: lo,
-            max: hi,
-            width: length,
-            height: 40,
-            opacity: 0.0,
-            a11y_label: label,
-            focused: focus,
-        ]
-    }
-}
+// A range's handle may go up to `cap` (or down to it): the other handle, one step away.
+private fn sliderCap(v: Float, cap: Float) -> Float => v > cap ? cap : v
 
-// The drawing, in screen coordinates along the slider (0 stop `span`): the active part runs lead
+private fn sliderFloor(v: Float, floor: Float) -> Float => v < floor ? floor : v
+
+// The value a pointer at `pos` along the track means (0 at the start, `span` at the end): the
+// handle travels 8 dp in from each end. Clamped to the range and snapped to the step.
+private fn sliderClamp(v: Float, lo: Float, hi: Float) -> Float => v < lo ? lo : v > hi ? hi : v
+
+private fn sliderSnap(v: Float, lo: Float, hi: Float, step: Float) -> Float =>
+    step > 0.0 ? sliderClamp(lo + step * ((v - lo) / step).round(), lo, hi) : sliderClamp(v, lo, hi)
+
+private fn sliderAt(pos: Float, span: Float, lo: Float, hi: Float, step: Float) -> Float =>
+    sliderSnap(lo + (hi - lo) * (pos - 8.0) / (span - 16.0), lo, hi, step)
+
+// What an arrow key moves by (a step, or a tenth of the range when continuous), and what
+// PageUp / PageDown move by (a tenth of the range, never less than a step).
+private fn sliderArrow(lo: Float, hi: Float, step: Float) -> Float => step > 0.0 ? step : (hi - lo) / 10.0
+
+private fn sliderPage(lo: Float, hi: Float, step: Float) -> Float =>
+    (hi - lo) / 10.0 > step ? (hi - lo) / 10.0 : step
+
+// The value a key makes of `v`, or `v` for a key the slider does not use: arrows step, PageUp
+// and PageDown by 10%, Home and End to the ends.
+private fn sliderKey(k: Str, v: Float, lo: Float, hi: Float, step: Float) -> Float =>
+    (k == "ArrowRight" || k == "ArrowUp") ? sliderSnap(v + sliderArrow(lo, hi, step), lo, hi, step)
+    : (k == "ArrowLeft" || k == "ArrowDown") ? sliderSnap(v - sliderArrow(lo, hi, step), lo, hi, step)
+    : k == "PageUp" ? sliderSnap(v + sliderPage(lo, hi, step), lo, hi, step)
+    : k == "PageDown" ? sliderSnap(v - sliderPage(lo, hi, step), lo, hi, step)
+    : k == "Home" ? lo
+    : k == "End" ? hi
+    : v
+
+// The drawing without the handles (they are the controls), in screen coordinates along the slider (0 stop `span`): the active part runs lead
 // `lead` stop `stop`, a handle stands handleX `stop` and, with `both`, handleX `lead` as well. A piece of
 // track ends 8 short of a handle.
 private View SliderDrawing(size: SliderSize, span: Float, lead: Float, stop: Float, both: Bool,
-    lower: Bool, steps: Int, disabled: Bool) {
+    lower: Bool, steps: Int, disabled: Bool, icon: Str) {
     inject Theme as t
 
     let h = sliderTrack(size)
@@ -136,37 +129,9 @@ private View SliderDrawing(size: SliderSize, span: Float, lead: Float, stop: Flo
             }
         }
 
-        Box #[
-            width: 4,
-            height: hh,
-            radius: 2,
-            bg: active,
-            translate: ((lower ? lead : stop) - 2.0, 0.0),
-        ] {}
-        when both {
-            Box #[width: 4, height: hh, radius: 2, bg: active, translate: (lead - 2.0, 0.0)] {}
-        }
-    }
-}
-
-// The drawing with the hidden slider laid over it.
-private View SliderPlane(bind value: Float, bind focus: Bool, size: SliderSize, span: Float,
-    lead: Float, stop: Float, lower: Bool, steps: Int, disabled: Bool, icon: Str, lo: Float,
-    hi: Float, step: Float, label: Str) {
-    inject Theme as t
-
-    ZStack #[width: span, height: sliderHandle(size), alignment: start] {
-        SliderDrawing(size, span, lead, stop, false, lower, steps, disabled)
-        Box #[ml: 8] {
-            SliderInput(bind value: value, lo: lo, hi: hi, step: step, length: span - 16.0,
-                label: label, disabled: disabled, bind focus: focus)
-        }
-        // Over the hidden slider, not under it: that one paints over what is below it even at
-        // zero opacity (see the notes).
-        when icon != "" && sliderTrack(size) >= 40 {
-            Box #[translate: ((sliderTrack(size) - (sliderTrack(size) >= 96 ? 32 : 24)) / 2.0, 0.0)] {
-                Icon(icon, size: sliderTrack(size) >= 96 ? 32 : 24,
-                    color: disabled ? t.surface : t.onPrimary)
+        when icon != "" && h >= 40 {
+            Box #[translate: ((h - (h >= 96 ? 32 : 24)) / 2.0, 0.0)] {
+                Icon(icon, size: h >= 96 ? 32 : 24, color: disabled ? t.surface : t.onPrimary)
             }
         }
     }

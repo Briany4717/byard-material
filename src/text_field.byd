@@ -4,14 +4,24 @@
 //     m.TextField(bind: email, label: "Email", variant: .outlined, error: bad,
 //         error_text: "Not an address", leading_icon: "mail")
 //
-// `bind value` is the text. The label sits inside while the field is empty and unfocused and
-// floats up (smaller, to the top edge; on an outlined field it notches the outline) once it has
-// focus or text. The placeholder shows only with focus and no text. `max_length` caps the text
-// and shows a counter; `prefix` and `suffix` show once the label has floated. `trailing_label`
-// turns the trailing icon into an IconButton (a clear button) that calls `on_trailing_tap`; an
-// error replaces the trailing icon with the error icon. `width` is the container's width.
-// The field is named by its label; supporting and error text are the text lines after it.
-// A single line only: Byard's TextField has no multiline mode.
+// `bind value` is the text. The inner field is named `as field`, and the label, the active
+// indicator and the prefix and suffix write `on field.focused` (the container writes
+// `on hover` and `on focus_within` itself): there is no `var` for focus or hover. The label sits
+// inside while the field is empty and unfocused and floats up (smaller, to the top edge) once it
+// has focus or text; on an outlined field the border has a real gap (`border_gap`) where it
+// floats, so it works on any background. `max_length` caps the text and shows a counter;
+// `prefix` and `suffix` show once the label has floated. `trailing_label` turns the trailing
+// icon into an IconButton (a clear button) that calls `on_trailing_tap`; an error replaces the
+// trailing icon with the error icon. `width` is the container's width.
+//
+// The field is named by its label, and its supporting or error text is its `a11y_description`
+// (the visible line is hidden from readers so it is not read twice).
+//
+// More lines: `lines: 3` is a fixed height; `min_lines: 2, max_lines: 6` grows with the text
+// and then scrolls. Enter inserts a newline there. Left alone it is one line.
+//
+// The placeholder is the one thing that still reads focus from a `var`: it is an attribute of
+// the field, not something a state block paints.
 
 enum TextFieldVariant {
     filled,
@@ -22,32 +32,34 @@ View TextField(bind value: Str, label: Str, variant: TextFieldVariant = .filled,
     placeholder: Str = "", supporting_text: Str = "", error: Bool = false,
     error_text: Str = "", max_length: Int = 0, prefix: Str = "", suffix: Str = "",
     leading_icon: Str = "", trailing_icon: Str = "", trailing_label: Str = "",
+    lines: Int = 1, min_lines: Int = 0, max_lines: Int = 0,
     width: Int = 280, disabled: Bool = false, on_trailing_tap: Fn() = {}) {
     inject Theme as t
 
     var focused = false
-    var hovered = false
 
     let filled = variant == TextFieldVariant.filled
-    let up = focused || value != ""
+    let multi = lines > 1 || min_lines > 0 || max_lines > 0
+    // `lines: n` is n to n lines (1 is the single line); `min_lines` and `max_lines` grow.
+    let fewest = min_lines > 0 ? min_lines : lines
+    let most = max_lines > 0 ? max_lines : min_lines > 0 ? 99 : lines
+    let hasText = value != ""
     let hasTrailingButton = trailing_label != "" && trailing_icon != "" && !error
     let hasTrailing = error || trailing_icon != ""
 
-    // Container height 56 dp, icons 24 dp at 12 dp from the edge, text 16 dp from the edge (or
-    // 16 dp after a leading icon).
+    // Container height 56 dp (at least, when it has more lines), icons 24 dp at 12 dp from the
+    // edge, text 16 dp from the edge (or 16 dp after a leading icon).
     let left = leading_icon != "" ? 52 : 16
     let rightPad = hasTrailingButton ? 4 : hasTrailing ? 12 : 16
 
     let labelInk = disabled ? t.onSurface.alpha(disabledContent)
         : error ? t.error
-        : focused ? t.primary
         : t.onSurfaceVariant
+    let focusInk = error ? t.error : t.primary
     let lineInk = disabled ? (filled ? t.onSurface.alpha(disabledContent) : t.onSurface.alpha(disabledContainer))
         : error ? t.error
-        : focused ? t.primary
-        : hovered ? t.onSurface
         : filled ? t.onSurfaceVariant : t.outline
-    let lineWidth = focused ? 2 : 1
+    let hoverInk = error ? t.error : t.onSurface
     let supportInk = disabled ? t.onSurface.alpha(disabledContent)
         : error ? t.error : t.onSurfaceVariant
     let textInk = disabled ? t.onSurface.alpha(disabledContent) : t.onSurface
@@ -56,41 +68,57 @@ View TextField(bind value: Str, label: Str, variant: TextFieldVariant = .filled,
     let shown = error && error_text != "" ? error_text : supporting_text
     let hasFooter = shown != "" || max_length > 0
 
+    // Where the floated label cuts the outline: from 4 dp before it, as long as the label at
+    // 0.75 scale plus 8 dp after it. The length is an estimate (6.5 dp a letter at bodySmall
+    // size): Byld cannot measure a text.
+    let notch = (left - 4.0, label.len * 6.5 + 12.0)
+    let noNotch = (0.0, 0.0)
+
     Column #[width: width, shrink: 0] {
-        ZStack #[width: width, height: 56, alignment: top_start] {
+        ZStack #[width: width, alignment: top_start] {
             // The container and what sits in it.
             Row #[
                 width: width,
-                height: 56,
+                min_height: 56,
                 bg: filled ? (disabled ? t.onSurface.alpha(0.04) : t.surfaceContainerHighest) : t.surface.alpha(0.0),
                 radius: (4, 4, filled ? 0 : 4, filled ? 0 : 4),
                 border: lineInk,
-                border_width: filled ? 0 : lineWidth,
+                border_width: filled ? 0 : 1,
+                border_gap: (!filled && hasText) ? notch : noNotch,
                 p: (0, rightPad, 0, leading_icon != "" ? 12 : 16),
-                align: center,
-                pointer_enter => hovered = true,
-                pointer_exit => hovered = false,
-            ] {
-                on hover { overlay: t.onSurface.alpha(filled ? stateHover : 0.0) with t.springEffectsFast }
+                align: multi ? start : center,
+                disabled: disabled,
+            ] as box {
+                on hover {
+                    overlay: t.onSurface.alpha(filled ? stateHover : 0.0) with t.springEffectsFast
+                    border: hoverInk
+                }
+                on focus_within {
+                    border: focusInk
+                    border_width: filled ? 0 : 2
+                    border_gap: filled ? noNotch : notch
+                }
 
                 when leading_icon != "" {
-                    Icon(leading_icon, color: iconInk)
+                    Icon(leading_icon, color: iconInk) #[mt: multi ? 16 : 0]
                 }
                 Row #[
                     grow: 1,
-                    height: 24,
-                    align: center,
+                    min_height: 24,
+                    align: multi ? start : center,
                     ml: leading_icon != "" ? 16 : 0,
-                    mt: filled ? 24 : 0,
-                    mb: filled ? 8 : 0,
+                    mt: filled ? 24 : multi ? 16 : 0,
+                    mb: filled ? 8 : multi ? 16 : 0,
                 ] {
-                    when up && prefix != "" {
+                    when prefix != "" {
                         Text(prefix) #[
                             typo: t.bodyLarge,
-                            color: t.onSurfaceVariant,
+                            color: t.onSurfaceVariant.alpha(hasText ? 1.0 : 0.0) with t.springEffectsFast,
                             wrap: false,
                             shrink: 0,
-                        ]
+                        ] {
+                            on field.focused { color: t.onSurfaceVariant with t.springEffectsFast }
+                        }
                     }
                     TextField #[
                         bind: value,
@@ -98,25 +126,30 @@ View TextField(bind value: Str, label: Str, variant: TextFieldVariant = .filled,
                         disabled: disabled,
                         indicator: none,
                         grow: 1,
-                        height: 24,
-                        p: (horizontal: 0),
+                        min_lines: fewest,
+                        max_lines: most,
+                        p: multi ? 0 : (horizontal: 0),
+                        max_height: multi ? 4000 : 24,
                         typo: t.bodyLarge,
                         color: textInk,
                         placeholder: focused ? placeholder : "",
                         a11y_label: label,
+                        a11y_description: shown,
                         input(text) => {
                             if max_length > 0 && text.len > max_length {
                                 value = text.slice(0, max_length)
                             }
                         },
-                    ]
-                    when up && suffix != "" {
+                    ] as field
+                    when suffix != "" {
                         Text(suffix) #[
                             typo: t.bodyLarge,
-                            color: t.onSurfaceVariant,
+                            color: t.onSurfaceVariant.alpha(hasText ? 1.0 : 0.0) with t.springEffectsFast,
                             wrap: false,
                             shrink: 0,
-                        ]
+                        ] {
+                            on field.focused { color: t.onSurfaceVariant with t.springEffectsFast }
+                        }
                     }
                 }
                 when error {
@@ -128,32 +161,45 @@ View TextField(bind value: Str, label: Str, variant: TextFieldVariant = .filled,
                 }
             }
 
-            // The active indicator of a filled field.
+            // The active indicator of a filled field: 1 dp, drawn 2 dp thick (scaled from its
+            // bottom edge) while the field has focus.
             when filled {
-                ZStack #[width: width, height: 56, alignment: bottom_start] {
-                    Box #[width: width, height: lineWidth, bg: lineInk with t.springEffectsFast] {}
+                Box #[
+                    width: width,
+                    height: 1,
+                    bg: lineInk with t.springEffectsFast,
+                    align_self: end,
+                    origin: (0, 1),
+                ] {
+                    on box.hover { bg: hoverInk with t.springEffectsFast }
+                    on field.focused {
+                        bg: focusInk with t.springEffectsFast
+                        scale: (1.0, 2.0) with t.springSpatialFast
+                    }
                 }
             }
 
-            // The label: resting inside, floated to the top edge. On an outlined field its
-            // background cuts a notch in the outline.
+            // The label: resting inside, floated to the top edge with text or focus.
             Text(label) #[
                 typo: t.bodyLarge,
                 color: labelInk with t.springEffectsFast,
-                bg: (!filled && up) ? t.surface : t.surface.alpha(0.0),
-                p: (horizontal: filled ? 0 : 4),
                 wrap: false,
                 origin: (0, 0),
-                scale: up ? 0.75 : 1.0 with t.springSpatialFast,
-                translate: (filled ? left : left - 4,
-                    up ? (filled ? 8 : -9) : 16) with t.springSpatialFast,
+                scale: hasText ? 0.75 : 1.0 with t.springSpatialFast,
+                translate: (left, hasText ? (filled ? 8 : -9) : 16) with t.springSpatialFast,
                 a11y_hidden: true,
-            ]
+            ] {
+                on field.focused {
+                    color: focusInk with t.springEffectsFast
+                    scale: 0.75 with t.springSpatialFast
+                    translate: (left, filled ? 8 : -9) with t.springSpatialFast
+                }
+            }
         }
 
         when hasFooter {
             Row #[p: (4, 16, 0, 16), gap: 16, width: width] {
-                Text(shown) #[typo: t.bodySmall, color: supportInk, grow: 1]
+                Text(shown) #[typo: t.bodySmall, color: supportInk, grow: 1, a11y_hidden: true]
                 when max_length > 0 {
                     Text("{value.len}/{max_length}") #[
                         typo: t.bodySmall,
