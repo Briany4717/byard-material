@@ -15,7 +15,8 @@
 // An item given `on_tap` is one element with the role of a list item, the tap, a state layer
 // on hover, focus and press and a keyboard ring; any other is inert, still announced as a list
 // item named by its headline. Controls in a slot keep their own taps. `selected` takes the
-// secondary container colour. A disabled item dims its text and its slots to 38%.
+// secondary container colour. `dragged: true` is the item while an app moves it: a 16% state layer
+// and level 3. A disabled item dims its text and its slots to 38%.
 //
 // The helpers below give the leading kinds Material's sizes and colours: an icon of 24, an
 // avatar of 40, an image of 56 square, and trailing supporting text. Anything else goes in the
@@ -25,7 +26,7 @@ private fn listLines(supporting: Str, overline: Str, lines: Int) -> Int =>
     lines > 0 ? lines : supporting == "" ? 1 : overline == "" ? 2 : 3
 
 View ListItem(headline: Str, supporting: Str = "", overline: Str = "", lines: Int = 0,
-    selected: Bool = false, disabled: Bool = false, on_tap: Fn() = none, leading: Slot = none,
+    selected: Bool = false, disabled: Bool = false, dragged: Bool = false, on_tap: Fn() = none, leading: Slot = none,
     trailing: Slot = none) {
     inject Theme as t
 
@@ -42,6 +43,8 @@ View ListItem(headline: Str, supporting: Str = "", overline: Str = "", lines: In
     when on_tap != none {
         Row #[
             bg: container with t.springEffectsFast,
+            shadow: dragged ? "lg" : (),
+            overlay: t.onSurface.alpha(dragged ? stateDragged : 0.0) with t.springEffectsFast,
             min_height: n == 1 ? 56 : n == 2 ? 72 : 88,
             p: (top ? 12 : 8, 24, top ? 12 : 8, 16),
             gap: 16,
@@ -66,6 +69,8 @@ View ListItem(headline: Str, supporting: Str = "", overline: Str = "", lines: In
     } else {
         Row #[
             bg: container with t.springEffectsFast,
+            shadow: dragged ? "lg" : (),
+            overlay: t.onSurface.alpha(dragged ? stateDragged : 0.0) with t.springEffectsFast,
             min_height: n == 1 ? 56 : n == 2 ? 72 : 88,
             p: (top ? 12 : 8, 24, top ? 12 : 8, 16),
             gap: 16,

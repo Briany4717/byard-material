@@ -57,3 +57,19 @@ expect = ['Button "More" [focusable focused']
 [[test]]
 name = "a disabled item is dimmed and has no focus"
 expect = ['ListItem "Locked" [focusable disabled]']
+
+[[test]]
+name = "a dragged item is still a list item and still acts"
+steps = [{ tap = 'ListItem "Held"' }]
+expect = ['ListItem "Held" [focusable focused]', 'Label "Picked: 5"']
+
+[[test]]
+name = "the same in the dark scheme"
+scheme = "dark"
+expect = [
+    'List "Inbox"',
+    'ListItem "Plain"',
+    'ListItem "Open" [focusable]',
+    'ListItem "Locked" [focusable disabled]',
+]
+not = ['ListItem "Plain" [focusable']
