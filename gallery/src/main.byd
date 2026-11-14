@@ -16,6 +16,9 @@ enum Page {
     fab,
     textField,
     chips,
+    card,
+    list,
+    badge,
 }
 
 View Main() {
@@ -53,6 +56,12 @@ View Main() {
                 TextFieldPage()
             } else when page == Page.chips {
                 ChipsPage()
+            } else when page == Page.card {
+                CardPage()
+            } else when page == Page.list {
+                ListPage()
+            } else when page == Page.badge {
+                BadgePage()
             } else {
                 Column #[p: 24, gap: 16, align: start] {
                     Text("Components") #[typo: t.titleMedium, color: t.primary]
@@ -67,6 +76,9 @@ View Main() {
                     m.Button("Fab", variant: .tonal, on_tap: { page = Page.fab })
                     m.Button("TextField", variant: .tonal, on_tap: { page = Page.textField })
                     m.Button("Chips", variant: .tonal, on_tap: { page = Page.chips })
+                    m.Button("Card", variant: .tonal, on_tap: { page = Page.card })
+                    m.Button("ListItem and Divider", variant: .tonal, on_tap: { page = Page.list })
+                    m.Button("Badge", variant: .tonal, on_tap: { page = Page.badge })
                 }
             }
         }
