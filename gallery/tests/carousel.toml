@@ -5,7 +5,7 @@ size = "460x400"
 [[test]]
 name = "the carousel is a list of items, the first one selected"
 expect = [
-    'List "Places" [focusable]',
+    'List "Places"', 'Group "Places" description "Arrow keys move between items" [focusable]',
     'ListItem "Dunes" [selected]',
     'ListItem "Harbour"',
     'ListItem "Forest"',
@@ -28,7 +28,7 @@ expect = ['Label "Picked: 1"']
 [[test]]
 name = "Tab reaches the carousel once and goes on to the next control"
 steps = [{ key = "Tab" }]
-expect = ['List "Places" [focusable focused]']
+expect = ['Group "Places" description "Arrow keys move between items" [focusable focused]']
 
 [[test]]
 name = "the second Tab leaves the carousel"
@@ -84,3 +84,15 @@ name = "the same in the dark scheme"
 scheme = "dark"
 steps = [{ key = "Tab" }, { key = "Right" }, { wait = 800 }]
 expect = ['ListItem "Harbour" [selected]']
+
+[[test]]
+name = "a drag that starts on a card scrolls the carousel and does not pick"
+steps = [{ hold = [150, 130] }, { hover = [100, 130] }, { hover = [40, 130] }, { release = [40, 130] }, { wait = 800 }]
+expect = ['Label "Picked: -1"']
+not = ['ScrollView = scroll 0,0']
+
+[[test]]
+name = "the items are one list item each, and only the carousel is a Tab stop"
+steps = [{ key = "Tab" }]
+expect = ['Group "Places" description "Arrow keys move between items" [focusable focused]', 'ListItem "Dunes" [selected]']
+not = ['ListItem "Harbour" [focusable', 'Button (unnamed)']

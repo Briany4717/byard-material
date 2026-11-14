@@ -25,19 +25,19 @@ View SearchPage() {
             m.SearchBar(bind: q1, placeholder: "Search songs", disabled: true)
         }
         Section("SearchView, docked: collapsed, then open") {
-            Row #[gap: 24, align: start] {
-                DockedDemo(open: false)
-                DockedDemo(open: true)
+            Column #[gap: 24, align: start] {
+                SearchDockedDemo(open: false)
+                SearchDockedDemo(open: true)
             }
         }
     }
 }
 
-View DockedDemo(open: Bool) {
+View SearchDockedDemo(open: Bool) {
     var q = ""
     var o = open
     var picked = ""
-    Column #[gap: 12, height: 400] {
+    Column #[gap: 12, height: open ? 380 : 100] {
         m.SearchView(bind query: q, bind expanded: o, placeholder: "Search songs", width: 300,
             suggestions: SongHits(q), on_pick: {|s| picked = s })
         Text("Picked: {picked}")
@@ -69,6 +69,21 @@ View SearchScenarios() {
         Text("Picked: {picked}")
         Text("Query: {q}")
         Text("Sent: {sent}")
+        m.Button("Elsewhere")
+    }
+}
+
+View SearchFullScenarios() {
+    inject Theme as t
+    var q = ""
+    var o = false
+    var picked = ""
+    Column #[p: 24, gap: 16, bg: t.surface, grow: 1] {
+        m.SearchView(bind query: q, bind expanded: o, variant: .fullScreen,
+            placeholder: "Search songs", width: 300, suggestions: SongHits(q),
+            on_pick: {|s| picked = s })
+        Text("Open: {o}") #[color: t.onSurface]
+        Text("Picked: {picked}") #[color: t.onSurface]
         m.Button("Elsewhere")
     }
 }

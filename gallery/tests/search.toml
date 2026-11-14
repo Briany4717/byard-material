@@ -43,10 +43,10 @@ exact = ['TextInput "Search" = "" [focusable]', 'Label "Open: false"']
 not = ['ListItem', 'Button "Back"']
 
 [[test]]
-name = "Tab opens the view, the field keeps focus and the suggestions list"
+name = "Tab only focuses the bar; Down opens the view, the field keeps focus and the suggestions list"
 view = "SearchScenarios"
 size = "440x600"
-steps = [{ key = "Tab" }, { wait = 800 }]
+steps = [{ key = "Tab" }, { wait = 800 }, { expect = ['Label "Open: false"'] }, { key = "Down" }, { wait = 800 }]
 expect = [
     'Label "Open: true"',
     'Button "Back" [focusable]',
@@ -67,7 +67,7 @@ expect = ['Label "Open: true"', 'ListItem "Lo-fi beats"']
 name = "typing narrows the list and shows the clear button"
 view = "SearchScenarios"
 size = "440x600"
-steps = [{ key = "Tab" }, { type = "lo" }]
+steps = [{ key = "Tab" }, { type = "lo" }, { wait = 800 }]
 expect = ['ListItem "Lo-fi beats"', 'Button "Clear" [focusable]', 'Label "Query: lo"']
 not = ['ListItem "Jazz piano"']
 
@@ -78,21 +78,23 @@ size = "440x600"
 steps = [
     { key = "Tab" },
     { key = "Down" },
-    { expect = ['ListItem "Jazz piano" [selected]'] },
+    { wait = 800 },
+    { key = "Down" },
+    { expect = ['ListItem "Jazz piano" [focusable selected]'] },
     { key = "Down" },
     { key = "Down" },
     { key = "Down" },
-    { expect = ['ListItem "Jazz piano" [selected]'] },
+    { expect = ['ListItem "Jazz piano" [focusable selected]'] },
     { key = "Up" },
 ]
-expect = ['ListItem "Lo-fi beats" [selected]']
-not = ['ListItem "Jazz piano" [selected]']
+expect = ['ListItem "Lo-fi beats" [focusable selected]']
+not = ['ListItem "Jazz piano" [focusable selected]']
 
 [[test]]
 name = "Enter picks the highlighted suggestion and closes the view"
 view = "SearchScenarios"
 size = "440x600"
-steps = [{ key = "Tab" }, { key = "Down" }, { key = "Down" }, { key = "Enter" }]
+steps = [{ key = "Tab" }, { key = "Down" }, { wait = 800 }, { key = "Down" }, { key = "Down" }, { key = "Enter" }, { wait = 800 }]
 expect = [
     'Label "Open: false"',
     'Label "Picked: Jazz standards"',
@@ -105,28 +107,28 @@ not = ['ListItem', 'Button "Back"']
 name = "Enter with nothing highlighted submits the text"
 view = "SearchScenarios"
 size = "440x600"
-steps = [{ key = "Tab" }, { type = "jazz" }, { key = "Enter" }]
+steps = [{ key = "Tab" }, { type = "jazz" }, { wait = 800 }, { key = "Enter" }]
 expect = ['Label "Sent: 1"', 'Label "Picked: "', 'Label "Open: true"']
 
 [[test]]
 name = "a tap on a suggestion picks it"
 view = "SearchScenarios"
 size = "440x600"
-steps = [{ key = "Tab" }, { wait = 800 }, { tap = 'ListItem "Lo-fi beats"' }]
+steps = [{ key = "Tab" }, { key = "Down" }, { wait = 800 }, { tap = 'ListItem "Lo-fi beats"' }, { wait = 800 }]
 expect = ['Label "Picked: Lo-fi beats"', 'Label "Open: false"']
 
 [[test]]
 name = "the arrow on a row copies it into the field and keeps the view open"
 view = "SearchScenarios"
 size = "440x600"
-steps = [{ key = "Tab" }, { wait = 800 }, { tap = 'Button "Use Jazz standards"' }]
+steps = [{ key = "Tab" }, { key = "Down" }, { wait = 800 }, { tap = 'Button "Use Jazz standards"' }]
 expect = ['Label "Query: Jazz standards"', 'Label "Open: true"', 'Label "Picked: "']
 
 [[test]]
 name = "the clear button empties the field"
 view = "SearchScenarios"
 size = "440x600"
-steps = [{ key = "Tab" }, { type = "lo" }, { tap = 'Button "Clear"' }]
+steps = [{ key = "Tab" }, { type = "lo" }, { wait = 800 }, { tap = 'Button "Clear"' }]
 expect = ['Label "Query: "', 'ListItem "Jazz piano"']
 not = ['Button "Clear"']
 
@@ -134,7 +136,7 @@ not = ['Button "Clear"']
 name = "Escape closes the view"
 view = "SearchScenarios"
 size = "440x600"
-steps = [{ key = "Tab" }, { key = "Escape" }]
+steps = [{ key = "Tab" }, { key = "Down" }, { wait = 800 }, { key = "Escape" }, { wait = 800 }]
 expect = ['Label "Open: false"']
 not = ['ListItem', 'Button "Back"']
 
@@ -142,7 +144,7 @@ not = ['ListItem', 'Button "Back"']
 name = "the back arrow closes the view"
 view = "SearchScenarios"
 size = "440x600"
-steps = [{ key = "Tab" }, { tap = 'Button "Back"' }]
+steps = [{ key = "Tab" }, { key = "Down" }, { wait = 800 }, { tap = 'Button "Back"' }, { wait = 800 }]
 expect = ['Label "Open: false"']
 not = ['ListItem']
 
@@ -151,5 +153,91 @@ name = "the view in the dark scheme"
 view = "SearchScenarios"
 size = "440x600"
 scheme = "dark"
-steps = [{ key = "Tab" }, { key = "Down" }]
-expect = ['ListItem "Jazz piano" [selected]']
+steps = [{ key = "Tab" }, { key = "Down" }, { wait = 800 }, { key = "Down" }]
+expect = ['ListItem "Jazz piano" [focusable selected]']
+
+[[test]]
+name = "a press outside the docked view closes it"
+view = "SearchScenarios"
+size = "440x600"
+steps = [
+    { key = "Tab" },
+    { key = "Down" },
+    { wait = 800 },
+    { expect = ['Label "Open: true"'] },
+    { tap = 'Label "Query: "' },
+    { wait = 800 },
+]
+expect = ['Label "Open: false"']
+not = ['ListItem', 'Button "Back"']
+
+[[test]]
+name = "Escape closes the docked view and the field keeps focus"
+view = "SearchScenarios"
+size = "440x600"
+steps = [{ key = "Tab" }, { key = "Down" }, { wait = 800 }, { key = "Escape" }, { wait = 800 }]
+expect = ['Label "Open: false"', 'TextInput "Search" = "" [focusable focused]']
+
+[[test]]
+name = "the Back arrow hands focus back to the bar's field"
+view = "SearchScenarios"
+size = "440x600"
+steps = [{ key = "Tab" }, { key = "Down" }, { wait = 800 }, { tap = 'Button "Back"' }, { wait = 800 }]
+expect = ['Label "Open: false"', 'TextInput "Search" = "" [focusable focused]']
+
+[[test]]
+name = "full screen: a tap on the bar opens a dialog with focus in its field"
+view = "SearchFullScenarios"
+size = "440x600"
+steps = [{ tap = 'TextInput "Search"' }, { wait = 800 }]
+expect = [
+    'Label "Open: true"',
+    'Button "Back" [focusable]',
+    'TextInput "Search" = "" [focusable focused]',
+    'ListItem "Jazz piano"',
+]
+
+[[test]]
+name = "full screen: typing narrows the list"
+view = "SearchFullScenarios"
+size = "440x600"
+steps = [{ tap = 'TextInput "Search"' }, { wait = 800 }, { type = "lo" }]
+expect = ['ListItem "Lo-fi beats"']
+not = ['ListItem "Jazz piano"']
+
+[[test]]
+name = "full screen: Escape closes it and focus is back on the bar"
+view = "SearchFullScenarios"
+size = "440x600"
+steps = [{ tap = 'TextInput "Search"' }, { wait = 800 }, { key = "Escape" }, { wait = 800 }]
+expect = ['Label "Open: false"', 'TextInput "Search" = "" [focusable focused]']
+not = ['ListItem', 'Button "Back"']
+
+[[test]]
+name = "full screen: the Back arrow returns focus to the bar too"
+view = "SearchFullScenarios"
+size = "440x600"
+steps = [{ tap = 'TextInput "Search"' }, { wait = 800 }, { tap = 'Button "Back"' }, { wait = 800 }]
+expect = ['Label "Open: false"', 'TextInput "Search" = "" [focusable focused]']
+
+[[test]]
+name = "full screen: Tab stays inside the view"
+view = "SearchFullScenarios"
+size = "440x600"
+steps = [{ tap = 'TextInput "Search"' }, { wait = 800 }, { key = "Tab" }, { key = "Tab" }, { key = "Tab" }, { key = "Tab" }, { key = "Tab" }, { key = "Tab" }, { key = "Tab" }]
+not = ['Button "Elsewhere" [focusable focused]']
+
+[[test]]
+name = "full screen: a pick closes it and calls on_pick"
+view = "SearchFullScenarios"
+size = "440x600"
+steps = [{ tap = 'TextInput "Search"' }, { wait = 800 }, { tap = 'ListItem "Lo-fi beats"' }, { wait = 800 }]
+expect = ['Label "Open: false"', 'Label "Picked: Lo-fi beats"']
+
+[[test]]
+name = "full screen in the dark scheme"
+view = "SearchFullScenarios"
+size = "440x600"
+scheme = "dark"
+steps = [{ tap = 'TextInput "Search"' }, { wait = 800 }, { key = "Escape" }, { wait = 800 }]
+expect = ['Label "Open: false"', 'TextInput "Search" = "" [focusable focused]']

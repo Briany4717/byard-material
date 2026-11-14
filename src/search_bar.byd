@@ -8,8 +8,8 @@
 // `bind query` is the text. The field is Byard's bare TextField, named by `label`; the
 // placeholder is drawn over it while the text is empty and stays in view with focus, as
 // Material's does. `trailing` takes any elements (icon buttons, an avatar) and sits at the
-// end; `on_submit` runs on Enter and `on_open` when the bar is pressed or its field gains focus
-// (SearchView expands on it).
+// end; `on_submit` runs on Enter and `on_open` when the bar is pressed, typed into or sent
+// ArrowDown (SearchView expands on it). Focus alone opens nothing, so Tab can pass over it.
 
 View SearchBar(bind query: Str, placeholder: Str = "Search", label: Str = "Search",
     leading_icon: Str = "search", width: Int = 360, disabled: Bool = false,
@@ -49,7 +49,13 @@ View SearchBar(bind query: Str, placeholder: Str = "Search", label: Str = "Searc
                 typo: t.bodyLarge,
                 color: disabled ? t.onSurface.alpha(disabledContent) : t.onSurface,
                 a11y_label: label,
-                focus => on_open(),
+                tap => on_open(),
+                input(_) => on_open(),
+                key_down(k) => {
+                    if k == "ArrowDown" {
+                        on_open()
+                    }
+                },
                 submit => on_submit(),
             ]
         }

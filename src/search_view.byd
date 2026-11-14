@@ -26,41 +26,60 @@ View SearchView(bind query: Str, bind expanded: Bool, suggestions: List<SearchSu
     inject Theme as t
 
     var active = -1
+    var fieldFocus = false
 
     let full = variant == SearchViewVariant.fullScreen
     let wanted = searchViewHeader + searchDividerHeight + suggestions.len * searchRowHeight
     let panel = (wanted < 240 ? 240 : wanted > max_height ? max_height : wanted) - searchViewHeader
 
-    let close = () => {
+    let open = () => {
+        expanded = true
+        fieldFocus = true
+    }
+    // Closing hands focus back to the bar (`back`), except for a press outside, which goes where
+    // the user pressed.
+    let close = (back: Bool) => {
         expanded = false
         active = -1
+        if back {
+            fieldFocus = true
+        }
     }
     let pick = (s: Str) => {
         query = s
-        close()
+        close(true)
         on_pick(s)
     }
 
     when full {
         // Collapsed, the bar. Open, a surface over the whole window (`at` with `grow` and `align_self:
-        // stretch` is the window's size) with its own header.
+        // stretch` is the window's size) with its own header. The surface is a dialog, so focus moves
+        // into its field when it opens and back to the bar when it goes.
         Box #[width: width, height: searchBarHeight, shrink: 0, a11y_hidden: expanded] {
             SearchBar(bind: query, placeholder: placeholder, label: label,
-                leading_icon: leading_icon, width: width, disabled: expanded, trailing: trailing,
-                on_open: { expanded = true }, on_submit: on_submit)
+                leading_icon: leading_icon, width: width, trailing: trailing,
+                on_open: { expanded = true }, on_submit: { expanded = true
+                    on_submit() })
         }
-        Overlay #[modal: false] {
-            Column #[
-                at: (0, 0),
-                grow: 1,
-                align_self: stretch,
-                bg: expanded ? t.surfaceContainerHigh : t.surfaceContainerHigh.alpha(0.0) with t.springEffectsDefault,
-            ] {
-                when expanded {
-                    SearchViewHeader(bind query: query, bind active: active, expanded: true,
+        when expanded {
+            Overlay #[modal: false, dismiss => close(true)] {
+                Column #[
+                    at: (0, 0),
+                    grow: 1,
+                    align_self: stretch,
+                    bg: t.surfaceContainerHigh with t.springEffectsDefault,
+                    opacity: 1.0 with t.springEffectsDefault,
+                    scale: (1.0, 1.0) with t.springSpatialDefault,
+                    a11y_role: dialog,
+                    a11y_label: label,
+                ] {
+                    on enter { opacity: 0.0, scale: (0.96, 0.96) }
+                    on leave { opacity: 0.0, scale: (0.96, 0.96) }
+                    SearchViewHeader(bind query: query, bind active: active, bind focused: fieldFocus,
+                        expanded: true, autofocus: true,
                         height: searchViewFullHeader, flat: true,
                         suggestions: suggestions, placeholder: placeholder, label: label,
-                        trailing: trailing, on_close: { close() }, on_pick: {|s| pick(s) },
+                        trailing: trailing, on_close: { close(true) }, on_pick: {|s| pick(s) },
                         on_submit: on_submit)
                     Box #[height: searchDividerHeight, bg: t.outline, shrink: 0] {}
                     SearchViewList(bind query: query, bind active: active, suggestions: suggestions,
@@ -71,24 +90,31 @@ View SearchView(bind query: Str, bind expanded: Bool, suggestions: List<SearchSu
     } else {
         // The bar is the header, always in the page; the list hangs from it.
         Box #[width: width, height: searchBarHeight, shrink: 0] as bar {
-            SearchViewHeader(bind query: query, bind active: active, expanded: expanded,
+            SearchViewHeader(bind query: query, bind active: active, bind focused: fieldFocus,
+                expanded: expanded, autofocus: false,
                 height: searchBarHeight,
                 flat: false, suggestions: suggestions, placeholder: placeholder, label: label,
-                leading_icon: leading_icon, trailing: trailing, on_close: { close() },
-                on_pick: {|s| pick(s) }, on_open: { expanded = true }, on_submit: on_submit)
+                leading_icon: leading_icon, trailing: trailing, on_close: { close(true) },
+                on_pick: {|s| pick(s) }, on_open: { open() }, on_submit: on_submit)
         }
-        Overlay #[modal: false] {
-            Column #[
-                anchor_to: "bar",
-                anchor_edge: below,
-                anchor_align: start,
-                width: width,
-                height: expanded ? panel : 0 with t.springSpatialDefault,
-                bg: t.surfaceContainerHigh,
-                radius: (0, 0, searchViewRadius, searchViewRadius),
-                shadow: expanded ? "lg" : (),
-            ] {
-                when expanded {
+        // Anchored under the bar: a press outside it and the list, or Escape, closes the view.
+        when expanded {
+            Overlay #[modal: false] {
+                Column #[
+                    anchor_to: bar,
+                    anchor_edge: below,
+                    anchor_align: start,
+                    dismiss => close(false),
+                    width: width,
+                    height: panel,
+                    bg: t.surfaceContainerHigh,
+                    radius: (0, 0, searchViewRadius, searchViewRadius),
+                    shadow: "lg",
+                    opacity: 1.0 with t.springEffectsDefault,
+                    translate: (0, 0) with t.springSpatialDefault,
+                ] {
+                    on enter { opacity: 0.0, translate: (0, 0 - 16) }
+                    on leave { opacity: 0.0, translate: (0, 0 - 16) }
                     Box #[height: searchDividerHeight, bg: t.outline, shrink: 0] {}
                     SearchViewList(bind query: query, bind active: active, suggestions: suggestions,
                         on_pick: {|s| pick(s) })
@@ -101,7 +127,8 @@ View SearchView(bind query: Str, bind expanded: Bool, suggestions: List<SearchSu
 // The row at the top: leading icon (a back arrow while open), the field, a clear button while
 // there is text. Collapsed it looks like a SearchBar; its field is the one the user types in,
 // so it keeps focus as the view opens.
-private View SearchViewHeader(bind query: Str, bind active: Int, expanded: Bool, height: Int,
+private View SearchViewHeader(bind query: Str, bind active: Int, bind focused: Bool,
+    expanded: Bool, autofocus: Bool, height: Int,
     flat: Bool, suggestions: List<SearchSuggestion>, placeholder: Str, label: Str,
     leading_icon: Str = "search", trailing: Slot = none, on_close: Fn(), on_pick: Fn(Str),
     on_open: Fn() = none, on_submit: Fn() = none) {
@@ -119,6 +146,8 @@ private View SearchViewHeader(bind query: Str, bind active: Int, expanded: Bool,
         p: (0, expanded ? 4 : (trailing != none ? 12 : 16), 0, expanded ? 4 : 16),
         gap: expanded ? 4 : 16,
         align: center,
+        a11y_role: group,
+        tap => on_open(),
     ] {
         on hover { overlay: t.onSurface.alpha(expanded ? 0.0 : stateHover) with t.springEffectsFast }
         on focus_within { overlay: t.onSurface.alpha(expanded ? 0.0 : stateFocus) with t.springEffectsFast }
@@ -146,11 +175,18 @@ private View SearchViewHeader(bind query: Str, bind active: Int, expanded: Bool,
                 typo: t.bodyLarge,
                 color: t.onSurface,
                 a11y_label: label,
-                focus => on_open(),
-                input(_) => active = -1,
+                autofocus: autofocus,
+                focused: focused,
+                tap => on_open(),
+                input(_) => {
+                    active = -1
+                    on_open()
+                },
                 key_down(k) => {
                     if k == "Escape" {
                         on_close()
+                    } else if k == "ArrowDown" && !expanded {
+                        on_open()
                     } else if k == "ArrowDown" && n > 0 {
                         active = active + 1 >= n ? 0 : active + 1
                     } else if k == "ArrowUp" && n > 0 {
