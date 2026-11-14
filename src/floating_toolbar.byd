@@ -1,0 +1,66 @@
+// Material 3 Expressive floating toolbar: a fully round container, 64 across, that floats at
+// level 3 over the content. Horizontal or vertical; standard (`surface_container`) or vibrant
+// (`primary_container`). An optional FAB sits beside it, to its end when horizontal and below
+// it when vertical: give `fab_icon` and `fab_label`, tap it with `on_fab`.
+//
+//     m.FloatingToolbar(fab_icon: "edit", fab_label: "Edit") {
+//         m.IconButton("undo", label: "Undo")
+//         m.IconButton("redo", label: "Redo")
+//     }
+//
+// The view is as big as what it holds; put it where it should float (a `ZStack` or an
+// `Overlay` at the bottom of the screen).
+
+View FloatingToolbar(label: Str = "Toolbar", color: ToolbarColor = .standard,
+    orientation: ToolbarOrientation = .horizontal, fab_icon: Str = "", fab_label: Str = "",
+    on_fab: Fn() = {}, content) {
+    inject Theme as t
+
+    let vibrant = color == ToolbarColor.vibrant
+    let across = orientation == ToolbarOrientation.horizontal
+
+    let bar = vibrant ? t.primaryContainer : t.surfaceContainer
+    let fabColor = vibrant ? FabColor.primary : FabColor.primaryContainer
+
+    when across {
+        Row #[gap: 8, align: center] {
+            Row #[
+                bg: bar with t.springEffectsFast,
+                radius: 32,
+                shadow: "lg",
+                height: 64,
+                p: (0, 12),
+                gap: 8,
+                align: center,
+                shrink: 0,
+                a11y_role: toolbar,
+                a11y_label: label,
+            ] {
+                content
+            }
+            when fab_icon != "" {
+                Fab(fab_icon, label: fab_label, color: fabColor, on_tap: on_fab)
+            }
+        }
+    } else {
+        Column #[gap: 8, align: center] {
+            Column #[
+                bg: bar with t.springEffectsFast,
+                radius: 32,
+                shadow: "lg",
+                width: 64,
+                p: (12, 0),
+                gap: 8,
+                align: center,
+                shrink: 0,
+                a11y_role: toolbar,
+                a11y_label: label,
+            ] {
+                content
+            }
+            when fab_icon != "" {
+                Fab(fab_icon, label: fab_label, color: fabColor, on_tap: on_fab)
+            }
+        }
+    }
+}

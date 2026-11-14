@@ -1,0 +1,148 @@
+// Material 3 Expressive flexible navigation bar: three to five destinations along the bottom of
+// a window, a pill behind the icon of the selected one, whose icon is filled.
+//
+//     var screen = 0
+//
+//     m.NavigationBar(label: "Main") {
+//         m.NavigationBarItem(0, bind: screen, label: "Home", icon: "home")
+//         m.NavigationBarItem(1, bind: screen, label: "Search", icon: "search",
+//             badge: { Badge() })
+//         m.NavigationBarItem(2, bind: screen, label: "Library", icon: "library_music",
+//             on_select: { refresh() })
+//     }
+//
+// An item is selected when the var it binds equals its `index`; a tap, or Enter or Space, writes the
+// index and then calls `on_select`. On a wide window write `horizontal: true` on every item: the
+// icon and the label sit side by side in the pill, which is the Expressive bar for medium and
+// wider windows. (An item cannot see its bar, nor the window, so you decide.)
+//
+// Role: the bar is a `navigation` landmark around a `tab_list`, and each item is a `tab`. That
+// is the one combination that gives a screen reader "navigation" and gives the keyboard what a
+// bar should be: one Tab stop (Tab enters at the selected item), the arrows (and Home and End) move
+// focus, Enter or Space selects. A bar of plain buttons would be one Tab stop per item, which is
+// right for a list of links but not for a bar that is also a selection.
+//
+// To show a screen for the selected item, put a `NavHost` above the bar, in a `Column`; the bar
+// writes a number and the host wants a name, so `let name = screen == 0 ? "home" : "search"` and
+// `NavHost(active: name)`. See the gallery.
+//
+// Why `bind` on each item: see `Radio`; the bar's slot is the caller's own code.
+//
+//   bar         64 high, `surface_container`, items share the width
+//   indicator   56 x 32 (a vertical item) or 40 high (horizontal), fully round, `secondary_container`;
+//               it grows from its centre when the item is selected
+//   vertical    icon 24, 4 between the pill and the label, `label_medium` (emphasized when selected)
+//   horizontal  16 on each side of the pill, icon 24, 8 between icon and label, `label_large`
+//   colours     selected icon `on_secondary_container`, selected label `secondary`; the rest
+//               `on_surface_variant`; the state layer is on the pill, not on the whole item
+
+private let barHeight = 64
+private let barPillWidth = 56
+private let barPillHeight = 32
+private let barPillHeightWide = 40
+private let barIconSize = 24
+private let barLabelGap = 4
+private let barWideGap = 8
+private let barWidePadding = 16
+
+View NavigationBar(content, label: Str = "Navigation") {
+    inject Theme as t
+
+    Box #[
+        bg: t.surfaceContainer,
+        height: barHeight,
+        align_self: stretch,
+        a11y_role: navigation,
+        a11y_label: label,
+    ] {
+        Row #[a11y_role: tab_list, a11y_label: label, grow: 1, align: center] {
+            content
+        }
+    }
+}
+
+View NavigationBarItem(index: Int, bind current: Int, label: Str, icon: Str,
+    badge: Slot = none, horizontal: Bool = false, disabled: Bool = false,
+    on_select: Fn() = {}) {
+    inject Theme as t
+
+    let on = current == index
+
+    let iconInk = disabled ? t.onSurface.alpha(disabledContent)
+        : on ? t.onSecondaryContainer : t.onSurfaceVariant
+    let labelInk = disabled ? t.onSurface.alpha(disabledContent)
+        : on ? t.secondary : t.onSurfaceVariant
+    let layer = on ? t.onSecondaryContainer : t.onSurface
+
+    let pillHeight = horizontal ? barPillHeightWide : barPillHeight
+
+    Column #[
+        grow: 1,
+        basis: 0,
+        height: barHeight,
+        align: center,
+        justify: center,
+        gap: barLabelGap,
+        a11y_role: tab,
+        a11y_selected: on,
+        a11y_label: label,
+        disabled: disabled,
+        tap => {
+            current = index
+            on_select()
+        },
+    ] as item {
+        ZStack #[
+            width: horizontal ? () : barPillWidth,
+            height: pillHeight,
+            radius: pillHeight / 2,
+            shrink: 0,
+            alignment: center,
+        ] {
+            on item.hover { overlay: layer.alpha(stateHover) with t.springEffectsFast }
+            on item.focus_visible {
+                overlay: layer.alpha(stateFocus) with t.springEffectsFast
+                outline: t.secondary
+                outline_width: focusRingWidth
+                outline_offset: focusRingOffset
+            }
+            on item.pressed { overlay: layer.alpha(statePress) with t.springEffectsFast }
+
+            Box #[
+                bg: t.secondaryContainer,
+                radius: pillHeight / 2,
+                align_self: stretch,
+                grow: 1,
+                scale.x: on ? 1.0 : 0.0 with t.springSpatialFast,
+                origin: center,
+            ] {}
+            Row #[
+                p: (0, horizontal ? barWidePadding : 0),
+                gap: barWideGap,
+                align: center,
+                justify: center,
+            ] {
+                ZStack #[alignment: top_start] {
+                    Icon(icon, fill: on ? 1.0 : 0.0, size: barIconSize, color: iconInk)
+                    when badge != none {
+                        Box #[ml: 14, mt: -2] { badge }
+                    }
+                }
+                when horizontal {
+                    Text(label) #[
+                        typo: on ? t.labelLargeEmphasized : t.labelLarge,
+                        color: labelInk with t.springEffectsFast,
+                        wrap: false,
+                    ]
+                }
+            }
+        }
+        when !horizontal {
+            Text(label) #[
+                typo: on ? t.labelMediumEmphasized : t.labelMedium,
+                color: labelInk with t.springEffectsFast,
+                wrap: false,
+            ]
+        }
+    }
+}

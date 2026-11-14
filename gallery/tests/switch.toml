@@ -47,3 +47,18 @@ name = "the same in the dark scheme"
 scheme = "dark"
 steps = [{ key = "Tab" }, { key = "Space" }]
 expect = ['Switch "Wi-Fi" = on']
+
+[[test]]
+name = "dragging the track past its middle turns it on, back turns it off"
+steps = [{ hold = [40, 40] }, { hover = [62, 40] }, { release = [62, 40] }]
+expect = ['Switch "Wi-Fi" = on']
+
+[[test]]
+name = "a drag that ends before the middle leaves it off"
+steps = [{ hold = [60, 40] }, { hover = [30, 40] }, { release = [30, 40] }]
+expect = ['Switch "Wi-Fi" = off']
+
+[[test]]
+name = "a drag back across the middle turns an on switch off"
+steps = [{ hold = [60, 80] }, { hover = [30, 80] }, { release = [30, 80] }]
+expect = ['Switch "Dark" = off']

@@ -1,0 +1,86 @@
+use material as m
+
+// m.DockedToolbar and m.FloatingToolbar: standard and vibrant, horizontal and vertical, with
+// and without a FAB beside the floating one.
+
+View ToolbarsPage() {
+    inject Theme as t
+    Column #[p: 24, gap: 32, bg: t.surface, grow: 1] {
+        Section("Docked: standard, vibrant") {
+            Column #[width: 400] { DockedDemo(color: m.ToolbarColor.standard) }
+            Column #[width: 400] { DockedDemo(color: m.ToolbarColor.vibrant) }
+        }
+        Section("Floating, horizontal: standard, vibrant; then with a FAB") {
+            Row #[gap: 24, align: center] {
+                FloatDemo(color: m.ToolbarColor.standard, fab: false)
+                FloatDemo(color: m.ToolbarColor.vibrant, fab: false)
+            }
+            Row #[gap: 24, align: center] {
+                FloatDemo(color: m.ToolbarColor.standard, fab: true)
+                FloatDemo(color: m.ToolbarColor.vibrant, fab: true)
+            }
+        }
+        Section("Floating, vertical: standard, vibrant; then with a FAB") {
+            Row #[gap: 40, align: start] {
+                VerticalDemo(color: m.ToolbarColor.standard, fab: false)
+                VerticalDemo(color: m.ToolbarColor.vibrant, fab: false)
+                VerticalDemo(color: m.ToolbarColor.standard, fab: true)
+                VerticalDemo(color: m.ToolbarColor.vibrant, fab: true)
+            }
+        }
+    }
+}
+
+View DockedDemo(color: m.ToolbarColor) {
+    m.DockedToolbar(color: color) {
+        m.IconButton("format_bold", label: "Bold")
+        m.IconButton("format_italic", label: "Italic")
+        m.IconButton("format_underlined", label: "Underline")
+        m.IconButton("link", label: "Link")
+        m.IconButton("more_vert", label: "More")
+    }
+}
+
+View FloatDemo(color: m.ToolbarColor, fab: Bool) {
+    m.FloatingToolbar(color: color, fab_icon: fab ? "edit" : "", fab_label: "Edit") {
+        m.IconButton("undo", label: "Undo")
+        m.IconButton("redo", label: "Redo")
+        m.IconButton("share", label: "Share")
+    }
+}
+
+View VerticalDemo(color: m.ToolbarColor, fab: Bool) {
+    m.FloatingToolbar(color: color, orientation: .vertical, fab_icon: fab ? "edit" : "", fab_label: "Edit") {
+        m.IconButton("undo", label: "Undo")
+        m.IconButton("redo", label: "Redo")
+        m.IconButton("share", label: "Share")
+    }
+}
+
+// For `tests/toolbars.toml`.
+View ToolbarScenarios() {
+    inject Theme as t
+    var bold = false
+    var edits = 0
+    var undos = 0
+    Column #[bg: t.surface, grow: 1, gap: 16, p: 16] {
+        Text("Bold: {bold ? "on" : "off"}")
+        Text("Edits: {edits}")
+        Text("Undos: {undos}")
+        m.DockedToolbar(label: "Formatting") {
+            m.IconButton("format_bold", label: "Bold", toggle: true, selected: bold, on_tap: { bold = !bold })
+            m.IconButton("format_italic", label: "Italic")
+        }
+        Row #[gap: 16] {
+            m.FloatingToolbar(label: "History", color: .vibrant, fab_icon: "edit", fab_label: "Edit",
+                on_fab: { edits += 1 }) {
+                m.IconButton("undo", label: "Undo", on_tap: { undos += 1 })
+                m.IconButton("redo", label: "Redo", disabled: true)
+            }
+        }
+        m.FloatingToolbar(label: "Tools", orientation: .vertical) {
+            m.IconButton("share", label: "Share")
+            m.IconButton("delete", label: "Delete")
+        }
+    }
+}

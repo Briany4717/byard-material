@@ -1,0 +1,157 @@
+// Material 3 tabs: primary and secondary, fixed (the tabs share the width) or scrollable (each
+// is as wide as its label). The indicator moves from the tab that was selected to the one that
+// is.
+//
+//     var tab = 0
+//
+//     m.Tabs(label: "Trips") {
+//         m.Tab(0, bind: tab, label: "Flights", icon: "flight")
+//         m.Tab(1, bind: tab, label: "Hotels", icon: "hotel", on_select: { load() })
+//         m.Tab(2, bind: tab, label: "Cars", badge: { Badge() })
+//     }
+//
+// A tab is selected when the var it binds equals its `index`; a tap, or Enter or Space, writes the
+// index and then calls `on_select`. `Tabs` is the `tab_list` a screen reader announces, and the
+// engine makes it one Tab stop: Tab enters at the selected tab, the arrows (and Home and End)
+// move focus along it, Enter or Space selects. An arrow key moves focus without selecting, as
+// Material's tabs do by default. To show a screen for the selected tab, put a `NavHost` (or a
+// `when`) under the `Tabs`, in a `Column`.
+//
+// Why `bind` on each tab as well as the list: a view's slot is the caller's own code, so the
+// list cannot hand its var down to the tabs written inside it (see `Radio`). `variant` and
+// `scrollable` are likewise written on each tab, and must match `Tabs`. The binding is called
+// `current` because a binding named `selected` cannot be used in arithmetic (see the notes).
+//
+// The indicator is drawn by each tab, not by the list, because a view cannot see where its
+// siblings are. Every tab keeps one at the place of the selected tab (it knows its own width
+// and the distance in tabs) and shows it only while selected; so when the selection moves, the
+// indicator of the old tab slides over to the new one while fading out and the new one slides in
+// from the old place while fading in. That is exact for fixed tabs, whose widths are equal. A
+// scrollable tab does not know its neighbours' widths, so there the indicator only fades.
+//
+//   primary    48 high (64 with an icon over its label), indicator 3 high, as wide as the
+//              label or icon, top corners 3, `primary`; selected label `primary`
+//   secondary  48 high, indicator 2 high, the width of the tab, `primary`; selected label
+//              `on_surface`
+//   both       label `title_small`, unselected `on_surface_variant`, divider 1 `outline_variant`
+//              under the list, scrollable tabs at least 90 wide with 16 on a side
+
+enum TabVariant {
+    primary,
+    secondary,
+}
+
+private let tabHeight = 48
+private let tabStackedHeight = 64
+private let tabMinWidth = 90
+private let tabPadding = 16
+private let tabIconSize = 24
+private let tabDivider = 1
+
+View Tabs(content, label: Str = "", scrollable: Bool = false) {
+    inject Theme as t
+
+    Column {
+        when scrollable {
+            ScrollView #[axis: horizontal] {
+                Row #[a11y_role: tab_list, a11y_label: label] {
+                    content
+                }
+            }
+        } else {
+            Row #[a11y_role: tab_list, a11y_label: label] {
+                content
+            }
+        }
+        Box #[height: tabDivider, bg: t.outlineVariant, align_self: stretch] {}
+    }
+}
+
+View Tab(index: Int, bind current: Int, label: Str, icon: Str = "", badge: Slot = none,
+    variant: TabVariant = .primary, scrollable: Bool = false, disabled: Bool = false,
+    on_select: Fn() = {}) {
+    inject Theme as t
+
+    let on = current == index
+    let primary = variant == TabVariant.primary
+    let stacked = icon != "" && label != ""
+
+    // Measured, so the indicator knows how far a tab is and how wide the label is.
+    var tabWidth: Float = 0.0
+    var contentWidth: Float = 0.0
+
+    let ink = disabled ? t.onSurface.alpha(disabledContent)
+        : on ? (primary ? t.primary : t.onSurface)
+        : t.onSurfaceVariant
+    // The state layer: `primary` under a selected primary tab, `on_surface` elsewhere.
+    let layer = disabled ? t.onSurface : (primary && on) ? t.primary : t.onSurface
+
+    // How far the selected tab's indicator is from this tab's own place (only while the tabs
+    // are equal). An unselected tab keeps its indicator there, unseen, so it starts from the old
+    // place when the tab is selected.
+    let shift = (on || scrollable) ? 0.0 : (current - index) * tabWidth
+
+    Column #[
+        height: stacked ? tabStackedHeight : tabHeight,
+        grow: scrollable ? 0 : 1,
+        basis: scrollable ? () : 0,
+        shrink: 0,
+        min_width: scrollable ? tabMinWidth : 0,
+        p: (0, scrollable ? tabPadding : 0),
+        a11y_role: tab,
+        a11y_selected: on,
+        a11y_label: label,
+        disabled: disabled,
+        tap => {
+            current = index
+            on_select()
+        },
+    ] as tab {
+        on measure => { tabWidth = it.w }
+        on hover { overlay: layer.alpha(stateHover) with t.springEffectsFast }
+        on focus_visible {
+            overlay: layer.alpha(stateFocus) with t.springEffectsFast
+            outline: t.secondary
+            outline_width: focusRingWidth
+            outline_offset: scrollable ? -focusRingWidth : focusRingOffset
+        }
+        on pressed { overlay: layer.alpha(statePress) with t.springEffectsFast }
+
+        Box #[grow: 1, align: center, justify: center, align_self: stretch] {
+            Column #[align: center, gap: 2] {
+                on measure => { contentWidth = it.w }
+
+                when icon != "" {
+                    ZStack #[alignment: top_start] {
+                        Icon(icon, fill: on ? 1.0 : 0.0, size: tabIconSize, color: ink)
+                        when badge != none {
+                            Box #[ml: 14, mt: -2] { badge }
+                        }
+                    }
+                }
+                when label != "" {
+                    Row #[gap: 6, align: center] {
+                        Text(label) #[
+                            typo: t.titleSmall,
+                            color: ink with t.springEffectsFast,
+                            wrap: false,
+                        ]
+                        when icon == "" && badge != none {
+                            badge
+                        }
+                    }
+                }
+            }
+        }
+
+        Box #[
+            height: primary ? 3 : 2,
+            width: primary ? contentWidth : (),
+            align_self: primary ? center : stretch,
+            bg: t.primary,
+            radius: primary ? (3, 3, 0, 0) : 0,
+            opacity: on ? 1.0 : 0.0 with t.springEffectsFast,
+            translate.x: shift,
+        ] {}
+    }
+}
