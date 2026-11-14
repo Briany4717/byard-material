@@ -1,0 +1,98 @@
+# Scenarios for m.Carousel, on the CarouselScenarios view.
+view = "CarouselScenarios"
+size = "460x400"
+
+[[test]]
+name = "the carousel is a list of items, the first one selected"
+expect = [
+    'List "Places"', 'Group "Places" description "Arrow keys move between items" [focusable]',
+    'ListItem "Dunes" [selected]',
+    'ListItem "Harbour"',
+    'ListItem "Forest"',
+    'Label "Picked: -1"',
+]
+
+[[test]]
+name = "multi-browse: a large, a medium and a small item at rest"
+expect = [
+    'ListItem "Dunes" [selected] @ 40,30 175x200',
+    'ListItem "Harbour" @ 223,30 121x200',
+    'ListItem "Forest" @ 352,30 56x200',
+]
+
+[[test]]
+name = "a tap on an item picks it"
+steps = [{ tap = 'ListItem "Harbour"' }]
+expect = ['Label "Picked: 1"']
+
+[[test]]
+name = "Tab reaches the carousel once and goes on to the next control"
+steps = [{ key = "Tab" }]
+expect = ['Group "Places" description "Arrow keys move between items" [focusable focused]']
+
+[[test]]
+name = "the second Tab leaves the carousel"
+steps = [{ key = "Tab" }, { key = "Tab" }]
+expect = ['Button "After" [focusable focused]']
+
+[[test]]
+name = "Right moves to the next item and the carousel snaps to it"
+steps = [{ key = "Tab" }, { key = "Right" }, { key = "Right" }, { wait = 800 }]
+expect = ['ScrollView = scroll 366,0', 'ListItem "Forest" [selected] @ 40,30 175x200']
+not = ['ListItem "Dunes" [selected]']
+
+[[test]]
+name = "Left goes back"
+steps = [
+    { key = "Tab" },
+    { key = "Right" },
+    { key = "Right" },
+    { key = "Left" },
+    { wait = 800 },
+]
+expect = ['ScrollView = scroll 183,0', 'ListItem "Harbour" [selected] @ 40,30 175x200']
+
+[[test]]
+name = "Left at the start stays there"
+steps = [{ key = "Tab" }, { key = "Left" }, { wait = 800 }]
+expect = ['ScrollView = scroll 0,0', 'ListItem "Dunes" [selected]']
+
+[[test]]
+name = "End and Home go to the ends"
+steps = [
+    { key = "Tab" },
+    { key = "End" },
+    { wait = 800 },
+    { expect = ['ScrollView = scroll 1281,0', 'ListItem "Summit" [selected]'] },
+    { key = "Home" },
+    { wait = 800 },
+]
+expect = ['ScrollView = scroll 0,0', 'ListItem "Dunes" [selected]']
+
+[[test]]
+name = "Enter picks the current item"
+steps = [{ key = "Tab" }, { key = "Right" }, { key = "Enter" }]
+expect = ['Label "Picked: 1"']
+
+[[test]]
+name = "Space picks it too"
+steps = [{ key = "Tab" }, { key = "Right" }, { key = "Right" }, { key = "Space" }]
+expect = ['Label "Picked: 2"']
+
+[[test]]
+name = "the same in the dark scheme"
+scheme = "dark"
+steps = [{ key = "Tab" }, { key = "Right" }, { wait = 800 }]
+expect = ['ListItem "Harbour" [selected]']
+
+[[test]]
+name = "a drag that starts on a card scrolls the carousel and does not pick"
+steps = [{ hold = [150, 130] }, { hover = [100, 130] }, { hover = [40, 130] }, { release = [40, 130] }, { wait = 800 }]
+expect = ['Label "Picked: -1"']
+not = ['ScrollView = scroll 0,0']
+
+[[test]]
+name = "the items are one list item each, and only the carousel is a Tab stop"
+steps = [{ key = "Tab" }]
+expect = ['Group "Places" description "Arrow keys move between items" [focusable focused]', 'ListItem "Dunes" [selected]']
+not = ['ListItem "Harbour" [focusable', 'Button (unnamed)']
