@@ -29,3 +29,12 @@ expect = ['Label "Saves: 0"']
 name = "Tab walks the halves and Space presses"
 steps = [{ key = "Tab" }, { key = "Space" }, { key = "Tab" }, { key = "Space" }]
 expect = ['Label "Saves: 1"', 'Label "Menu: open"']
+
+[[test]]
+name = "the same in the dark scheme"
+scheme = "dark"
+expect = [
+    'Button "Save" [focusable]',
+    'Button "More options" [focusable collapsed]',
+    'Button "Send" [focusable disabled]',
+]
