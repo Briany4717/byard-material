@@ -103,3 +103,14 @@ name = "the same in the dark scheme"
 scheme = "dark"
 steps = [{ tap = 'Button "Open dialog"' }]
 expect = ['Dialog "Discard draft?"', 'Button "Cancel" [focusable focused]']
+
+[[test]]
+name = "autofocus on an action: a destructive dialog focuses the safe one, not the first"
+steps = [{ tap = 'Button "Delete photo"' }]
+expect = ['Dialog "Delete this photo?"', 'Button "Keep" [focusable focused]']
+not = ['Button "Delete" [focusable focused]']
+
+[[test]]
+name = "Enter on the autofocused action keeps the photo"
+steps = [{ tap = 'Button "Delete photo"' }, { key = "Enter" }]
+expect = ['Label "Result: kept"']
