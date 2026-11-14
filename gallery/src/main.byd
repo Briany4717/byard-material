@@ -16,6 +16,9 @@ enum Page {
     fab,
     textField,
     chips,
+    dialog,
+    menu,
+    sheets,
     tabs,
     navigationBar,
     navigationRail,
@@ -62,6 +65,12 @@ View Main() {
                 TextFieldPage()
             } else when page == Page.chips {
                 ChipsPage()
+            } else when page == Page.dialog {
+                DialogPage()
+            } else when page == Page.menu {
+                MenuPage()
+            } else when page == Page.sheets {
+                SheetsPage()
             } else when page == Page.tabs {
                 TabsPage()
             } else when page == Page.navigationBar {
@@ -94,6 +103,9 @@ View Main() {
                     m.Button("Fab", variant: .tonal, on_tap: { page = Page.fab })
                     m.Button("TextField", variant: .tonal, on_tap: { page = Page.textField })
                     m.Button("Chips", variant: .tonal, on_tap: { page = Page.chips })
+                    m.Button("Dialog", variant: .tonal, on_tap: { page = Page.dialog })
+                    m.Button("Menu", variant: .tonal, on_tap: { page = Page.menu })
+                    m.Button("Sheets", variant: .tonal, on_tap: { page = Page.sheets })
                     m.Button("Tabs", variant: .tonal, on_tap: { page = Page.tabs })
                     m.Button("NavigationBar", variant: .tonal, on_tap: { page = Page.navigationBar })
                     m.Button("NavigationRail", variant: .tonal, on_tap: { page = Page.navigationRail })
