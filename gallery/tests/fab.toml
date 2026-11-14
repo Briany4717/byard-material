@@ -36,7 +36,22 @@ not = ['@ 96,24 80x80']
 [[test]]
 name = "the menu opens, listing its items, and the fab becomes a close button"
 steps = [{ tap = 'Button "Add"' }]
-expect = ['Label "Open: yes"', 'Button "Close menu" [focusable focused expanded]', 'MenuItem "Photo"', 'MenuItem "Video"']
+expect = ['Label "Open: yes"', 'Button "Close menu" [focusable expanded]', 'MenuItem "Photo"', 'MenuItem "Video"']
+
+[[test]]
+name = "focus moves into the menu, to the first item"
+steps = [{ tap = 'Button "Add"' }]
+expect = ['Menu', 'MenuItem "Photo" [focusable focused]', 'MenuItem "Video" [focusable]']
+
+[[test]]
+name = "Down moves to the next item and Up goes back"
+steps = [{ tap = 'Button "Add"' }, { key = "ArrowDown" }, { expect = ['MenuItem "Video" [focusable focused]'] }, { key = "ArrowUp" }]
+expect = ['MenuItem "Photo" [focusable focused]']
+
+[[test]]
+name = "Enter on the focused item picks it"
+steps = [{ tap = 'Button "Add"' }, { key = "ArrowDown" }, { key = "Enter" }]
+expect = ['Label "Picked: 1"', 'Label "Open: no"']
 
 [[test]]
 name = "choosing an item closes the menu and reports it"
@@ -45,9 +60,14 @@ expect = ['Label "Picked: 1"', 'Label "Open: no"']
 not = ['MenuItem']
 
 [[test]]
-name = "Escape closes the menu"
-steps = [{ tap = 'Button "Add"' }, { key = "Escape" }]
-expect = ['Label "Open: no"']
+name = "Escape closes the menu and focus is back on the button"
+steps = [{ tap = 'Button "Add"' }, { key = "Escape" }, { wait = 1000 }]
+expect = ['Label "Open: no"', 'Button "Add" [focusable focused collapsed]']
+not = ['MenuItem']
+
+[[test]]
+name = "the items stay drawn, inert, while they leave"
+steps = [{ tap = 'Button "Add"' }, { wait = 1000 }, { key = "Escape" }, { expect = ['Label "Open: no"'] }, { wait = 1000 }]
 not = ['MenuItem']
 
 [[test]]
