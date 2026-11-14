@@ -19,9 +19,17 @@
 // there is no room. An item's action closes the menu by writing `open = false` itself: a slot is
 // the caller's code, so the menu cannot do it for them.
 //
-// Keyboard: the opener keeps focus when the menu opens (the engine has no way to move it, see
-// the notes), so Tab goes into the menu, at the selected item or the first, and the arrow keys
-// move between items, across groups. Enter or Space chooses, Escape closes.
+// Focus goes into the menu when it opens (to the selected item, else the first) and back to the
+// button when it closes. The menu is one Tab stop: Up, Down, Home and End move between items
+// across groups (they wrap), Enter or Space choose, Escape closes. It fades and drops in, and out.
+//
+// An item with a `submenu` shows a chevron; Right or Enter opens it beside the item and moves
+// focus into it, Left or Escape closes it and returns to the item. Escape closes only the top
+// menu.
+//
+//     m.MenuItem("Share", icon: "share", submenu: {
+//         m.MenuGroup { m.MenuItem("Email", on_tap: { open = false }) }
+//     })
 //
 // Measurements (starred: not sure of them)
 //   group    container surface_container_low*, corner large (16)*, padding 4*, level 2*, width 112 to 280
@@ -38,16 +46,21 @@ View Menu(bind open: Bool, anchor: Slot, content) {
     Box #[shrink: 0] as menuAnchor { anchor }
 
     when open {
-        Overlay #[scrim: t.scrim.alpha(0.0), dismiss => open = false] {
+        Overlay #[modal: false] {
             Column #[
-                anchor_to: "menuAnchor",
+                anchor_to: menuAnchor,
                 anchor_edge: below,
                 anchor_align: start,
                 anchor_gap: 2,
                 gap: 2,
-                a11y_role: tab_list,
+                opacity: 1.0 with t.springEffectsFast,
+                translate: (0, 0) with t.springSpatialFast,
+                a11y_role: menu,
                 a11y_label: "Menu",
+                dismiss => open = false,
             ] {
+                on enter { opacity: 0.0, translate: (0, -8) }
+                on leave { opacity: 0.0, translate: (0, -8) }
                 content
             }
         }
@@ -86,8 +99,10 @@ View MenuDivider() {
 }
 
 View MenuItem(label: Str, icon: Str = "", trailing_icon: Str = "", trailing_text: Str = "",
-    selected: Bool = false, disabled: Bool = false, on_tap: Fn() = {}) {
+    selected: Bool = false, disabled: Bool = false, submenu: Slot = none, on_tap: Fn() = {}) {
     inject Theme as t
+
+    var sub = false
 
     let container = selected ? t.tertiaryContainer : t.surfaceContainerLow.alpha(0.0)
     let ink = disabled ? t.onSurface.alpha(disabledContent)
@@ -102,12 +117,19 @@ View MenuItem(label: Str, icon: Str = "", trailing_icon: Str = "", trailing_text
         p: (0, 12),
         gap: 12,
         align: center,
-        a11y_role: tab,
+        a11y_role: menu_item,
         a11y_label: label,
         a11y_selected: selected,
+        a11y_expanded: submenu != none ? sub : none,
         disabled: disabled,
-        tap => on_tap(),
-    ] {
+        tap => {
+            if submenu != none {
+                sub = true
+            } else {
+                on_tap()
+            }
+        },
+    ] as item {
         on hover { overlay: ink.alpha(stateHover) with t.springEffectsFast }
         on focus_visible {
             overlay: ink.alpha(stateFocus) with t.springEffectsFast
@@ -126,6 +148,30 @@ View MenuItem(label: Str, icon: Str = "", trailing_icon: Str = "", trailing_text
         }
         when trailing_icon != "" {
             Icon(trailing_icon, size: 24, color: quiet)
+        }
+        when submenu != none {
+            Icon("chevron_right", size: 24, color: quiet)
+        }
+    }
+
+    when submenu != none && sub {
+        Overlay #[modal: false] {
+            Column #[
+                anchor_to: item,
+                anchor_edge: after,
+                anchor_align: start,
+                anchor_gap: 2,
+                gap: 2,
+                opacity: 1.0 with t.springEffectsFast,
+                translate: (0, 0) with t.springSpatialFast,
+                a11y_role: menu,
+                a11y_label: label,
+                dismiss => sub = false,
+            ] {
+                on enter { opacity: 0.0, translate: (-8, 0) }
+                on leave { opacity: 0.0, translate: (-8, 0) }
+                submenu
+            }
         }
     }
 }

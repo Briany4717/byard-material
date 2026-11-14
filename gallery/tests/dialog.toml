@@ -8,9 +8,17 @@ expect = ['Button "Open dialog"', 'Label "Open: no"']
 not = ['Dialog']
 
 [[test]]
-name = "a tap opens a dialog with its headline, text and actions"
+name = "a tap opens one dialog, named by its headline and described by its text"
 steps = [{ tap = 'Button "Open dialog"' }]
-expect = ['Dialog (unnamed) [modal]', 'Dialog "Discard draft?"', 'Label "It will be deleted."', 'Button "Cancel"', 'Button "Discard"']
+exact = ['Dialog "Discard draft?" described_by "It will be deleted." [modal]']
+expect = ['Label "Discard draft?"', 'Group "It will be deleted."', 'Button "Cancel"', 'Button "Discard"']
+not = ['(unnamed)']
+
+[[test]]
+name = "focus moves in on open, to the first action"
+steps = [{ tap = 'Button "Open dialog"' }]
+expect = ['Button "Cancel" [focusable focused]']
+not = ['Button "Open dialog" [focusable focused]']
 
 [[test]]
 name = "an action closes it and reports"
@@ -32,39 +40,66 @@ not = ['Dialog']
 
 [[test]]
 name = "a tap inside the dialog keeps it open"
-steps = [{ tap = 'Button "Open dialog"' }, { tap = 'Label "It will be deleted."' }]
+steps = [{ tap = 'Button "Open dialog"' }, { tap = 'Group "It will be deleted."' }]
 expect = ['Dialog "Discard draft?"']
 
 [[test]]
-name = "Tab stays inside the dialog and wraps"
-steps = [{ tap = 'Button "Open dialog"' }, { key = "Tab" }, { expect = ['Button "Cancel" [focusable focused]'] }, { key = "Tab" }, { expect = ['Button "Discard" [focusable focused]'] }, { key = "Tab" }]
-expect = ['Button "Cancel" [focusable focused]']
-not = ['Button "Open dialog" [focusable focused]']
+name = "Tab is trapped: it cycles between the actions and never reaches the page"
+steps = [{ tap = 'Button "Open dialog"' }, { key = "Tab" }, { expect = ['Button "Discard" [focusable focused]'] }, { key = "Tab" }, { expect = ['Button "Cancel" [focusable focused]'] }, { key = "Tab" }, { key = "Tab" }, { key = "Tab" }]
+expect = ['Button "Discard" [focusable focused]']
+not = ['Button "Open dialog" [focusable focused]', 'Button "Open full" [focusable focused]']
+
+[[test]]
+name = "Shift+Tab wraps backwards"
+steps = [{ tap = 'Button "Open dialog"' }, { key = "shift+Tab" }]
+expect = ['Button "Discard" [focusable focused]']
 
 [[test]]
 name = "Space presses the focused action"
-steps = [{ tap = 'Button "Open dialog"' }, { key = "Tab" }, { key = "Tab" }, { key = "Space" }]
+steps = [{ tap = 'Button "Open dialog"' }, { key = "Tab" }, { key = "Space" }]
 expect = ['Label "Result: discard"']
 
 [[test]]
-name = "the opener keeps focus through opening and closing by keyboard"
-steps = [{ key = "Tab" }, { key = "Space" }, { expect = ['Dialog "Discard draft?"'] }, { key = "Escape" }]
+name = "opened with the keyboard, Escape gives focus back to the opener"
+steps = [{ key = "Tab" }, { key = "Space" }, { expect = ['Dialog "Discard draft?"', 'Button "Cancel" [focusable focused]'] }, { key = "Escape" }]
 expect = ['Button "Open dialog" [focusable focused]', 'Label "Open: no"']
 not = ['Dialog']
 
 [[test]]
-name = "the full-screen dialog has a close button and an action"
+name = "closed by an action, focus returns to the opener"
+steps = [{ key = "Tab" }, { key = "Space" }, { key = "Tab" }, { key = "Space" }]
+expect = ['Button "Open dialog" [focusable focused]', 'Label "Result: discard"']
+
+[[test]]
+name = "opened with a tap, closing gives focus back to the opener as well"
+steps = [{ tap = 'Button "Open full"' }, { key = "Escape" }]
+expect = ['Button "Open full" [focusable focused]']
+
+[[test]]
+name = "the dialog is gone once its exit motion has run"
+steps = [{ tap = 'Button "Open dialog"' }, { key = "Escape" }, { wait = 400 }]
+not = ['Dialog', 'Cancel']
+
+[[test]]
+name = "the full-screen dialog is one node with a close button focused, and an action"
 steps = [{ tap = 'Button "Open full"' }]
-expect = ['Dialog (unnamed)', 'Button "Close"', 'Button "Save"', 'Label "Event details"']
+expect = ['Dialog "New event"', 'Button "Close" [focusable focused]', 'Button "Save"', 'Label "Event details"']
+not = ['(unnamed)']
+
+[[test]]
+name = "Tab stays in the full-screen dialog"
+steps = [{ tap = 'Button "Open full"' }, { key = "Tab" }, { expect = ['Button "Save" [focusable focused]'] }, { key = "Tab" }]
+expect = ['Button "Close" [focusable focused]']
+not = ['Button "Open dialog" [focusable focused]']
 
 [[test]]
 name = "the full-screen dialog closes with its button, with Escape and with its action"
-steps = [{ tap = 'Button "Open full"' }, { tap = 'Button "Close"' }, { expect = ['Label "Open: no"'] }, { tap = 'Button "Open full"' }, { key = "Escape" }, { tap = 'Button "Open full"' }, { tap = 'Button "Save"' }]
+steps = [{ tap = 'Button "Open full"' }, { tap = 'Button "Close"' }, { wait = 400 }, { expect = ['Label "Open: no"'] }, { tap = 'Button "Open full"' }, { key = "Escape" }, { wait = 400 }, { tap = 'Button "Open full"' }, { tap = 'Button "Save"' }]
 expect = ['Label "Result: saved"']
-not = ['Dialog']
+not = ['Dialog "New event"']
 
 [[test]]
 name = "the same in the dark scheme"
 scheme = "dark"
 steps = [{ tap = 'Button "Open dialog"' }]
-expect = ['Dialog "Discard draft?"']
+expect = ['Dialog "Discard draft?"', 'Button "Cancel" [focusable focused]']

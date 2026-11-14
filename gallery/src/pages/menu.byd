@@ -24,6 +24,14 @@ View MenuPage() {
                         m.MenuItem("Wrap lines", icon: "wrap_text", selected: wrap, on_tap: { wrap = !wrap
                             open = false })
                         m.MenuDivider()
+                        m.MenuItem("Share", icon: "share", submenu: {
+                            m.MenuGroup {
+                                m.MenuItem("Email", icon: "mail", on_tap: { open = false
+                                    last = "email" })
+                                m.MenuItem("Copy link", icon: "link", on_tap: { open = false
+                                    last = "link" })
+                            }
+                        })
                         m.MenuItem("Settings", icon: "settings", trailing_icon: "open_in_new", on_tap: { open = false
                             last = "settings" })
                     }
@@ -57,6 +65,14 @@ View MenuScenarios() {
             m.MenuGroup {
                 m.MenuItem("Wrap", selected: wrap, on_tap: { wrap = !wrap
                     open = false })
+                m.MenuItem("Share", icon: "share", submenu: {
+                    m.MenuGroup {
+                        m.MenuItem("Email", on_tap: { open = false
+                            last = "email" })
+                        m.MenuItem("Copy link", on_tap: { open = false
+                            last = "link" })
+                    }
+                })
                 m.MenuItem("Delete", icon: "delete", on_tap: { open = false
                     last = "delete" })
             }

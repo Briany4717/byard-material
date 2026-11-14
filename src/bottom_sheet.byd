@@ -4,9 +4,14 @@
 //
 //     m.BottomSheet(bind: open, modal: true) { Text("Share with") }
 //
-// It is there while `open` is true; its drag state starts over each time it opens. A drag down
+// It is there while `open` is true; its drag state starts over each time it opens. It slides up
+// from the bottom edge when it opens and back down when it closes. A modal one is a focus scope:
+// focus moves in (to the drag handle, the first stop), Tab stays inside, and focus goes back to
+// the opener on close. A standard one leaves focus and Tab to the page. A drag down
 // of more than 80 dp, released, closes it; a drag up of more
-// than 40 dp expands it to 400 dp; a drag short of that springs back.
+// than 40 dp expands it to 400 dp; a drag short of that springs back. The handle is also the
+// keyboard way in: Enter or Space (or a tap) toggles expanded, Up expands, Down collapses and
+// then closes.
 //
 // Measurements (starred: not sure of them)
 //   container surface_container_low, top corners 28, level 1 (modal)*, width up to 640
@@ -49,9 +54,11 @@ private View BottomSheetPanel(bind open: Bool, modal: Bool, drag_handle: Bool,
         max_width: 640,
         min_height: tall ? 400 : 0,
         translate: (0, dy < 0.0 ? 0.0 : dy) with t.springSpatialFast,
-        a11y_role: dialog,
+        a11y_role: modal ? dialog : group,
         a11y_label: "Bottom sheet",
     ] {
+        on enter { translate: (0, 480) }
+        on leave { translate: (0, 480) }
         when drag_handle {
             Box #[
                 height: 48,
@@ -61,6 +68,21 @@ private View BottomSheetPanel(bind open: Bool, modal: Bool, drag_handle: Bool,
                 a11y_role: slider,
                 a11y_label: handle_label,
                 a11y_value: tall ? "expanded" : "collapsed",
+                focus => {},
+                tap => {
+                    tall = !tall
+                },
+                key_down(k) => {
+                    if k == "ArrowUp" {
+                        tall = true
+                    } else if k == "ArrowDown" {
+                        if tall {
+                            tall = false
+                        } else {
+                            open = false
+                        }
+                    }
+                },
                 drag(e) => dy = e.dy,
                 drag_end(e) => {
                     if e.dy > 80.0 {
@@ -73,6 +95,13 @@ private View BottomSheetPanel(bind open: Bool, modal: Bool, drag_handle: Bool,
                     }
                 },
             ] {
+                on hover { overlay: t.onSurface.alpha(stateHover) with t.springEffectsFast }
+                on focus_visible {
+                    overlay: t.onSurface.alpha(stateFocus) with t.springEffectsFast
+                    outline: t.secondary
+                    outline_width: focusRingWidth
+                    outline_offset: -focusRingWidth
+                }
                 Box #[width: 32, height: 4, radius: 2, bg: t.onSurfaceVariant.alpha(0.4)]
             }
         }

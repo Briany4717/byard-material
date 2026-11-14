@@ -5,7 +5,10 @@
 //     m.SideSheet(bind: open, headline: "Filters", modal: true,
 //         actions: { m.Button("Apply", on_tap: { open = false }) }) { Text("...") }
 //
-// It sits at the end edge, the full height of the window.
+// It sits at the end edge, the full height of the window, and slides in from it when it opens
+// and back out when it closes. A modal one is a focus scope: focus moves in (to the close button
+// or the first control), Tab stays inside, and focus goes back to the opener on close. A standard
+// one leaves focus and Tab to the page.
 //
 // Measurements (starred: not sure of them)
 //   container surface_container_low (modal) or surface (standard)*, width 320*, 256 to 400 allowed
@@ -41,9 +44,12 @@ private View SideSheetPanel(bind open: Bool, headline: Str, modal: Bool, close_l
         shadow: modal ? "sm" : (),
         width: 320,
         grow: 1,
-        a11y_role: dialog,
+        translate: (0, 0) with t.springSpatialDefault,
+        a11y_role: modal ? dialog : group,
         a11y_label: headline,
     ] {
+        on enter { translate: (320, 0) }
+        on leave { translate: (320, 0) }
         Row #[height: 56, p: (0, 12, 0, 24), gap: 8, align: center, shrink: 0] {
             Text(headline) #[typo: t.titleLarge, color: t.onSurfaceVariant, grow: 1, wrap: false]
             IconButton("close", label: close_label, on_tap: { open = false })

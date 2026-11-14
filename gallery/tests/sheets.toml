@@ -8,32 +8,56 @@ expect = ['Label "Bottom: no"', 'Label "Side: no"']
 not = ['Dialog']
 
 [[test]]
-name = "the bottom sheet opens with a drag handle and its content"
+name = "the bottom sheet opens with a drag handle and its content, focus on the handle"
 steps = [{ tap = 'Button "Open bottom"' }]
-expect = ['Dialog "Bottom sheet"', 'Slider "Drag handle" = "collapsed"', 'Label "Share with"']
+expect = ['Dialog "Bottom sheet" [modal]', 'Slider "Drag handle" = "collapsed" [focusable focused]', 'Label "Share with"']
 
 [[test]]
-name = "Escape and a tap on the scrim close the bottom sheet"
-steps = [{ tap = 'Button "Open bottom"' }, { key = "Escape" }, { expect = ['Label "Bottom: no"'] }, { tap = 'Button "Open bottom"' }, { tap = [200, 40] }]
+name = "the bottom sheet slides in: it is lower mid-motion than at rest"
+steps = [{ tap = 'Button "Open bottom"' }, { wait = 40 }, { expect = ['Dialog "Bottom sheet" [modal]'] }]
+not = ['Dialog "Bottom sheet" [modal] @ 0,791']
+
+[[test]]
+name = "Tab stays in the modal bottom sheet"
+steps = [{ tap = 'Button "Open bottom"' }, { key = "Tab" }, { key = "Tab" }]
+expect = ['Slider "Drag handle" = "collapsed" [focusable focused]']
+not = ['Button "Open side" [focusable focused]']
+
+[[test]]
+name = "Escape closes the bottom sheet and focus goes back to the opener"
+steps = [{ key = "Tab" }, { key = "Space" }, { expect = ['Slider "Drag handle" = "collapsed" [focusable focused]'] }, { key = "Escape" }, { wait = 400 }]
+expect = ['Label "Bottom: no"', 'Button "Open bottom" [focusable focused]']
+not = ['Dialog']
+
+[[test]]
+name = "the handle is keyboard operable: Enter expands, Down collapses, Down again closes"
+steps = [{ tap = 'Button "Open bottom"' }, { key = "Enter" }, { expect = ['Slider "Drag handle" = "expanded"'] }, { key = "Down" }, { expect = ['Slider "Drag handle" = "collapsed"'] }, { key = "Down" }, { wait = 400 }]
 expect = ['Label "Bottom: no"']
 not = ['Dialog']
 
 [[test]]
-name = "the modal side sheet opens, Tab stays in it, its close button closes it"
-steps = [{ tap = 'Button "Open side"' }, { expect = ['Dialog "Filters"', 'Label "Stock"'] }, { key = "Tab" }, { expect = ['Button "Close" [focusable focused]'] }, { key = "Tab" }, { expect = ['Button "Close" [focusable focused]'] }, { key = "Space" }]
+name = "a tap on the scrim closes the bottom sheet"
+steps = [{ tap = 'Button "Open bottom"' }, { tap = [200, 40] }, { wait = 400 }]
+expect = ['Label "Bottom: no"']
+not = ['Dialog']
+
+[[test]]
+name = "the modal side sheet opens with focus on its close button, Tab stays in it, the button closes it"
+steps = [{ tap = 'Button "Open side"' }, { expect = ['Dialog "Filters" [modal]', 'Label "Stock"', 'Button "Close" [focusable focused]'] }, { key = "Tab" }, { expect = ['Button "Close" [focusable focused]'] }, { key = "Space" }, { wait = 400 }]
 expect = ['Label "Side: no"']
 not = ['Dialog']
 
 [[test]]
-name = "Escape closes the modal side sheet"
-steps = [{ tap = 'Button "Open side"' }, { key = "Escape" }]
-expect = ['Label "Side: no"']
+name = "Escape closes the modal side sheet and focus goes back to the opener"
+steps = [{ key = "Tab" }, { key = "Tab" }, { key = "Space" }, { expect = ['Button "Close" [focusable focused]'] }, { key = "Escape" }, { wait = 400 }]
+expect = ['Label "Side: no"', 'Button "Open side" [focusable focused]']
 not = ['Dialog']
 
 [[test]]
-name = "a standard side sheet leaves the page live"
-steps = [{ tap = 'Button "Toggle standard"' }, { expect = ['Dialog "Details"', 'Label "Beside"'] }, { tap = 'Button "Open bottom"' }]
+name = "a standard side sheet leaves the page live and focus where it was"
+steps = [{ tap = 'Button "Toggle standard"' }, { wait = 400 }, { expect = ['Group "Details"', 'Label "Beside"', 'Button "Toggle standard" [focusable focused]'] }, { tap = 'Button "Open bottom"' }]
 expect = ['Label "Bottom: yes"']
+not = ['Dialog "Details"']
 
 [[test]]
 name = "the same in the dark scheme"

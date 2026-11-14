@@ -5,58 +5,114 @@ size = "440x560"
 [[test]]
 name = "closed, there is only the button"
 expect = ['Button "Actions"', 'Label "Open: no"']
-not = ['TabList', 'Tab "Cut"']
+not = ['Menu', 'MenuItem "Cut"']
 
 [[test]]
-name = "a tap opens it, with its items and the disabled one marked"
+name = "a tap opens a menu of menu items, with the disabled one marked and the submenu opener collapsed"
 steps = [{ tap = 'Button "Actions"' }]
-expect = ['TabList "Menu"', 'Tab "Cut" [focusable]', 'Tab "Copy"', 'Tab "Paste" [focusable disabled]', 'Tab "Wrap"', 'Tab "Delete"']
+expect = ['Menu "Menu"', 'MenuItem "Cut" [focusable', 'MenuItem "Copy"', 'MenuItem "Paste" [focusable disabled]', 'MenuItem "Wrap"', 'MenuItem "Share" [focusable collapsed]', 'MenuItem "Delete"']
+not = ['TabList', 'Tab "', '(unnamed)', 'Dialog']
 
 [[test]]
-name = "Tab goes to the first item, the arrows move, Enter chooses"
-steps = [{ tap = 'Button "Actions"' }, { key = "Tab" }, { expect = ['Tab "Cut" [focusable focused]'] }, { key = "Down" }, { expect = ['Tab "Copy" [focusable focused]'] }, { key = "Enter" }]
+name = "focus moves into the menu on open, to the first item"
+steps = [{ tap = 'Button "Actions"' }]
+expect = ['MenuItem "Cut" [focusable focused]']
+not = ['Button "Actions" [focusable focused]']
+
+[[test]]
+name = "the menu is one Tab stop and traps Tab: it never moves to the next item or to the page"
+steps = [{ tap = 'Button "Actions"' }, { key = "Tab" }, { key = "Tab" }]
+expect = ['MenuItem "Cut" [focusable focused]']
+not = ['MenuItem "Copy" [focusable focused]', 'Button "Other" [focusable focused]']
+
+[[test]]
+name = "Down and Up move, Enter chooses"
+steps = [{ tap = 'Button "Actions"' }, { key = "Down" }, { expect = ['MenuItem "Copy" [focusable focused]'] }, { key = "Enter" }]
 expect = ['Label "Last: copy"', 'Label "Open: no"']
-not = ['TabList']
+not = ['Menu "Menu"']
 
 [[test]]
 name = "the arrows cross from one group to the next, skipping the disabled item"
-steps = [{ tap = 'Button "Actions"' }, { key = "Tab" }, { key = "Down" }, { key = "Down" }]
-expect = ['Tab "Wrap" [focusable focused]']
+steps = [{ tap = 'Button "Actions"' }, { key = "Down" }, { key = "Down" }]
+expect = ['MenuItem "Wrap" [focusable focused]']
 
 [[test]]
-name = "Up wraps to the last item"
-steps = [{ tap = 'Button "Actions"' }, { key = "Tab" }, { key = "Up" }]
-expect = ['Tab "Delete" [focusable focused]']
+name = "Up from the first wraps to the last, Home and End go to the ends"
+steps = [{ tap = 'Button "Actions"' }, { key = "Up" }, { expect = ['MenuItem "Delete" [focusable focused]'] }, { key = "Home" }, { expect = ['MenuItem "Cut" [focusable focused]'] }, { key = "End" }]
+expect = ['MenuItem "Delete" [focusable focused]']
 
 [[test]]
-name = "Escape closes it"
+name = "Escape closes it and focus goes back to the button"
 steps = [{ tap = 'Button "Actions"' }, { key = "Escape" }]
-expect = ['Label "Open: no"']
-not = ['TabList']
+expect = ['Label "Open: no"', 'Button "Actions" [focusable focused]']
+not = ['Menu "Menu"']
+
+[[test]]
+name = "opened with the keyboard, choosing an item gives focus back to the button"
+steps = [{ key = "Tab" }, { key = "Space" }, { expect = ['MenuItem "Cut" [focusable focused]'] }, { key = "Enter" }]
+expect = ['Label "Last: cut"', 'Button "Actions" [focusable focused]']
 
 [[test]]
 name = "a tap outside closes it"
 steps = [{ tap = 'Button "Actions"' }, { tap = [400, 500] }]
 expect = ['Label "Open: no"']
-not = ['TabList']
+not = ['Menu "Menu"']
 
 [[test]]
 name = "a tap on an item chooses it"
-steps = [{ tap = 'Button "Actions"' }, { tap = 'Tab "Delete"' }]
+steps = [{ tap = 'Button "Actions"' }, { tap = 'MenuItem "Delete"' }]
 expect = ['Label "Last: delete"', 'Label "Open: no"']
 
 [[test]]
 name = "a disabled item does nothing"
-steps = [{ tap = 'Button "Actions"' }, { tap = 'Tab "Paste"' }]
+steps = [{ tap = 'Button "Actions"' }, { tap = 'MenuItem "Paste"' }]
 expect = ['Label "Open: yes"', 'Label "Last: none"']
 
 [[test]]
+name = "the menu is gone once its exit motion has run"
+steps = [{ tap = 'Button "Actions"' }, { key = "Escape" }, { wait = 400 }]
+not = ['Menu "Menu"', 'MenuItem']
+
+[[test]]
+name = "Right on a submenu item opens it and focus goes in"
+steps = [{ tap = 'Button "Actions"' }, { key = "Up" }, { key = "Up" }, { expect = ['MenuItem "Share" [focusable focused collapsed]'] }, { key = "Right" }]
+expect = ['MenuItem "Share" [focusable expanded]', 'Menu "Share"', 'MenuItem "Email" [focusable focused]', 'MenuItem "Copy link"']
+
+[[test]]
+name = "Enter opens the submenu too, and the arrows move inside it"
+steps = [{ tap = 'Button "Actions"' }, { key = "Up" }, { key = "Up" }, { key = "Enter" }, { key = "Down" }]
+expect = ['MenuItem "Copy link" [focusable focused]']
+
+[[test]]
+name = "Left closes the submenu and focus returns to its item, the menu stays"
+steps = [{ tap = 'Button "Actions"' }, { key = "Up" }, { key = "Up" }, { key = "Right" }, { key = "Left" }, { wait = 400 }]
+expect = ['MenuItem "Share" [focusable focused collapsed]', 'Menu "Menu"', 'Label "Open: yes"']
+not = ['Menu "Share"', 'MenuItem "Email"']
+
+[[test]]
+name = "Escape closes only the submenu, a second Escape closes the menu"
+steps = [{ tap = 'Button "Actions"' }, { key = "Up" }, { key = "Up" }, { key = "Right" }, { key = "Escape" }, { wait = 400 }, { expect = ['Menu "Menu"', 'MenuItem "Share" [focusable focused collapsed]', 'Label "Open: yes"'] }, { key = "Escape" }]
+expect = ['Label "Open: no"', 'Button "Actions" [focusable focused]']
+not = ['Menu "Menu"']
+
+[[test]]
+name = "choosing a submenu item closes both and reports"
+steps = [{ tap = 'Button "Actions"' }, { key = "Up" }, { key = "Up" }, { key = "Right" }, { key = "Down" }, { key = "Enter" }, { wait = 400 }]
+expect = ['Label "Last: link"', 'Label "Open: no"', 'Button "Actions" [focusable focused]']
+not = ['Menu']
+
+[[test]]
+name = "a tap on a submenu item opens it"
+steps = [{ tap = 'Button "Actions"' }, { tap = 'MenuItem "Share"' }]
+expect = ['MenuItem "Share" [focusable expanded]', 'MenuItem "Email"']
+
+[[test]]
 name = "Tab enters at the selected item"
-steps = [{ tap = 'Button "Actions"' }, { tap = 'Tab "Wrap"' }, { tap = 'Button "Actions"' }, { key = "Tab" }]
-expect = ['Tab "Wrap" [focusable focused selected]']
+steps = [{ tap = 'Button "Actions"' }, { tap = 'MenuItem "Wrap"' }, { tap = 'Button "Actions"' }]
+expect = ['MenuItem "Wrap" [focusable focused selected]']
 
 [[test]]
 name = "the same in the dark scheme"
 scheme = "dark"
 steps = [{ tap = 'Button "Actions"' }]
-expect = ['Tab "Cut"']
+expect = ['MenuItem "Cut" [focusable focused]']

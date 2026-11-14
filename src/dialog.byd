@@ -14,8 +14,9 @@
 // writes `open = false`. The scrim is the theme's `scrim` at 32%, which the engine draws.
 // A full-screen dialog has no scrim to tap, so Escape and its close button dismiss it.
 //
-// Tab stays inside the dialog (the engine traps it). The engine cannot yet move focus into the
-// dialog when it opens or put it back on the opener when it closes: see the notes.
+// Focus goes into the dialog when it opens: to the first action (Material puts it on the
+// dismissive one, so a stray Enter does not confirm), and back to the button that opened it
+// when it closes. Tab stays inside, Escape closes. It fades and scales in, and out.
 //
 // Measurements (starred: not sure of them)
 //   basic: container surface_container_high, corner 28, padding 24, width 280 to 560, level 3
@@ -28,10 +29,23 @@ View Dialog(bind open: Bool, headline: Str, supporting_text: Str = "", icon: Str
     fullscreen: Bool = false, close_label: Str = "Close", actions: Slot = none, content) {
     inject Theme as t
 
+    // The supporting text is always drawn, empty when there is none, because what describes
+    // the dialog has to be tagged outside a `when` and must be a node of its own (a bare `Text`
+    // cannot be pointed at): a group named by the text, hidden when it is empty.
     when open {
         Overlay #[dismiss => open = false] {
             when fullscreen {
-                Column #[bg: t.surface, grow: 1, a11y_role: dialog] {
+                Column #[
+                    bg: t.surface,
+                    grow: 1,
+                    opacity: 1.0 with t.springEffectsFast,
+                    translate: (0, 0) with t.springSpatialDefault,
+                    a11y_role: dialog,
+                    a11y_label: headline,
+                    a11y_described_by: body,
+                ] {
+                    on enter { opacity: 0.0, translate: (0, 48) }
+                    on leave { opacity: 0.0, translate: (0, 48) }
                     Row #[height: 56, p: (0, 24, 0, 8), gap: 8, align: center, shrink: 0] {
                         IconButton("close", label: close_label, on_tap: { open = false })
                         Text(headline) #[
@@ -42,9 +56,18 @@ View Dialog(bind open: Bool, headline: Str, supporting_text: Str = "", icon: Str
                         ]
                         when actions != none { actions }
                     }
-                    Column #[grow: 1, p: (8, 24, 24, 24), gap: 16] {
-                        when supporting_text != "" {
-                            Text(supporting_text) #[typo: t.bodyMedium, color: t.onSurfaceVariant]
+                    Column #[grow: 1, p: (8, 24, 24, 24)] {
+                        Box #[
+                            mb: supporting_text != "" ? 16 : 0,
+                            a11y_role: group,
+                            a11y_label: supporting_text,
+                            a11y_hidden: supporting_text == "",
+                        ] as body {
+                            Text(supporting_text) #[
+                                typo: t.bodyMedium,
+                                color: t.onSurfaceVariant,
+                                a11y_hidden: true,
+                            ]
                         }
                         content
                     }
@@ -56,26 +79,39 @@ View Dialog(bind open: Bool, headline: Str, supporting_text: Str = "", icon: Str
                     radius: t.cornerXl,
                     shadow: "lg",
                     p: 24,
-                    gap: 16,
                     min_width: 280,
                     max_width: 560,
+                    opacity: 1.0 with t.springEffectsFast,
+                    scale: 1.0 with t.springSpatialFast,
                     a11y_role: dialog,
                     a11y_label: headline,
+                    a11y_described_by: body,
                 ] {
+                    on enter { opacity: 0.0, scale: 0.8 }
+                    on leave { opacity: 0.0, scale: 0.8 }
                     when icon != "" {
-                        Icon(icon, size: 24, color: t.secondary) #[align_self: center]
+                        Icon(icon, size: 24, color: t.secondary) #[align_self: center, mb: 16]
                     }
                     Text(headline) #[
                         typo: t.headlineSmall,
                         color: t.onSurface,
                         align_self: icon != "" ? center : start,
                     ]
-                    when supporting_text != "" {
-                        Text(supporting_text) #[typo: t.bodyMedium, color: t.onSurfaceVariant]
+                    Box #[
+                        mt: supporting_text != "" ? 16 : 0,
+                        a11y_role: group,
+                        a11y_label: supporting_text,
+                        a11y_hidden: supporting_text == "",
+                    ] as body {
+                        Text(supporting_text) #[
+                            typo: t.bodyMedium,
+                            color: t.onSurfaceVariant,
+                            a11y_hidden: true,
+                        ]
                     }
                     content
                     when actions != none {
-                        Row #[gap: 8, justify: end, align: center, mt: 8] { actions }
+                        Row #[gap: 8, justify: end, align: center, mt: 24] { actions }
                     }
                 }
             }
