@@ -1,0 +1,84 @@
+use material as m
+
+// m.Menu: groups, icons, trailing text, a selected item, dividers. Opens from its button.
+
+View MenuPage() {
+    inject Theme as t
+    var open = false
+    var wrap = true
+    var last = "nothing yet"
+    Column #[p: 24, gap: 32, bg: t.surface, grow: 1] {
+        Section("Menu") {
+            Line("button") {
+                m.Menu(bind: open, anchor: {
+                    m.Button("Edit", variant: .tonal, icon: "edit", on_tap: { open = !open })
+                }) {
+                    m.MenuGroup {
+                        m.MenuItem("Cut", icon: "content_cut", trailing_text: "Ctrl+X", on_tap: { open = false
+                            last = "cut" })
+                        m.MenuItem("Copy", icon: "content_copy", trailing_text: "Ctrl+C", on_tap: { open = false
+                            last = "copy" })
+                        m.MenuItem("Paste", icon: "content_paste", disabled: true)
+                    }
+                    m.MenuGroup(label: "View") {
+                        m.MenuItem("Wrap lines", icon: "wrap_text", selected: wrap, on_tap: { wrap = !wrap
+                            open = false })
+                        m.MenuDivider()
+                        m.MenuItem("Share", icon: "share", submenu: {
+                            m.MenuGroup {
+                                m.MenuItem("Email", icon: "mail", on_tap: { open = false
+                                    last = "email" })
+                                m.MenuItem("Copy link", icon: "link", on_tap: { open = false
+                                    last = "link" })
+                            }
+                        })
+                        m.MenuItem("Settings", icon: "settings", trailing_icon: "open_in_new", on_tap: { open = false
+                            last = "settings" })
+                    }
+                }
+            }
+            Line("last") { Text("{last}, wrap {wrap ? "on" : "off"}") #[
+                typo: t.bodyMedium,
+                color: t.onSurfaceVariant,
+            ] }
+        }
+    }
+}
+
+// For `tests/menu.toml`.
+View MenuScenarios() {
+    inject Theme as t
+    var open = false
+    var wrap = false
+    var last = "none"
+    Column #[p: 24, gap: 16, align: start, bg: t.surface, grow: 1] {
+        m.Menu(bind: open, anchor: {
+            m.Button("Actions", on_tap: { open = !open })
+        }) {
+            m.MenuGroup {
+                m.MenuItem("Cut", icon: "content_cut", trailing_text: "Ctrl+X", on_tap: { open = false
+                    last = "cut" })
+                m.MenuItem("Copy", icon: "content_copy", on_tap: { open = false
+                    last = "copy" })
+                m.MenuItem("Paste", disabled: true)
+            }
+            m.MenuGroup {
+                m.MenuItem("Wrap", selected: wrap, on_tap: { wrap = !wrap
+                    open = false })
+                m.MenuItem("Share", icon: "share", submenu: {
+                    m.MenuGroup {
+                        m.MenuItem("Email", on_tap: { open = false
+                            last = "email" })
+                        m.MenuItem("Copy link", on_tap: { open = false
+                            last = "link" })
+                    }
+                })
+                m.MenuItem("Delete", icon: "delete", on_tap: { open = false
+                    last = "delete" })
+            }
+        }
+        Text("Last: {last}")
+        Text("Open: {open ? "yes" : "no"}")
+        m.Button("Other")
+    }
+}

@@ -20,6 +20,11 @@ enum Page {
     loading,
     snackbar,
     tooltip,
+    search,
+    carousel,
+    dialog,
+    menu,
+    sheets,
     tabs,
     navigationBar,
     navigationRail,
@@ -74,6 +79,16 @@ View Main() {
                 SnackbarPage()
             } else when page == Page.tooltip {
                 TooltipPage()
+            } else when page == Page.search {
+                SearchPage()
+            } else when page == Page.carousel {
+                CarouselPage()
+            } else when page == Page.dialog {
+                DialogPage()
+            } else when page == Page.menu {
+                MenuPage()
+            } else when page == Page.sheets {
+                SheetsPage()
             } else when page == Page.tabs {
                 TabsPage()
             } else when page == Page.navigationBar {
@@ -110,6 +125,11 @@ View Main() {
                     m.Button("LoadingIndicator", variant: .tonal, on_tap: { page = Page.loading })
                     m.Button("Snackbar", variant: .tonal, on_tap: { page = Page.snackbar })
                     m.Button("Tooltip", variant: .tonal, on_tap: { page = Page.tooltip })
+                    m.Button("Search", variant: .tonal, on_tap: { page = Page.search })
+                    m.Button("Carousel", variant: .tonal, on_tap: { page = Page.carousel })
+                    m.Button("Dialog", variant: .tonal, on_tap: { page = Page.dialog })
+                    m.Button("Menu", variant: .tonal, on_tap: { page = Page.menu })
+                    m.Button("Sheets", variant: .tonal, on_tap: { page = Page.sheets })
                     m.Button("Tabs", variant: .tonal, on_tap: { page = Page.tabs })
                     m.Button("NavigationBar", variant: .tonal, on_tap: { page = Page.navigationBar })
                     m.Button("NavigationRail", variant: .tonal, on_tap: { page = Page.navigationRail })

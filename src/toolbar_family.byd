@@ -11,3 +11,12 @@ enum ToolbarOrientation {
     horizontal,
     vertical,
 }
+
+// The colour a toolbar gives the standard IconButtons drawn in it, so the caller writes none:
+// `on_primary_container` on a vibrant toolbar. Outside a toolbar, or in a standard one, `tinted` is
+// false and the button keeps its own colour. (`tinted` and not an optional `color`: a `none` from
+// a `?:` arm reads as colour 0, not as nothing.)
+private context ToolbarContent {
+    tinted: Bool = false
+    ink: Color = 0
+}

@@ -8,6 +8,11 @@
 // Put the button where a FAB goes (the bottom end of a screen) and the list opens upwards from
 // it, lined up with its end. Choosing an item closes the menu and calls `on_select(index)`.
 //
+// The list is a `menu`, so it is a focus scope: focus goes to the first item when it opens,
+// Up and Down walk the items, Escape closes it and focus is back on the button. The items
+// arrive and leave in turn (`on enter` / `on leave`, the nearest to the button first) on the
+// theme's springs.
+//
 // The items take the colour set's container colour and the close button its filled colour:
 // primary containers give primary, secondary secondary, and a filled set stays itself. I was not
 // sure of this pairing, nor of the 4 dp between items; see the notes.
@@ -75,7 +80,7 @@ View FabMenu(items: List<Str>, bind open: Bool, icons: List<Str> = [], icon: Str
     when open {
         Overlay #[modal: false] {
             Column #[
-                anchor_to: "menuFab",
+                anchor_to: menuFab,
                 anchor_edge: above,
                 anchor_align: end,
                 anchor_gap: 8,
@@ -85,12 +90,12 @@ View FabMenu(items: List<Str>, bind open: Bool, icons: List<Str> = [], icon: Str
                 dismiss => open = false,
             ] {
                 for i, item in items {
-                    // The items come in (a stagger takes numeric literals only, so these are
-                    // Material's spatial-fast spring and a short fade by value, not by token) one after another from the button upwards: the one
-                    // nearest it first.
+                    // One after another from the button upwards: the item nearest it moves
+                    // first, going in and coming out. The motion is the theme's; `on enter`
+                    // and `on leave` say where an item starts and where it goes.
                     Row #[
-                        opacity: 1.0 with anim.stagger(linear(100ms, from: 0.0), 40ms, items.len - 1 - i),
-                        translate: (0, 0) with anim.stagger(spring(stiffness: 1400, damping_ratio: 0.9, from: (0, 24)), 40ms, items.len - 1 - i),
+                        opacity: 1.0 with anim.stagger(t.springEffectsFast, 40ms, items.len - 1 - i),
+                        translate: (0, 0) with anim.stagger(t.springSpatialFast, 40ms, items.len - 1 - i),
                         bg: itemContainer,
                         radius: 28,
                         height: 56,
@@ -98,11 +103,14 @@ View FabMenu(items: List<Str>, bind open: Bool, icons: List<Str> = [], icon: Str
                         gap: 8,
                         align: center,
                         a11y_role: menu_item,
+                        autofocus: i == 0,
                         tap => {
                             open = false
                             on_select(i)
                         },
                     ] {
+                        on enter { opacity: 0.0, translate: (0, 24) }
+                        on leave { opacity: 0.0, translate: (0, 24) }
                         on hover { overlay: itemInk.alpha(stateHover) with t.springEffectsFast }
                         on focus_visible {
                             overlay: itemInk.alpha(stateFocus) with t.springEffectsFast

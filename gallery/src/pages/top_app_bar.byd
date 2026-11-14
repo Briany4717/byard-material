@@ -38,14 +38,16 @@ View TopAppBarPage() {
 
 // A bar's rectangle: the page's width would stretch it too far to read.
 View Frame(h: Int, content) {
-    Clip #[width: 400, height: h] { content }
+    Clip #[width: 400, height: h] {
+        Column #[width: 400, height: h] { content }
+    }
 }
 
 View CollapsingDemo(y0: Float, variant: m.TopAppBarVariant) {
     inject Theme as t
     var y = y0
     Clip #[width: 300, height: 320, rrect: 12] {
-        ScrollView #[collapse_header: true, collapse_min: 64, offset: (0, y), grow: 1] {
+        ScrollView #[collapse_header: true, collapse_min: 64, offset: (0, y), width: 300, height: 320] {
             m.TopAppBar("Inbox", variant: variant, subtitle: "12 unread", collapse: scroll_fraction,
                 navigation: { m.IconButton("arrow_back", label: "Back") },
                 actions: { m.IconButton("search", label: "Search") })
@@ -71,8 +73,8 @@ View TopAppBarScenarios() {
             m.Button("Top", variant: .tonal, on_tap: { y = 0.0 })
             Text("Taps: {taps}")
         }
-        Clip #[width: 360, height: 400] {
-            ScrollView #[collapse_header: true, collapse_min: 64, offset: (0, y), grow: 1] {
+        Clip #[width: 300, height: 320] {
+            ScrollView #[collapse_header: true, collapse_min: 64, offset: (0, y), width: 360, height: 400] {
                 m.TopAppBar("Inbox", variant: .large, subtitle: "12 unread", collapse: scroll_fraction,
                     navigation: { m.IconButton("arrow_back", label: "Back", on_tap: { taps += 1 }) },
                     actions: { m.IconButton("search", label: "Search") m.IconButton("more_vert", label: "More", disabled: true) })

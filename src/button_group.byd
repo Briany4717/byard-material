@@ -5,13 +5,15 @@
 // and last are fully round, the corners between them small, and a selected item rounds fully.
 // Selection is none (plain buttons), single (one index) or multi (any number).
 //
-//     m.ButtonGroup(["Day", "Week", "Month"], bind: range)               // var range: List<Int> = [0]
-//     m.ButtonGroup(["Bold", "Italic"], icons: ["format_bold", "format_italic"],
-//         type: .connected, selection: .multi, bind: styles)
+//     m.ButtonGroup(["Day", "Week", "Month"])                       // keeps its own selection
+//     m.ButtonGroup(["Day", "Week", "Month"], bind: range)          // var range = 0
+//     m.MultiButtonGroup(["Bold", "Italic"], icons: ["format_bold", "format_italic"],
+//         type: .connected, bind: styles)                           // var styles: List<Int> = []
 //
-// The selection is a list of indices, so one binding serves single and multi. A group with
-// `selection: .none` still takes a binding (give it a spare `var`) and reports taps through
-// `on_tap(index)`. `icon_only` hides the labels but keeps them for a screen reader.
+// `ButtonGroup` selects one item and binds its index; with no `bind` it keeps the index itself,
+// starting at 0. `selectable: false` makes plain buttons that only report `on_tap(index)`.
+// `MultiButtonGroup` is the same group where any number are on, bound to a list of indices
+// (empty to start). `icon_only` hides the labels but keeps them for a screen reader.
 //
 // A standard group's pressed item widens by `groupWiden` on each side and the ones beside it
 // narrow by `groupNarrow`, on a spatial spring (padding with motion). In a connected group the
@@ -23,12 +25,6 @@
 enum ButtonGroupType {
     standard,
     connected,
-}
-
-enum ButtonGroupSelection {
-    none,
-    single,
-    multi,
 }
 
 // The space between items. A standard group's falls as the buttons grow; a connected group's is
@@ -69,33 +65,48 @@ private fn groupNarrow(size: ButtonSize) -> Int =>
 private fn groupIconPad(size: ButtonSize) -> Int =>
     size == ButtonSize.xs ? 6 : size == ButtonSize.s ? 10 : size == ButtonSize.m ? 16 : size == ButtonSize.l ? 32 : 48
 
-View ButtonGroup(items: List<Str>, bind selected: List<Int>, icons: List<Str> = [],
+View ButtonGroup(items: List<Str>, bind selected: Int = 0, icons: List<Str> = [],
     type: ButtonGroupType = .standard, variant: ButtonVariant = .tonal, size: ButtonSize = .s,
-    shape: ButtonShape = .round, selection: ButtonGroupSelection = .single,
-    icon_only: Bool = false, disabled: Bool = false, on_tap: Fn(Int) = none) {
-    inject Theme as t
+    shape: ButtonShape = .round, selectable: Bool = true, icon_only: Bool = false,
+    disabled: Bool = false, on_tap: Fn(Int) = none) {
+    GroupRow(items, selectable ? [selected] : [], icons, type, variant, size, shape, selectable,
+        icon_only, disabled, on_pick: {|i|
+            if selectable {
+                selected = i
+            }
+            on_tap(i)
+        })
+}
 
+// The same group with any number of items on: `bind` is the list of their indices.
+View MultiButtonGroup(items: List<Str>, bind chosen: List<Int> = [], icons: List<Str> = [],
+    type: ButtonGroupType = .standard, variant: ButtonVariant = .tonal, size: ButtonSize = .s,
+    shape: ButtonShape = .round, icon_only: Bool = false, disabled: Bool = false,
+    on_tap: Fn(Int) = none) {
+    GroupRow(items, chosen, icons, type, variant, size, shape, true, icon_only, disabled,
+        on_pick: {|i|
+            if chosen.contains(i) {
+                chosen = chosen.filter(j => j != i)
+            } else {
+                chosen = chosen.push(i)
+            }
+            on_tap(i)
+        })
+}
+
+// The row both share. `marked` says which indices are on.
+private View GroupRow(items: List<Str>, marked: List<Int>, icons: List<Str>, type: ButtonGroupType,
+    variant: ButtonVariant, size: ButtonSize, shape: ButtonShape, toggle: Bool, icon_only: Bool,
+    disabled: Bool, on_pick: Fn(Int)) {
     // The item the pointer is down on, or -1: a standard group reads it to widen that item.
     var down = -1
 
     Row #[gap: groupGap(size, type), align: center, a11y_role: group] {
         for i, label in items {
             GroupItem(label, icons.len > i ? icons[i] : "", i, items.len, bind down: down,
-                type: type, variant: variant, size: size, shape: shape,
-                toggle: selection != ButtonGroupSelection.none,
-                on: selected.contains(i), icon_only: icon_only, disabled: disabled,
-                on_tap: {
-                    if selection == ButtonGroupSelection.multi {
-                        if selected.contains(i) {
-                            selected = selected.filter(j => j != i)
-                        } else {
-                            selected = selected.push(i)
-                        }
-                    } else if selection == ButtonGroupSelection.single {
-                        selected = [i]
-                    }
-                    on_tap(i)
-                })
+                type: type, variant: variant, size: size, shape: shape, toggle: toggle,
+                on: marked.contains(i), icon_only: icon_only, disabled: disabled,
+                on_tap: { on_pick(i) })
         }
     }
 }

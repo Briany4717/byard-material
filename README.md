@@ -27,10 +27,13 @@ are Material's (a `seed` there recolours all of it).
 
 It is early. The design is RFC-0050 in Byard's repository. So far there are `Button`,
 `IconButton`, `Icon`, `TextField`, the four chips (`AssistChip`, `FilterChip`, `InputChip`,
-`SuggestionChip`), `ButtonGroup`, `SplitButton`, `Fab`, `ExtendedFab`, `FabMenu`, `Switch`,
-`Checkbox`, `Radio`, `RadioGroup`, `Slider`, `RangeSlider`, `NavigationBar`, `NavigationRail` and `Tabs`, `TopAppBar`, `Card`, `ListItem` with `List`,
-`Divider`, `Badge`, `BadgedIcon`, `BottomAppBar`, `DockedToolbar` and `FloatingToolbar`, `Snackbar`, `SnackbarHost`, `Tooltip`,
-`LoadingIndicator`, `LinearProgressIndicator` and `CircularProgressIndicator`; the rest of the components are on their way. How a component is
+`SuggestionChip`), `ButtonGroup`,`MultiButtonGroup`, `SplitButton`, `Fab`, `ExtendedFab`, `FabMenu`, `Switch`,
+`Checkbox`, `Radio`, `RadioGroup`, `Slider`, `RangeSlider`, `SearchBar`, `SearchView`, `Carousel`, 
+`NavigationBar`, `NavigationRail` and `Tabs`, `TopAppBar`, `Card`, `ListItem` with `List`,
+`Divider`, `Badge`, `BadgedIcon`, `BottomAppBar`, `DockedToolbar`, `FloatingToolbar`,  `Dialog`, `Snackbar`, `SnackbarHost`, `Tooltip`,
+`LoadingIndicator`, `LinearProgressIndicator`, `CircularProgressIndicator`, `Menu` (with `MenuGroup`, 
+`MenuItem`, `MenuDivider`), `BottomSheet` and `SideSheet`; the rest of the components are on
+their way. How a component is
 written here is in [CONVENTIONS.md](CONVENTIONS.md).
 
 This package is also how Byard's package system gets tested for real: it lives in its own

@@ -1,0 +1,19 @@
+// The measurements Material 3 gives its search components, shared by SearchBar, SearchView and
+// their field. Private.
+//
+//   search bar:   container height 56, fully round (28), surface_container_high, elevation level 3;
+//                 leading icon 24 at 16 from the edge, 16 between icon and text, text body_large,
+//                 placeholder on_surface_variant, trailing icons on_surface_variant, an avatar 30
+//   search view:  docked: container extra large (28), surface_container_high, header 56 high,
+//                 a 1 dp divider (outline) under it, list rows 56 high; full screen: no corners,
+//                 header 72 high
+//   list row:     56 high, 16 each side, icon 24, 16 between icon and text, body_large on_surface
+
+private let searchBarHeight = 56
+private let searchBarRadius = 28
+private let searchIconSize = 24
+private let searchViewRadius = 28
+private let searchViewHeader = 56
+private let searchViewFullHeader = 72
+private let searchRowHeight = 56
+private let searchDividerHeight = 1

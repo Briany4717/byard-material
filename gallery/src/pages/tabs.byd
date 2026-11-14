@@ -24,6 +24,9 @@ View TabsPage() {
         Section("With a badge and a disabled tab") {
             Column #[width: 480] { BadgedTabs() }
         }
+        Section("Without a bind, and a lone tab") {
+            Column #[gap: 16, width: 480] { OwnSelectionTabs() }
+        }
         Section("Under a NavHost") {
             Column #[width: 480] { HostedTabs() }
         }
@@ -50,62 +53,72 @@ View NavDemoBadge(text: Str = "") {
 
 View PrimaryFixed() {
     var tab = 0
-    m.Tabs(label: "Sections") {
-        m.Tab(0, bind: tab, label: "Flights")
-        m.Tab(1, bind: tab, label: "Trips")
-        m.Tab(2, bind: tab, label: "Explore")
+    m.Tabs(bind: tab, label: "Sections") {
+        m.Tab(0, label: "Flights")
+        m.Tab(1, label: "Trips")
+        m.Tab(2, label: "Explore")
     }
 }
 
 View PrimaryIcons() {
     var tab = 1
-    m.Tabs(label: "Modes") {
-        m.Tab(0, bind: tab, label: "Flights", icon: "flight")
-        m.Tab(1, bind: tab, label: "Trips", icon: "luggage")
-        m.Tab(2, bind: tab, label: "Explore", icon: "explore")
+    m.Tabs(bind: tab, label: "Modes") {
+        m.Tab(0, label: "Flights", icon: "flight")
+        m.Tab(1, label: "Trips", icon: "luggage")
+        m.Tab(2, label: "Explore", icon: "explore")
     }
 }
 
 View SecondaryFixed() {
     var tab = 0
-    m.Tabs(label: "Filters") {
-        m.Tab(0, bind: tab, label: "Flights", variant: .secondary)
-        m.Tab(1, bind: tab, label: "Trips", variant: .secondary)
-        m.Tab(2, bind: tab, label: "Explore", variant: .secondary)
+    m.Tabs(bind: tab, variant: .secondary, label: "Filters") {
+        m.Tab(0, label: "Flights")
+        m.Tab(1, label: "Trips")
+        m.Tab(2, label: "Explore")
     }
 }
 
 View ScrollablePrimary() {
     var tab = 0
-    m.Tabs(label: "Categories", scrollable: true) {
-        m.Tab(0, bind: tab, label: "Flights", scrollable: true)
-        m.Tab(1, bind: tab, label: "Hotels and lodging", scrollable: true)
-        m.Tab(2, bind: tab, label: "Cars", scrollable: true)
-        m.Tab(3, bind: tab, label: "Experiences", scrollable: true)
-        m.Tab(4, bind: tab, label: "Cruises", scrollable: true)
-        m.Tab(5, bind: tab, label: "Trains", scrollable: true)
+    m.Tabs(bind: tab, scrollable: true, label: "Categories") {
+        m.Tab(0, label: "Flights")
+        m.Tab(1, label: "Hotels and lodging")
+        m.Tab(2, label: "Cars")
+        m.Tab(3, label: "Experiences")
+        m.Tab(4, label: "Cruises")
+        m.Tab(5, label: "Trains")
     }
 }
 
 View ScrollableSecondary() {
     var tab = 1
-    m.Tabs(label: "More categories", scrollable: true) {
-        m.Tab(0, bind: tab, label: "Flights", variant: .secondary, scrollable: true)
-        m.Tab(1, bind: tab, label: "Hotels and lodging", variant: .secondary, scrollable: true)
-        m.Tab(2, bind: tab, label: "Cars", variant: .secondary, scrollable: true)
-        m.Tab(3, bind: tab, label: "Experiences", variant: .secondary, scrollable: true)
-        m.Tab(4, bind: tab, label: "Cruises", variant: .secondary, scrollable: true)
-        m.Tab(5, bind: tab, label: "Trains", variant: .secondary, scrollable: true)
+    m.Tabs(bind: tab, variant: .secondary, scrollable: true, label: "More categories") {
+        m.Tab(0, label: "Flights")
+        m.Tab(1, label: "Hotels and lodging")
+        m.Tab(2, label: "Cars")
+        m.Tab(3, label: "Experiences")
+        m.Tab(4, label: "Cruises")
+        m.Tab(5, label: "Trains")
     }
 }
 
 View BadgedTabs() {
     var tab = 0
-    m.Tabs(label: "Inbox") {
-        m.Tab(0, bind: tab, label: "Primary", icon: "inbox", badge: { NavDemoBadge("3") })
-        m.Tab(1, bind: tab, label: "Social", icon: "group", badge: { NavDemoBadge() })
-        m.Tab(2, bind: tab, label: "Promos", icon: "sell", disabled: true)
+    m.Tabs(bind: tab, label: "Inbox") {
+        m.Tab(0, label: "Primary", icon: "inbox", badge: { NavDemoBadge("3") })
+        m.Tab(1, label: "Social", icon: "group", badge: { NavDemoBadge() })
+        m.Tab(2, label: "Promos", icon: "sell", disabled: true)
     }
+}
+
+// No `bind:`: the tabs keep their own selection. A Tab outside any Tabs shows the defaults.
+View OwnSelectionTabs() {
+    m.Tabs(label: "Own") {
+        m.Tab(0, label: "Flights")
+        m.Tab(1, label: "Trips")
+        m.Tab(2, label: "Explore")
+    }
+    m.Tab(0, label: "Alone")
 }
 
 View HostedTabs() {
@@ -114,10 +127,10 @@ View HostedTabs() {
     var homePath = "/"
     let name = tab == 0 ? "flights" : tab == 1 ? "trips" : "explore"
     Column #[bg: t.surface] {
-        m.Tabs(label: "Travel") {
-            m.Tab(0, bind: tab, label: "Flights")
-            m.Tab(1, bind: tab, label: "Trips")
-            m.Tab(2, bind: tab, label: "Explore")
+        m.Tabs(bind: tab, label: "Travel") {
+            m.Tab(0, label: "Flights")
+            m.Tab(1, label: "Trips")
+            m.Tab(2, label: "Explore")
         }
         NavHost(active: name) #[height: 96, transition: fade] {
             tab "flights" {
@@ -140,13 +153,20 @@ View TabsScenarios() {
     var picked = 0
     Column #[p: 24, gap: 8, align: start, bg: t.surface, grow: 1] {
         Column #[width: 400] {
-            m.Tabs(label: "Sections") {
-                m.Tab(0, bind: tab, label: "Flights", on_select: { picked++ })
-                m.Tab(1, bind: tab, label: "Trips", icon: "luggage")
-                m.Tab(2, bind: tab, label: "Hold", disabled: true)
-                m.Tab(3, bind: tab, label: "Explore")
+            m.Tabs(bind: tab, label: "Sections") {
+                m.Tab(0, label: "Flights", on_select: { picked++ })
+                m.Tab(1, label: "Trips", icon: "luggage")
+                m.Tab(2, label: "Hold", disabled: true)
+                m.Tab(3, label: "Explore")
             }
         }
+        Column #[width: 400] {
+            m.Tabs(label: "Own") {
+                m.Tab(0, label: "Mine")
+                m.Tab(1, label: "Yours")
+            }
+        }
+        Row { m.Tab(0, label: "Alone") }
         Text("Tab is {tab}, picked {picked}")
         m.Button("Done", variant: .text)
     }

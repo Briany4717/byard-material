@@ -1,0 +1,66 @@
+// Material 3 search bar: a full pill with a leading icon, a field and room for trailing actions
+// or an avatar.
+//
+//     m.SearchBar(bind: query, placeholder: "Search songs", trailing: {
+//         m.IconButton("mic", label: "Voice search", variant: .standard)
+//     })
+//
+// `bind query` is the text. The field is Byard's bare TextField, named by `label`; the
+// placeholder is drawn over it while the text is empty and stays in view with focus, as
+// Material's does. `trailing` takes any elements (icon buttons, an avatar) and sits at the
+// end; `on_submit` runs on Enter and `on_open` when the bar is pressed, typed into or sent
+// ArrowDown (SearchView expands on it). Focus alone opens nothing, so Tab can pass over it.
+
+View SearchBar(bind query: Str, placeholder: Str = "Search", label: Str = "Search",
+    leading_icon: Str = "search", width: Int = 360, disabled: Bool = false,
+    trailing: Slot = none, on_open: Fn() = none, on_submit: Fn() = none) {
+    inject Theme as t
+
+    let ink = disabled ? t.onSurface.alpha(disabledContent) : t.onSurfaceVariant
+
+    Row #[
+        bg: disabled ? t.onSurface.alpha(disabledContainer) : t.surfaceContainerHigh with t.springEffectsFast,
+        radius: searchBarRadius,
+        shadow: disabled ? () : "lg",
+        width: width,
+        height: searchBarHeight,
+        shrink: 0,
+        p: (0, trailing != none ? 12 : 16, 0, 16),
+        gap: 16,
+        align: center,
+        a11y_role: group,
+        tap => on_open(),
+    ] {
+        on hover { overlay: t.onSurface.alpha(stateHover) with t.springEffectsFast }
+        on focus_within { overlay: t.onSurface.alpha(stateFocus) with t.springEffectsFast }
+
+        Icon(leading_icon, size: searchIconSize, color: ink)
+        ZStack #[grow: 1, height: 24, alignment: start] {
+            when query == "" {
+                Text(placeholder) #[typo: t.bodyLarge, color: ink, wrap: false, a11y_hidden: true]
+            }
+            TextField #[
+                bind: query,
+                disabled: disabled,
+                indicator: none,
+                grow: 1,
+                height: 24,
+                p: (horizontal: 0),
+                typo: t.bodyLarge,
+                color: disabled ? t.onSurface.alpha(disabledContent) : t.onSurface,
+                a11y_label: label,
+                tap => on_open(),
+                input(_) => on_open(),
+                key_down(k) => {
+                    if k == "ArrowDown" {
+                        on_open()
+                    }
+                },
+                submit => on_submit(),
+            ]
+        }
+        when trailing != none {
+            Row #[gap: 4, align: center, shrink: 0] { trailing }
+        }
+    }
+}
