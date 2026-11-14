@@ -1,0 +1,396 @@
+// What TimePicker and TimePickerDialog share, all private: the numbers a value is made of, the
+// hour and minute boxes, the AM/PM selector, the two input fields and the clock dial.
+//
+// Material 3 time picker measurements used (from the public spec; starred ones I am not sure of)
+//   dial           256 across, surface_container_highest; labels body_large on_surface, 101 from
+//                  the centre (24-hour inner ring 69*); handle 48 across, primary, its label
+//                  on_primary; track 2 wide, primary; centre dot 8 across, primary
+//   time boxes     96 x 80, corner 8, display_large; selected primary_container /
+//                  on_primary_container, else surface_container_highest / on_surface
+//   separator      24 wide, display_large, on_surface
+//   period (AM/PM) vertical 52 x 80, horizontal 216 x 38, corner 8, outline 1; label title_medium;
+//                  selected tertiary_container / on_tertiary_container, else on_surface_variant
+//   input fields   96 x 72, corner 8, display_medium; resting surface_container_highest, focused
+//                  primary_container with a 2 primary outline, invalid a 2 error outline; the
+//                  caption under it label_medium on_surface_variant (error when invalid)
+
+private let dialSize = 256
+private let outerRadius = 101
+private let innerRadius = 69
+private let handleSize = 48
+
+// Radians in 30 degrees: the step between two hours on the dial.
+private let rad30 = 0.5235988
+
+private fn hour12(h: Int) -> Int => h % 12 == 0 ? 12 : h % 12
+
+private fn pad2(n: Int) -> Str => n < 10 ? "0{n}" : "{n}"
+
+// `v` wrapped into lo..hi, both ends included.
+private fn wrapTo(v: Int, lo: Int, hi: Int) -> Int =>
+    lo + ((v - lo) % (hi - lo + 1) + (hi - lo + 1)) % (hi - lo + 1)
+
+// What a key changes a spin button by: Up and Down by `small`, PageUp and PageDown by `big`.
+private fn keyDelta(k: Str, small: Int, big: Int) -> Int =>
+    k == "ArrowUp" ? small : k == "ArrowDown" ? 0 - small : k == "PageUp" ? big : k == "PageDown" ? 0 - big : 0
+
+// The 12-hour hour (1 to 12) a key makes of `hour`.
+private fn hour12Key(k: Str, hour: Int) -> Int =>
+    k == "Home" ? 1 : k == "End" ? 12 : wrapTo(hour12(hour) + keyDelta(k, 1, 3), 1, 12)
+
+// The 24-hour value a key makes of `hour`; in 12-hour time the period stays what it was.
+private fn hourKey(k: Str, hour: Int, is24: Bool) -> Int =>
+    is24 ? (k == "Home" ? 0 : k == "End" ? 23 : wrapTo(hour + keyDelta(k, 1, 3), 0, 23))
+    : hour12Key(k, hour) % 12 + (hour >= 12 ? 12 : 0)
+
+private fn minuteKey(k: Str, minute: Int) -> Int =>
+    k == "Home" ? 0 : k == "End" ? 59 : wrapTo(minute + keyDelta(k, 1, 5), 0, 59)
+
+// The hour a dial position means: `pos` 0 to 11 clockwise from the top, on the inner ring or not.
+// 24-hour: the outer ring is 12, 1 to 11 and the inner one 00, 13 to 23; 12-hour keeps the period.
+private fn hourAt(pos: Int, inner: Bool, is24: Bool, pm: Bool) -> Int =>
+    is24 ? (inner ? (pos == 0 ? 0 : pos + 12) : (pos == 0 ? 12 : pos)) : pos + (pm ? 12 : 0)
+
+private fn hourInner(hour: Int, is24: Bool) -> Bool => is24 && (hour == 0 || hour > 12)
+
+// A number typed in a field, or -1 when it is not one.
+private fn typed(text: Str) -> Int => text.toInt() ?? -1
+
+// An hour typed in a field: its value, or -1 when it is not an hour.
+private fn hourTyped(text: Str, is24: Bool) -> Int =>
+    text.len <= 2 && typed(text) >= (is24 ? 0 : 1) && typed(text) <= (is24 ? 23 : 12) ? typed(text) : -1
+
+private fn minuteTyped(text: Str) -> Int =>
+    text.len <= 2 && typed(text) >= 0 && typed(text) <= 59 ? typed(text) : -1
+
+// The 24-hour value of a typed 12-hour hour: the period stays what it was.
+private fn hourFromTyped(n: Int, hour: Int, is24: Bool) -> Int =>
+    is24 ? n : n % 12 + (hour >= 12 ? 12 : 0)
+
+// The hour when the form opened, with the period as it is now: what a bad hour falls back to.
+private fn hourRevert(start: Int, hour: Int, is24: Bool) -> Int =>
+    is24 ? start : start % 12 + (hour >= 12 ? 12 : 0)
+
+// The angle of a point in the dial, clockwise from the top in degrees (0 up to 360).
+private fn dialDeg(dx: Float, dy: Float) -> Float => (dx.atan2(0.0 - dy) * 57.29578 + 360.0) % 360.0
+
+private fn dialDist(dx: Float, dy: Float) -> Float => (dx * dx + dy * dy).sqrt()
+
+// The clock dial: the hour numbers, then the minute ones, a handle and a track to the selected
+// value. A press or a drag picks the value under the pointer; letting go on the hours moves on to
+// the minutes. The handle and the track turn on a spatial spring, the long way round never.
+private View Dial(hour: Int, minute: Int, is24: Bool, hours: Bool, on_hour: Fn(Int),
+    on_minute: Fn(Int), on_done: Fn()) {
+    inject Theme as t
+
+    let inner = hours && hourInner(hour, is24)
+    let ringR = inner ? innerRadius : outerRadius
+    let target = hours ? (hour % 12) * 30.0 : minute * 6.0
+
+    // The handle's angle keeps growing instead of wrapping, so it takes the short way round.
+    var turn: Float = target
+    on change(target) => turn = turn + ((target - turn) % 360.0 + 540.0) % 360.0 - 180.0
+
+    let ring = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+
+    ZStack #[
+        width: dialSize,
+        height: dialSize,
+        radius: dialSize / 2,
+        bg: t.surfaceContainerHighest,
+        alignment: top_start,
+        shrink: 0,
+        a11y_hidden: true,
+        pointer_down(e) => {
+            if hours {
+                on_hour(hourAt((dialDeg(e.x - 128.0, e.y - 128.0) / 30.0).round() % 12,
+                    is24 && dialDist(e.x - 128.0, e.y - 128.0) < 85.0, is24, hour >= 12))
+            } else {
+                on_minute((dialDeg(e.x - 128.0, e.y - 128.0) / 6.0).round() % 60)
+            }
+        },
+        drag(e) => {
+            if hours {
+                on_hour(hourAt((dialDeg(e.x - 128.0, e.y - 128.0) / 30.0).round() % 12,
+                    is24 && dialDist(e.x - 128.0, e.y - 128.0) < 85.0, is24, hour >= 12))
+            } else {
+                on_minute((dialDeg(e.x - 128.0, e.y - 128.0) / 6.0).round() % 60)
+            }
+        },
+        pointer_up => {
+            if hours {
+                on_done()
+            }
+        },
+    ] {
+        // The selector: a column from the top of the dial down to its centre (spacer, handle,
+        // track), turned about the centre.
+        ZStack #[
+            width: dialSize,
+            height: dialSize,
+            alignment: top_start,
+            rotate: turn * 1deg with t.springSpatialFast,
+            origin: center,
+            interactive: false,
+        ] {
+            Column #[width: dialSize, height: dialSize / 2, align: center] {
+                Box #[height: dialSize / 2 - ringR - handleSize / 2 with t.springSpatialFast]
+                Box #[width: handleSize, height: handleSize, radius: handleSize / 2, bg: t.primary]
+                Box #[
+                    width: 2,
+                    height: ringR - handleSize / 2 with t.springSpatialFast,
+                    bg: t.primary,
+                ]
+            }
+        }
+        Box #[
+            width: 8,
+            height: 8,
+            radius: 4,
+            bg: t.primary,
+            translate: (dialSize / 2 - 4, dialSize / 2 - 4),
+            interactive: false,
+        ]
+
+        Canvas #[width: dialSize, height: dialSize] {
+            when hours {
+                for i in ring {
+                    text(i == 0 ? "12" : "{i}",
+                        x: dialSize / 2 + outerRadius * (i * rad30).sin(),
+                        y: dialSize / 2 - outerRadius * (i * rad30).cos(),
+                        color: (!inner && i == hour % 12) ? t.onPrimary : t.onSurface,
+                        size: 16, align: center)
+                }
+                when is24 {
+                    for i in ring {
+                        text(i == 0 ? "00" : "{i + 12}",
+                            x: dialSize / 2 + innerRadius * (i * rad30).sin(),
+                            y: dialSize / 2 - innerRadius * (i * rad30).cos(),
+                            color: (inner && i == hour % 12) ? t.onPrimary : t.onSurface,
+                            size: 16, align: center)
+                    }
+                }
+            } else {
+                for i in ring {
+                    text(pad2(i * 5),
+                        x: dialSize / 2 + outerRadius * (i * rad30).sin(),
+                        y: dialSize / 2 - outerRadius * (i * rad30).cos(),
+                        color: (minute * 1.0 / 5.0).round() % 12 == i ? t.onPrimary : t.onSurface,
+                        size: 16, align: center)
+                }
+            }
+        }
+    }
+}
+
+// The hour or the minute as a box: tap or focus selects it for the dial, Up and Down change it by
+// one and PageUp and PageDown by more. A spin button to a reader, which has no role for it here,
+// so it is a `slider` with its range.
+private View TimeBox(text: Str, label: Str, value: Int, lo: Int, hi: Int, selected: Bool,
+    autofocus: Bool, on_select: Fn(), on_key: Fn(Str)) {
+    inject Theme as t
+
+    let ink = selected ? t.onPrimaryContainer : t.onSurface
+
+    Row #[
+        width: 96,
+        height: 80,
+        radius: t.cornerSm,
+        bg: (selected ? t.primaryContainer : t.surfaceContainerHighest) with t.springEffectsFast,
+        align: center,
+        justify: center,
+        shrink: 0,
+        autofocus: autofocus,
+        a11y_role: slider,
+        a11y_label: label,
+        a11y_value: "{value}",
+        a11y_value_min: lo * 1.0,
+        a11y_value_max: hi * 1.0,
+        a11y_value_step: 1.0,
+        focus => on_select(),
+        tap => on_select(),
+        key_down(k) => on_key(k),
+    ] {
+        on hover { overlay: ink.alpha(stateHover) with t.springEffectsFast }
+        on focus_visible {
+            overlay: ink.alpha(stateFocus) with t.springEffectsFast
+            outline: t.secondary
+            outline_width: focusRingWidth
+            outline_offset: focusRingOffset
+        }
+        on pressed { overlay: ink.alpha(statePress) with t.springEffectsFast }
+
+        Text(text) #[
+            typo: t.displayLarge,
+            color: ink with t.springEffectsFast,
+            wrap: false,
+            a11y_hidden: true,
+        ]
+    }
+}
+
+// The hour box, the colon and the minute box.
+private View TimeBoxes(bind hour: Int, bind minute: Int, is24: Bool, hours: Bool, autofocus: Bool,
+    on_part: Fn(Bool)) {
+    inject Theme as t
+
+    Row #[align: center, shrink: 0] {
+        TimeBox(pad2(is24 ? hour : hour12(hour)), "Hour", is24 ? hour : hour12(hour),
+            is24 ? 0 : 1, is24 ? 23 : 12, hours, autofocus, on_select: { on_part(true) },
+            on_key: {|k| hour = hourKey(k, hour, is24) })
+        Box #[width: 24, align: center, justify: center, a11y_hidden: true] {
+            Text(":") #[typo: t.displayLarge, color: t.onSurface, wrap: false]
+        }
+        TimeBox(pad2(minute), "Minute", minute, 0, 59, !hours, false, on_select: { on_part(false) },
+            on_key: {|k| minute = minuteKey(k, minute) })
+    }
+}
+
+// AM and PM as two connected toggle buttons in an outline, one under the other or side by side.
+private View PeriodSelector(pm: Bool, vertical: Bool, on_pick: Fn(Bool)) {
+    inject Theme as t
+
+    Box #[
+        width: vertical ? 52 : 216,
+        height: vertical ? 80 : 38,
+        radius: t.cornerSm,
+        border: t.outline,
+        border_width: 1,
+        p: 1,
+        shrink: 0,
+        a11y_role: group,
+        a11y_label: "AM or PM",
+    ] {
+        when vertical {
+            Column #[grow: 1] {
+                PeriodItem("AM", !pm, false, true, on_tap: { on_pick(false) })
+                Box #[height: 1, bg: t.outline, a11y_hidden: true]
+                PeriodItem("PM", pm, true, true, on_tap: { on_pick(true) })
+            }
+        } else {
+            Row #[grow: 1] {
+                PeriodItem("AM", !pm, false, false, on_tap: { on_pick(false) })
+                Box #[width: 1, bg: t.outline, a11y_hidden: true]
+                PeriodItem("PM", pm, true, false, on_tap: { on_pick(true) })
+            }
+        }
+    }
+}
+
+private View PeriodItem(label: Str, on: Bool, second: Bool, vertical: Bool, on_tap: Fn()) {
+    inject Theme as t
+
+    // The outline is 1 dp, so the inside corner is 7.
+    let corners = vertical ? (second ? (0, 0, 7, 7) : (7, 7, 0, 0)) : (second ? (0, 7, 7, 0) : (7, 0, 0, 7))
+
+    let ink = on ? t.onTertiaryContainer : t.onSurfaceVariant
+
+    Row #[
+        grow: 1,
+        bg: (on ? t.tertiaryContainer : t.surface.alpha(0.0)) with t.springEffectsFast,
+        radius: corners,
+        align: center,
+        justify: center,
+        a11y_role: toggle_button,
+        a11y_checked: on,
+        tap => on_tap(),
+    ] {
+        on hover { overlay: ink.alpha(stateHover) with t.springEffectsFast }
+        on focus_visible {
+            overlay: ink.alpha(stateFocus) with t.springEffectsFast
+            outline: t.secondary
+            outline_width: focusRingWidth
+            outline_offset: focusRingOffset
+        }
+        on pressed { overlay: ink.alpha(statePress) with t.springEffectsFast }
+
+        Text(label) #[typo: t.titleMedium, color: ink with t.springEffectsFast, wrap: false]
+    }
+}
+
+// The input form: two numeric fields, each with its caption under it. A value that is not an hour
+// or a minute outlines the field in `error` and is not written; a good one is written as it is
+// typed. The fields start from the value as it is when they appear.
+private View TimeFields(bind hour: Int, bind minute: Int, is24: Bool, hours: Bool,
+    on_part: Fn(Bool)) {
+    inject Theme as t
+
+    var hText = pad2(is24 ? hour : hour12(hour))
+    var mText = pad2(minute)
+    var hStart = hour
+    var mStart = minute
+    var hFocus = false
+    var mFocus = false
+    var hErr = false
+    var mErr = false
+
+    let hHint = is24 ? "Enter 0 to 23" : "Enter 1 to 12"
+
+    Row #[align: start, shrink: 0] {
+        Column #[gap: 4, shrink: 0] {
+            TextField #[
+                bind: hText,
+                focused: hFocus,
+                width: 96,
+                height: 72,
+                radius: t.cornerSm,
+                bg: hFocus ? t.primaryContainer : t.surfaceContainerHighest,
+                color: hFocus ? t.onPrimaryContainer : t.onSurface,
+                typo: t.displayMedium,
+                border: hErr ? t.error : t.primary,
+                border_width: (hErr || hFocus) ? 2 : 0,
+                indicator: none,
+                p: (horizontal: 22),
+                a11y_label: "Hour",
+                a11y_description: hErr ? hHint : "",
+                input(text) => {
+                    hErr = hourTyped(text, is24) < 0
+                    if hourTyped(text, is24) >= 0 {
+                        hour = hourFromTyped(hourTyped(text, is24), hour, is24)
+                    } else {
+                        hour = hourRevert(hStart, hour, is24)
+                    }
+                },
+            ]
+            Text("Hour") #[
+                typo: t.labelMedium,
+                color: hErr ? t.error : t.onSurfaceVariant,
+                a11y_hidden: true,
+            ]
+        }
+        Box #[width: 24, height: 72, align: center, justify: center, a11y_hidden: true] {
+            Text(":") #[typo: t.displayLarge, color: t.onSurface, wrap: false]
+        }
+        Column #[gap: 4, shrink: 0] {
+            TextField #[
+                bind: mText,
+                focused: mFocus,
+                width: 96,
+                height: 72,
+                radius: t.cornerSm,
+                bg: mFocus ? t.primaryContainer : t.surfaceContainerHighest,
+                color: mFocus ? t.onPrimaryContainer : t.onSurface,
+                typo: t.displayMedium,
+                border: mErr ? t.error : t.primary,
+                border_width: (mErr || mFocus) ? 2 : 0,
+                indicator: none,
+                p: (horizontal: 22),
+                a11y_label: "Minute",
+                a11y_description: mErr ? "Enter 0 to 59" : "",
+                input(text) => {
+                    mErr = minuteTyped(text) < 0
+                    if minuteTyped(text) >= 0 {
+                        minute = minuteTyped(text)
+                    } else {
+                        minute = mStart
+                    }
+                },
+            ]
+            Text("Minute") #[
+                typo: t.labelMedium,
+                color: mErr ? t.error : t.onSurfaceVariant,
+                a11y_hidden: true,
+            ]
+        }
+    }
+}

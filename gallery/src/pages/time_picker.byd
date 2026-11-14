@@ -1,0 +1,114 @@
+use material as m
+
+// m.TimePicker: the dial and the input form, 12-hour and 24-hour, vertical and horizontal, and
+// the dialog that opens from a button.
+
+View TimePickerPage() {
+    inject Theme as t
+    var open = false
+    var start_hour = 14
+    var start_minute = 30
+    var last = "nothing yet"
+    var minutes = m.TimePickerPart.minute
+    var typing = false
+    var typed = true
+    var h1 = 10
+    var m1 = 15
+    var h2 = 17
+    var m2 = 5
+    var h3 = 0
+    var m3 = 0
+    var h4 = 9
+    var m4 = 41
+    var h5 = 23
+    var m5 = 59
+    Column #[p: 24, gap: 32, bg: t.surface, grow: 1] {
+        Section("Dial, vertical") {
+            Row #[gap: 24, align: start, wrap: true, row_gap: 24] {
+                Box #[
+                    bg: t.surfaceContainerHigh,
+                    radius: t.cornerXl,
+                    p: 24,
+                    shrink: 0,
+                    align_self: start,
+                ] {
+                    m.TimePicker(bind hour: h1, bind minute: m1)
+                }
+                Box #[
+                    bg: t.surfaceContainerHigh,
+                    radius: t.cornerXl,
+                    p: 24,
+                    shrink: 0,
+                    align_self: start,
+                ] {
+                    m.TimePicker(bind hour: h2, bind minute: m2, is24: true,
+                        bind part: minutes)
+                }
+            }
+        }
+        Section("Dial, horizontal") {
+            Box #[
+                bg: t.surfaceContainerHigh,
+                radius: t.cornerXl,
+                p: 24,
+                shrink: 0,
+                align_self: start,
+            ] {
+                m.TimePicker(bind hour: h3, bind minute: m3, layout: .horizontal)
+            }
+        }
+        Section("Input") {
+            Row #[gap: 24, align: start, wrap: true, row_gap: 24] {
+                Box #[
+                    bg: t.surfaceContainerHigh,
+                    radius: t.cornerXl,
+                    p: 24,
+                    shrink: 0,
+                    align_self: start,
+                ] {
+                    m.TimePicker(bind hour: h4, bind minute: m4, bind input: typing)
+                }
+                Box #[
+                    bg: t.surfaceContainerHigh,
+                    radius: t.cornerXl,
+                    p: 24,
+                    shrink: 0,
+                    align_self: start,
+                ] {
+                    m.TimePicker(bind hour: h5, bind minute: m5, layout: .horizontal, is24: true, bind input: typed)
+                }
+            }
+        }
+        Section("Dialog") {
+            Line("open") {
+                m.Button("Pick a time", variant: .tonal, on_tap: { open = true })
+                Text("{start_hour}:{start_minute}") #[typo: t.bodyMedium, color: t.onSurfaceVariant]
+                Text(last) #[typo: t.bodyMedium, color: t.onSurfaceVariant]
+            }
+        }
+    }
+    m.TimePickerDialog(bind open: open, bind hour: start_hour, bind minute: start_minute,
+        on_confirm: { last = "set" }, on_cancel: { last = "cancelled" })
+}
+
+// For `tests/time_picker.toml`.
+View TimePickerScenarios() {
+    inject Theme as t
+    var open = false
+    var hour = 9
+    var minute = 41
+    var result = "none"
+    var open24 = false
+    Column #[p: 24, gap: 16, align: start, bg: t.surface, grow: 1] {
+        Row #[gap: 16, align: center] {
+            m.Button("Open picker", on_tap: { open = true })
+            m.Button("Open 24 hour", variant: .tonal, on_tap: { open24 = true })
+        }
+        Text("Time: {hour}:{minute}")
+        Text("Result: {result}")
+    }
+    m.TimePickerDialog(bind open: open, bind hour: hour, bind minute: minute,
+        on_confirm: { result = "ok" }, on_cancel: { result = "cancel" })
+    m.TimePickerDialog(bind open: open24, bind hour: hour, bind minute: minute, is24: true,
+        layout: .horizontal, on_confirm: { result = "ok24" }, on_cancel: { result = "cancel24" })
+}

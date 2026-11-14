@@ -32,7 +32,7 @@ It is early. The design is RFC-0050 in Byard's repository. So far there are `But
 `NavigationBar`, `NavigationRail` and `Tabs`, `TopAppBar`, `Card`, `ListItem` with `List`,
 `Divider`, `Badge`, `BadgedIcon`, `BottomAppBar`, `DockedToolbar`, `FloatingToolbar`,  `Dialog`, `Snackbar`, `SnackbarHost`, `Tooltip`,
 `LoadingIndicator`, `LinearProgressIndicator`, `CircularProgressIndicator`, `Menu` (with `MenuGroup`, 
-`MenuItem`, `MenuDivider`), `BottomSheet` and `SideSheet`; the rest of the components are on
+`MenuItem`, `MenuDivider`), `BottomSheet`, `SideSheet`, `TimePicker` and `TimePickerDialog`; the rest of the components are on
 their way. How a component is
 written here is in [CONVENTIONS.md](CONVENTIONS.md).
 

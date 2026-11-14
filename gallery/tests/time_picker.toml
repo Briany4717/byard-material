@@ -1,0 +1,118 @@
+# Scenarios for m.TimePicker and m.TimePickerDialog, on the TimePickerScenarios view.
+view = "TimePickerScenarios"
+size = "440x560"
+
+[[test]]
+name = "closed, there is no dialog"
+expect = ['Button "Open picker"', 'Label "Time: 9:41"']
+not = ['Dialog', 'Slider']
+
+[[test]]
+name = "it opens as a dialog with the hour box focused and the hour and minute as ranges"
+steps = [{ tap = 'Button "Open picker"' }]
+exact = ['Dialog "Select time" [modal]', 'Slider "Hour" = 9 in 1..12 step 1 [focusable focused]', 'Slider "Minute" = 41 in 0..59 step 1 [focusable]', 'Group "AM or PM"', 'ToggleButton "AM" [focusable checked]', 'ToggleButton "PM" [focusable]']
+expect = ['Button "Switch to text input"', 'Button "Cancel"', 'Button "OK"']
+not = ['(unnamed)']
+
+[[test]]
+name = "Up and Down change the hour by one, and it wraps"
+steps = [{ tap = 'Button "Open picker"' }, { key = "ArrowUp" }, { expect = ['Slider "Hour" = 10 in 1..12'] }, { key = "ArrowUp" }, { key = "ArrowUp" }, { expect = ['Slider "Hour" = 12 in 1..12'] }, { key = "ArrowUp" }]
+expect = ['Slider "Hour" = 1 in 1..12']
+
+[[test]]
+name = "PageUp and PageDown change the hour by three, Home and End go to the ends"
+steps = [{ tap = 'Button "Open picker"' }, { key = "PageUp" }, { expect = ['Slider "Hour" = 12 in 1..12'] }, { key = "PageDown" }, { key = "PageDown" }, { expect = ['Slider "Hour" = 6 in 1..12'] }, { key = "Home" }, { expect = ['Slider "Hour" = 1 in 1..12'] }, { key = "End" }]
+expect = ['Slider "Hour" = 12 in 1..12']
+
+[[test]]
+name = "Tab goes hour, minute, AM, PM, the mode toggle, Cancel, OK and round again"
+steps = [{ tap = 'Button "Open picker"' }, { key = "Tab" }, { expect = ['Slider "Minute" = 41 in 0..59 step 1 [focusable focused]'] }, { key = "Tab" }, { expect = ['ToggleButton "AM" [focusable focused checked]'] }, { key = "Tab" }, { expect = ['ToggleButton "PM" [focusable focused]'] }, { key = "Tab" }, { expect = ['Button "Switch to text input" [focusable focused]'] }, { key = "Tab" }, { expect = ['Button "Cancel" [focusable focused]'] }, { key = "Tab" }, { expect = ['Button "OK" [focusable focused]'] }, { key = "Tab" }]
+expect = ['Slider "Hour" = 9 in 1..12 step 1 [focusable focused]']
+
+[[test]]
+name = "the minute box takes the same keys: by one, by five, to the ends, wrapping without carrying"
+steps = [{ tap = 'Button "Open picker"' }, { key = "Tab" }, { key = "ArrowUp" }, { expect = ['Slider "Minute" = 42 in 0..59'] }, { key = "PageDown" }, { expect = ['Slider "Minute" = 37 in 0..59'] }, { key = "Home" }, { key = "ArrowDown" }, { expect = ['Slider "Minute" = 59 in 0..59', 'Slider "Hour" = 9 in 1..12'] }, { key = "End" }, { key = "ArrowUp" }]
+expect = ['Slider "Minute" = 0 in 0..59']
+
+[[test]]
+name = "a press on the dial picks the hour, and letting go moves on to the minutes"
+steps = [{ tap = 'Button "Open picker"' }, { wait = 400 }, { tap = [321, 324] }, { expect = ['Slider "Hour" = 3 in 1..12'] }, { tap = [220, 425] }]
+expect = ['Slider "Hour" = 3 in 1..12', 'Slider "Minute" = 30 in 0..59']
+
+[[test]]
+name = "a tap on the minute box makes the dial pick minutes, and on the hour box hours again"
+steps = [{ tap = 'Button "Open picker"' }, { wait = 400 }, { tap = 'Slider "Minute"' }, { tap = [321, 324] }, { expect = ['Slider "Minute" = 15 in 0..59', 'Slider "Hour" = 9 in 1..12'] }, { tap = 'Slider "Hour"' }, { tap = [321, 324] }]
+expect = ['Slider "Hour" = 3 in 1..12', 'Slider "Minute" = 15 in 0..59']
+
+[[test]]
+name = "PM keeps the hour on the clock and moves it twelve hours; OK writes both back"
+steps = [{ tap = 'Button "Open picker"' }, { tap = 'ToggleButton "PM"' }, { expect = ['ToggleButton "PM" [focusable focused checked]', 'ToggleButton "AM" [focusable]', 'Slider "Hour" = 9 in 1..12'] }, { tap = 'Button "OK"' }]
+expect = ['Label "Time: 21:41"', 'Label "Result: ok"']
+not = ['Dialog']
+
+[[test]]
+name = "the input form has two numeric fields and keeps the period group"
+steps = [{ tap = 'Button "Open picker"' }, { tap = 'Button "Switch to text input"' }]
+expect = ['TextInput "Hour" = "09"', 'TextInput "Minute" = "41"', 'Button "Switch to dial"', 'ToggleButton "AM"']
+not = ['Slider']
+
+[[test]]
+name = "an hour that is not one is flagged, and not written"
+steps = [{ tap = 'Button "Open picker"' }, { tap = 'Button "Switch to text input"' }, { tap = 'TextInput "Hour"' }, { key = "mod+a" }, { type = "13" }, { expect = ['TextInput "Hour" description "Enter 1 to 12" = "13"'] }, { tap = 'Button "OK"' }]
+expect = ['Label "Time: 9:41"']
+
+[[test]]
+name = "a minute that is not one is flagged, and a good one is written"
+steps = [{ tap = 'Button "Open picker"' }, { tap = 'Button "Switch to text input"' }, { tap = 'TextInput "Minute"' }, { key = "mod+a" }, { type = "75" }, { expect = ['TextInput "Minute" description "Enter 0 to 59" = "75"'] }, { key = "mod+a" }, { type = "8" }, { expect = ['TextInput "Minute" = "8"'], not = ['description'] }, { tap = 'TextInput "Hour"' }, { key = "mod+a" }, { type = "7" }, { tap = 'Button "OK"' }]
+expect = ['Label "Time: 7:8"']
+
+[[test]]
+name = "a tap on the toggle goes back to the dial with the typed time"
+steps = [{ tap = 'Button "Open picker"' }, { tap = 'Button "Switch to text input"' }, { tap = 'TextInput "Hour"' }, { key = "mod+a" }, { type = "4" }, { tap = 'Button "Switch to dial"' }]
+expect = ['Slider "Hour" = 4 in 1..12', 'Button "Switch to text input"']
+not = ['TextInput']
+
+[[test]]
+name = "Cancel throws the draft away and reports it"
+steps = [{ tap = 'Button "Open picker"' }, { key = "ArrowUp" }, { tap = 'ToggleButton "PM"' }, { tap = 'Button "Cancel"' }]
+expect = ['Label "Time: 9:41"', 'Label "Result: cancel"']
+not = ['Dialog']
+
+[[test]]
+name = "Escape cancels as well, and a reopened picker starts from the saved time"
+steps = [{ tap = 'Button "Open picker"' }, { key = "ArrowUp" }, { key = "Escape" }, { wait = 400 }, { expect = ['Label "Result: cancel"', 'Label "Time: 9:41"'] }, { tap = 'Button "Open picker"' }]
+expect = ['Slider "Hour" = 9 in 1..12', 'Slider "Minute" = 41 in 0..59']
+
+[[test]]
+name = "opened with the keyboard, Escape gives focus back to the opener"
+steps = [{ key = "Tab" }, { key = "Space" }, { expect = ['Dialog "Select time"', 'Slider "Hour" = 9 in 1..12 step 1 [focusable focused]'] }, { key = "Escape" }]
+expect = ['Button "Open picker" [focusable focused]']
+not = ['Dialog']
+
+[[test]]
+name = "the dialog is gone once its exit motion has run"
+steps = [{ tap = 'Button "Open picker"' }, { tap = 'Button "Cancel"' }, { wait = 500 }]
+not = ['Dialog', 'Slider', 'Cancel']
+
+[[test]]
+name = "24-hour, horizontal: hours run 0 to 23 and there is no AM or PM"
+steps = [{ tap = 'Button "Open 24 hour"' }]
+expect = ['Dialog "Select time"', 'Slider "Hour" = 9 in 0..23 step 1 [focusable focused]', 'Slider "Minute" = 41 in 0..59']
+not = ['ToggleButton', 'AM or PM']
+
+[[test]]
+name = "24-hour keys: Up wraps 23 to 0, PageDown by three, Home and End"
+steps = [{ tap = 'Button "Open 24 hour"' }, { key = "End" }, { expect = ['Slider "Hour" = 23 in 0..23'] }, { key = "ArrowUp" }, { expect = ['Slider "Hour" = 0 in 0..23'] }, { key = "PageDown" }, { expect = ['Slider "Hour" = 21 in 0..23'] }, { key = "Home" }]
+expect = ['Slider "Hour" = 0 in 0..23']
+
+[[test]]
+name = "24-hour: the inner ring picks 13 to 23 and 00, the outer one 12 and 1 to 11"
+size = "640x560"
+steps = [{ tap = 'Button "Open 24 hour"' }, { wait = 400 }, { tap = [474, 187] }, { expect = ['Slider "Hour" = 13 in 0..23'] }, { tap = 'Slider "Hour"' }, { tap = [527, 196] }, { expect = ['Slider "Hour" = 2 in 0..23'] }, { tap = 'Slider "Hour"' }, { tap = [440, 178] }, { expect = ['Slider "Hour" = 0 in 0..23'] }, { tap = 'Slider "Hour"' }, { tap = [440, 146] }, { expect = ['Slider "Hour" = 12 in 0..23'] }, { tap = 'Button "OK"' }]
+expect = ['Label "Result: ok24"', 'Label "Time: 12:41"']
+
+[[test]]
+name = "the same in the dark scheme"
+scheme = "dark"
+steps = [{ tap = 'Button "Open picker"' }, { key = "ArrowUp" }]
+expect = ['Dialog "Select time"', 'Slider "Hour" = 10 in 1..12 step 1 [focusable focused]']
