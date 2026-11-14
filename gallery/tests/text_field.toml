@@ -5,37 +5,38 @@ size = "440x560"
 [[test]]
 name = "each field is named by its label, with its text"
 exact = [
-    'TextInput "Name" = "" [focusable]',
-    'Label "Your full name"',
+    'TextInput "Name" description "Your full name" = "" [focusable]',
     'TextInput "Note" = "" [focusable disabled]',
-    'TextInput "Email" = "oops" [focusable]',
-    'Label "Not an address"',
+    'TextInput "Email" description "Not an address" = "oops" [focusable]',
     'TextInput "Bio" = "" [focusable]',
     'Label "0/5"',
+    'TextInput "Notes" description "Three lines" = "" [focusable multiline]',
     'Label "Name: "',
 ]
+not = ['Label "Your full name"', 'Label "Not an address"']
 
 [[test]]
 name = "Tab reaches the first field and typing fills it"
 steps = [{ key = "Tab" }, { type = "Ada" }]
 expect = [
-    'TextInput "Name" = "Ada" [focusable focused]',
+    'TextInput "Name" description "Your full name" = "Ada" [focusable focused]',
     'Label "Name: Ada"',
 ]
 
 [[test]]
 name = "the label stays the name once the field has text"
 steps = [{ key = "Tab" }, { type = "Ada" }, { key = "Tab" }]
-expect = ['TextInput "Name" = "Ada" [focusable]']
+expect = ['TextInput "Name" description "Your full name" = "Ada" [focusable]']
 
 [[test]]
 name = "Tab skips the disabled field"
 steps = [{ key = "Tab" }, { key = "Tab" }]
-expect = ['TextInput "Email" = "oops" [focusable focused]']
+expect = ['TextInput "Email" description "Not an address" = "oops" [focusable focused]']
 
 [[test]]
-name = "the error text is in the tree after its field"
-expect = ['Label "Not an address"']
+name = "the error text is the field's description, not a second node"
+expect = ['description "Not an address"']
+not = ['Label "Not an address"']
 
 [[test]]
 name = "max_length cuts the text and the counter follows"
@@ -50,3 +51,13 @@ name = "the same in the dark scheme"
 scheme = "dark"
 steps = [{ key = "Tab" }, { type = "x" }]
 expect = ['Label "Name: x"']
+
+[[test]]
+name = "a multiline field takes Enter as a new line and keeps Name's value apart"
+steps = [{ key = "Tab" }, { key = "Tab" }, { key = "Tab" }, { key = "Tab" }, { type = "one" }, { key = "Enter" }, { type = "two" }]
+expect = ['TextInput "Notes" description "Three lines" = "one\ntwo" [focusable focused multiline]']
+
+[[test]]
+name = "tapping a field focuses it, and a tap elsewhere takes the focus away"
+steps = [{ tap = 'TextInput "Name"' }]
+expect = ['TextInput "Name" description "Your full name" = "" [focusable focused]']

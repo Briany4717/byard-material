@@ -9,23 +9,21 @@
 //
 // `length` is how long the slider is (how tall when vertical) and is fixed: the handle is
 // placed from it. A `step` above 0 snaps the value, draws a stop for each step (`stops: false`
-// leaves them out; at most 41), and 0.0 is continuous. Pointer drag, a tap on the track and the
-// arrow keys (by `step`, or a tenth of the range) are the built-in `Slider`'s. Home and End are
-// not handled, and a vertical slider answers the keys but not the pointer: see the notes.
+// leaves them out; at most 41), and 0.0 is continuous.
 //
-// Why built on the built-in `Slider`: a composed control cannot read where the pointer is
-// (`pointer_down` and `pointer_move` carry no position), so the drag, the tap on the track,
-// the keys and the `slider` role with its value all come from a real `Slider` laid over the
-// drawing at `opacity: 0.0`; the drawing under it is Material's. The two agree because the
-// hidden slider spans exactly the handle's travel: 8 dp in from each end. The sizes and the
-// drawing are in `slider_family.byd`.
+// Composed, with no built-in `Slider` under it: the control is one `ZStack` with role `slider`
+// (named `as s`, so the handle and the value bubble write `on s.pressed` and
+// `on s.focus_visible`). A press or a drag sets the value from `e.x` (`e.y` when vertical), so a
+// tap on the track jumps; the arrow keys step (a step, or a tenth of the range), PageUp and
+// PageDown move 10% and Home and End go to the ends. The handle narrows while it is pressed and
+// the bubble above it shows the value while it is pressed or has keyboard focus. The sizes and
+// the track are in `slider_family.byd`; the pure functions there turn a position or a key into
+// the value.
 
 View Slider(bind value: Float, label: Str, min: Float = 0.0, max: Float = 1.0, step: Float = 0.0,
     size: SliderSize = .s, length: Int = 280, centered: Bool = false, vertical: Bool = false,
     icon: Str = "", stops: Bool = true, disabled: Bool = false) {
     inject Theme as t
-
-    var foc = false
 
     let span = length * 1.0
     let travel = span - 16.0
@@ -41,16 +39,25 @@ View Slider(bind value: Float, label: Str, min: Float = 0.0, max: Float = 1.0, s
     let steps = (stops && step > 0.0) ? ((max - min) / step).round() + 1 : 0
 
     let hh = sliderHandle(size)
-    let label_ = step > 0.0 && step >= 1.0 ? "{value:.0}" : "{value:.2}"
+    let label_ = step >= 1.0 ? "{value:.0}" : "{value:.2}"
+    let active = disabled ? t.onSurface.alpha(disabledContent) : t.primary
 
-    // The slider is drawn lying down; a vertical one is that, turned a quarter and moved
-    // back into its own box. The bubble stays outside the turn so its digits stand upright.
     ZStack #[
         width: vertical ? hh : span,
         height: vertical ? span : hh,
         alignment: top_start,
         shrink: 0,
-    ] {
+        a11y_role: slider,
+        a11y_label: label,
+        a11y_value: "{value}",
+        disabled: disabled,
+        focus => {},
+        pointer_down(e) => value = sliderAt(vertical ? span - e.y : e.x, span, min, max, step),
+        drag(e) => value = sliderAt(vertical ? span - e.y : e.x, span, min, max, step),
+        key_down(k) => value = sliderKey(k, value, min, max, step),
+    ] as s {
+        // The track is drawn lying down; a vertical one is that, turned a quarter and moved
+        // back into its own box.
         when vertical {
             ZStack #[
                 width: span,
@@ -60,15 +67,29 @@ View Slider(bind value: Float, label: Str, min: Float = 0.0, max: Float = 1.0, s
                 origin: center,
                 translate: ((hh - span) / 2.0, (span - hh) / 2.0),
             ] {
-                SliderPlane(bind value: value, bind focus: foc, size: size, span: span, lead: lead,
-                    stop: stop, lower: lower, steps: steps, disabled: disabled, icon: "", lo: min,
-                    hi: max, step: step, label: label)
+                SliderDrawing(size, span, lead, stop, false, lower, steps, disabled, "")
             }
         } else {
-            SliderPlane(bind value: value, bind focus: foc, size: size, span: span, lead: lead,
-                stop: stop, lower: lower, steps: steps, disabled: disabled, icon: icon, lo: min,
-                hi: max, step: step, label: label)
+            SliderDrawing(size, span, lead, stop, false, lower, steps, disabled, icon)
         }
+
+        // The handle: 4 dp across and as tall as the size says; 2 dp across while pressed.
+        Box #[
+            width: vertical ? hh : 4,
+            height: vertical ? 4 : hh,
+            radius: 2,
+            bg: active with t.springEffectsFast,
+            translate: vertical ? (0.0, span - handleX - 2.0) : ((lower ? lead : stop) - 2.0, 0.0),
+        ] {
+            on s.pressed { scale: vertical ? (1.0, 0.5) : (0.5, 1.0) with t.springSpatialFast }
+            on s.focus_visible {
+                outline: t.secondary
+                outline_width: focusRingWidth
+                outline_offset: focusRingOffset
+            }
+        }
+
+        // The value bubble, over the handle while it is pressed or focused by the keyboard.
         Box #[
             width: 48,
             height: 44,
@@ -76,9 +97,11 @@ View Slider(bind value: Float, label: Str, min: Float = 0.0, max: Float = 1.0, s
             bg: t.inverseSurface,
             align: center,
             justify: center,
-            opacity: foc && !disabled ? 1.0 : 0.0 with t.springEffectsFast,
+            opacity: 0.0,
             translate: vertical ? (hh + 4.0, span - handleX - 22.0) : (handleX - 24.0, -48.0),
         ] {
+            on s.pressed { opacity: 1.0 with t.springEffectsFast }
+            on s.focus_visible { opacity: 1.0 with t.springEffectsFast }
             Text(label_) #[
                 typo: t.labelLarge,
                 color: t.inverseOnSurface,

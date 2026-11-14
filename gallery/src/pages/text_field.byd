@@ -16,6 +16,13 @@ View TextFieldPage() {
     var bad2 = "not-an-address"
     var counted2 = "Hello"
     var cleared2 = "Clear me"
+    var notes = "First line\nSecond line"
+    var notes2 = ""
+    var grow = "A text that grows with what is written in it, wrapping at the width of the field"
+    var grow2 = "Short"
+    var onCard = "On a card"
+    var short = "x"
+    var long = "y"
     var dis = ""
     var dis2 = "Locked"
     Column #[p: 24, gap: 32, bg: t.surface, grow: 1] {
@@ -51,6 +58,27 @@ View TextFieldPage() {
                 m.TextField(bind: dis2, variant: .outlined, label: "Disabled", disabled: true, leading_icon: "lock")
             }
         }
+        Section("More lines") {
+            Row #[gap: 24, align: start] {
+                m.TextField(bind: notes, label: "Notes", lines: 3, supporting_text: "Three lines high")
+                m.TextField(bind: notes2, variant: .outlined, label: "Notes", lines: 3, supporting_text: "Three lines high")
+            }
+            Row #[gap: 24, align: start] {
+                m.TextField(bind: grow, label: "Grows", min_lines: 2, max_lines: 4, supporting_text: "2 to 4 lines")
+                m.TextField(bind: grow2, variant: .outlined, label: "Grows", min_lines: 2, max_lines: 4, supporting_text: "2 to 4 lines")
+            }
+        }
+        Section("Notch fits the label") {
+            Row #[gap: 24, align: start] {
+                m.TextField(bind: short, variant: .outlined, label: "ID", width: 200)
+                m.TextField(bind: long, variant: .outlined, label: "A rather long label for the notch", width: 280)
+            }
+        }
+        Section("Outlined on a card") {
+            Column #[bg: t.surfaceContainerHigh, p: 16, radius: 12, gap: 16, align: start] {
+                m.TextField(bind: onCard, variant: .outlined, label: "No patch", supporting_text: "The notch is a gap in the border")
+            }
+        }
     }
 }
 
@@ -61,11 +89,13 @@ View TextFieldScenarios() {
     var note = ""
     var mail = "oops"
     var bio = ""
+    var notes = ""
     Column #[p: 24, gap: 16, align: start, bg: t.surface, grow: 1] {
         m.TextField(bind: name, label: "Name", supporting_text: "Your full name")
         m.TextField(bind: note, label: "Note", variant: .outlined, disabled: true)
         m.TextField(bind: mail, label: "Email", variant: .outlined, error: true, error_text: "Not an address")
         m.TextField(bind: bio, label: "Bio", max_length: 5)
+        m.TextField(bind: notes, label: "Notes", variant: .outlined, lines: 3, supporting_text: "Three lines")
         Text("Name: {name}")
     }
 }
