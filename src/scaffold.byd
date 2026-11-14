@@ -1,0 +1,88 @@
+// Material 3 scaffold: where an app's top bar, body, navigation, FAB and snackbars go.
+//
+//     var screen = 0
+//     var queue: List = []
+//
+//     m.Scaffold(rail: wide, bind snackbars: queue,
+//         top: { m.TopAppBar("Inbox", variant: .large) },
+//         navigation: {
+//             m.NavigationBar(bind: screen) { ... }
+//         },
+//         fab: { m.Fab("edit", label: "Compose") }) {
+//         ...the body...
+//     }
+//
+// The body scrolls. The top bar is the first thing in that scroll view, so a medium or large
+// `TopAppBar` collapses as the body goes up, with nothing written by the caller: the scaffold
+// hands the bar the scroll fraction in a context and the bar reads it (a `collapse:` written on
+// the bar still wins). A small bar simply stays at the top.
+//
+// `scroll_y` sets where the body is scrolled to (0 is the top), for "scroll to top" and for tests.
+//
+// Navigation: the window's width is not a value a view can read (`on width >= md` only styles an
+// element), so the caller chooses: `rail: false` puts the slot under the body, for a
+// `NavigationBar` on compact windows; `rail: true` puts it before the body, for a `NavigationRail`
+// on medium and expanded ones. Write `rail: wide` and flip `wide` from your own breakpoint.
+//
+// Insets: the bars are siblings of the body, never over it, so nothing sits under them. The FAB
+// floats over the body's bottom corner (end side, 16 from each edge) and the body is given
+// bottom room for it, so its last item scrolls clear. Snackbars rise above a bottom navigation
+// bar.
+//
+//   FAB room   56 high + 16 + 16 = 88 (the medium FAB), added under the body when there is a FAB
+//   snackbar   16 above the window, or above the navigation bar's 64 + 16
+
+private let scaffoldBarHeight = 64
+private let scaffoldFabRoom = 88
+private let scaffoldMargin = 16
+
+// What the scaffold tells its top bar: how far the body has scrolled, 0 to 1.
+private context ScaffoldScroll {
+    fraction: Float = 0.0
+}
+
+View Scaffold(content, top: Slot = none, navigation: Slot = none, fab: Slot = none,
+    rail: Bool = false, scroll_y: Float = 0.0, bind snackbars: List = [], on_snackbar_action: Fn(Str) = {|_| }) {
+    inject Theme as t
+
+    Column #[bg: t.surface, grow: 1] {
+        Row #[grow: 1] {
+            when rail && navigation != none {
+                navigation
+            }
+            ZStack #[grow: 1, alignment: bottom_end] {
+                ScrollView #[
+                    grow: 1,
+                    offset: (0, scroll_y),
+                    collapse_header: true,
+                    collapse_min: scaffoldBarHeight,
+                ] {
+                    ScaffoldTop(fraction: scroll_fraction) {
+                        top
+                    }
+                    Column #[p: (0, 0, fab != none ? scaffoldFabRoom : 0, 0)] {
+                        content
+                    }
+                }
+                when fab != none {
+                    Box #[m: scaffoldMargin, shrink: 0] {
+                        fab
+                    }
+                }
+            }
+        }
+        when !rail && navigation != none {
+            navigation
+        }
+    }
+    SnackbarHost(bind queue: snackbars, on_action: on_snackbar_action,
+        bottom_inset: !rail && navigation != none ? scaffoldBarHeight : 0)
+}
+
+// The first child of the body's scroll view: `scroll_fraction` is the engine's, and only a direct
+// child of a `collapse_header: true` scroll view (a literal `true`) can read it, so it is passed in
+// as an argument and handed on in a context. With no top bar it is empty.
+private View ScaffoldTop(fraction: Float, content) {
+    provide ScaffoldScroll(fraction: fraction)
+    content
+}

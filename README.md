@@ -25,16 +25,27 @@ View Main() {
 and, in the app's `byard.toml`, `[theme] extends = "material"` so the colours, type and shapes
 are Material's (a `seed` there recolours all of it).
 
-It is early. The design is RFC-0050 in Byard's repository. So far there are `Button`,
-`IconButton`, `Icon`, `TextField`, the four chips (`AssistChip`, `FilterChip`, `InputChip`,
-`SuggestionChip`), `ButtonGroup`,`MultiButtonGroup`, `SplitButton`, `Fab`, `ExtendedFab`, `FabMenu`, `Switch`,
-`Checkbox`, `Radio`, `RadioGroup`, `Slider`, `RangeSlider`, `SearchBar`, `SearchView`, `Carousel`, 
-`NavigationBar`, `NavigationRail` and `Tabs`, `TopAppBar`, `Card`, `ListItem` with `List`,
-`Divider`, `Badge`, `BadgedIcon`, `BottomAppBar`, `DockedToolbar`, `FloatingToolbar`,  `Dialog`, `Snackbar`, `SnackbarHost`, `Tooltip`,
-`LoadingIndicator`, `LinearProgressIndicator`, `CircularProgressIndicator`, `Menu` (with `MenuGroup`, 
-`MenuItem`, `MenuDivider`), `BottomSheet`, `SideSheet`, `TimePicker` and `TimePickerDialog`; the rest of the components are on
-their way. How a component is
-written here is in [CONVENTIONS.md](CONVENTIONS.md).
+It is early: the first release is not tagged. The design is RFC-0050 in Byard's repository, and
+how a component is written here is in [CONVENTIONS.md](CONVENTIONS.md). What is in `src/`, by
+group:
+
+| Group | Views | Needs Byard |
+|-------|-------|-------------|
+| Actions | `Button` (also the toggle button), `IconButton`, `ButtonGroup`, `MultiButtonGroup` (standard and connected), `SplitButton`, `Fab`, `ExtendedFab`, `FabMenu` | main with RFC-0061 to 0063 (motion in layout, slots, input); `FabMenu` also 0066 |
+| Selection | `Switch`, `Checkbox`, `Radio`, `RadioGroup`, `Slider`, `RangeSlider`, `AssistChip`, `FilterChip`, `InputChip`, `SuggestionChip`, `ChipSet` | 0062, 0063 |
+| Input | `TextField`, `SearchBar`, `SearchView` | 0064 (multiline, border gap) |
+| Containment | `Card`, `ListItem` with `List`, `ListItemIcon`, `ListItemAvatar`, `ListItemImage`, `ListItemText`, `Divider`, `Badge`, `BadgedIcon`, `Carousel` | 0063 |
+| Navigation | `NavigationBar`, `NavigationRail`, `Tabs` (with their items), `TopAppBar` | 0065 (context) |
+| Toolbars | `BottomAppBar`, `DockedToolbar`, `FloatingToolbar` | 0062 |
+| Overlays | `Dialog`, `Menu` (with `MenuGroup`, `MenuItem`, `MenuDivider`), `BottomSheet`, `SideSheet`, `Tooltip`, `Snackbar`, `SnackbarHost` | 0066 (focus scopes, `on enter`/`on leave`, live regions) |
+| Progress | `LinearProgressIndicator`, `CircularProgressIndicator`, `LoadingIndicator` | 0064 (`sin`/`cos` in 0066) |
+| Layout | `Scaffold` | 0065 |
+| Pickers | `TimePicker`, `TimePickerDialog` | 0065, 0066 |
+| Icons | `Icon` (Material Symbols Rounded) | icon font axes |
+
+"Needs Byard" is the oldest Byard that has what the group uses: all of it needs Byard's `main`
+since 2026-11-14 (RFC-0061 to 0066) until Byard 0.1.0 is tagged, and then 0.1.0. The date pickers
+are being added.
 
 This package is also how Byard's package system gets tested for real: it lives in its own
 repository and goes through `byard add`, `byard get`, the lockfile, `byard publish` and

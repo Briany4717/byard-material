@@ -1,0 +1,113 @@
+use material as m
+
+// m.Scaffold: a compact window (top bar, bottom navigation bar, FAB) and a wide one (a rail).
+
+View ScaffoldPage() {
+    inject Theme as t
+    Column #[p: 24, gap: 32, bg: t.surface, grow: 1] {
+        Section("Compact: large top bar that collapses, navigation bar, FAB") {
+            Clip #[width: 400, height: 560, rrect: 12] {
+                Column #[width: 400, height: 560] { ScaffoldCompact() }
+            }
+        }
+        Section("Medium and expanded: a rail, a small top bar") {
+            Clip #[width: 640, height: 420, rrect: 12] {
+                Column #[width: 640, height: 420] { ScaffoldWide() }
+            }
+        }
+    }
+}
+
+View ScaffoldCompact() {
+    var screen = 0
+    var queue: List = []
+    m.Scaffold(bind snackbars: queue,
+        top: { m.TopAppBar("Inbox", variant: .large, subtitle: "12 unread",
+            actions: { m.IconButton("search", label: "Search") }) },
+        navigation: {
+            m.NavigationBar(bind: screen, label: "Main") {
+                m.NavigationBarItem(0, label: "Mail", icon: "mail")
+                m.NavigationBarItem(1, label: "Chat", icon: "chat")
+                m.NavigationBarItem(2, label: "Files", icon: "folder")
+            }
+        },
+        fab: { m.Fab("edit", label: "Compose", on_tap: { queue = queue.push({ text: "Draft saved" }) }) }) {
+        Messages()
+    }
+}
+
+View ScaffoldWide() {
+    var screen = 0
+    m.Scaffold(rail: true,
+        top: { m.TopAppBar("Inbox", navigation: { m.IconButton("menu", label: "Menu") }) },
+        navigation: {
+            m.NavigationRail(bind: screen, label: "Main") {
+                m.NavigationRailItem(0, label: "Mail", icon: "mail")
+                m.NavigationRailItem(1, label: "Chat", icon: "chat")
+                m.NavigationRailItem(2, label: "Files", icon: "folder")
+            }
+        },
+        fab: { m.Fab("edit", label: "Compose") }) {
+        Messages()
+    }
+}
+
+View Messages() {
+    inject Theme as t
+    Column #[p: 16, gap: 8] {
+        for i in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] {
+            Box #[bg: t.surfaceContainerHigh, radius: 12, p: 16] {
+                Text("Message {i}") #[typo: t.bodyLarge, color: t.onSurface]
+            }
+        }
+    }
+}
+
+// For `tests/scaffold.toml`: the whole window.
+View ScaffoldScenarios() {
+    var screen = 0
+    var queue: List = []
+    var composed = 0
+    var y = 0.0
+    m.Scaffold(bind snackbars: queue, scroll_y: y,
+        top: { m.TopAppBar("Inbox", variant: .large,
+            actions: { m.IconButton("search", label: "Search") }) },
+        navigation: {
+            m.NavigationBar(bind: screen, label: "Main") {
+                m.NavigationBarItem(0, label: "Mail", icon: "mail")
+                m.NavigationBarItem(1, label: "Chat", icon: "chat")
+            }
+        },
+        fab: { m.Fab("edit", label: "Compose", on_tap: {
+            composed = composed + 1
+            y = 0.0
+            queue = queue.push({ text: "Draft saved", action: "Undo" })
+        }) }) {
+        Row #[gap: 8, p: 8] {
+            m.Button("Scroll", variant: .tonal, on_tap: { y = 300.0 })
+            m.Button("Top", variant: .tonal, on_tap: { y = 0.0 })
+        }
+        Text("Composed {composed}, screen {screen}")
+        Messages()
+    }
+}
+
+View ScaffoldRailScenarios() {
+    var screen = 0
+    m.Scaffold(rail: true,
+        top: { m.TopAppBar("Inbox") },
+        navigation: {
+            m.NavigationRail(bind: screen, label: "Main") {
+                m.NavigationRailItem(0, label: "Mail", icon: "mail")
+                m.NavigationRailItem(1, label: "Chat", icon: "chat")
+            }
+        }) {
+        Text("Screen {screen}")
+    }
+}
+
+View ScaffoldPlainScenarios() {
+    m.Scaffold(fab: { m.Fab("add", label: "Add") }) {
+        Text("Plain body")
+    }
+}

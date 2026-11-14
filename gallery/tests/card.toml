@@ -51,3 +51,8 @@ expect = ['Label "Opened: 10"', 'Label "Booked: 0"']
 name = "Tab goes to the card, then to the button inside it"
 steps = [{ key = "Tab" }, { key = "Tab" }, { key = "Tab" }]
 expect = ['Button "Confirm" [focusable focused]']
+
+[[test]]
+name = "a dragged card is still a button and still acts"
+steps = [{ tap = 'Button "Lifted"' }]
+expect = ['Button "Lifted" [focusable focused]', 'Label "Opened: 5"']

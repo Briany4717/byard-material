@@ -40,10 +40,13 @@ private fn topBarHeight(variant: TopAppBarVariant, subtitle: Bool) -> Int =>
 View TopAppBar(title: Str, variant: TopAppBarVariant = .small, subtitle: Str = "",
     collapse: Float = 0.0, scrolled: Bool = false, navigation: Slot = none, actions: Slot = none) {
     inject Theme as t
+    inject ScaffoldScroll as sc
 
+    // Inside a Scaffold the bar follows the body's scroll by itself.
+    let fold = collapse > 0.0 ? collapse : sc.fraction
     let big = variant == TopAppBarVariant.medium || variant == TopAppBarVariant.large
     let centered = variant == TopAppBarVariant.centerAligned
-    let on = scrolled || collapse > 0.0
+    let on = scrolled || fold > 0.0
 
     Column #[
         bg: (on ? t.surfaceContainer : t.surface) with t.springEffectsFast,
@@ -54,12 +57,12 @@ View TopAppBar(title: Str, variant: TopAppBarVariant = .small, subtitle: Str = "
                 navigation
             }
             // The small title: always on a small bar, and the collapsed form of a big one.
-            when !big || collapse > 0.0 {
+            when !big || fold > 0.0 {
                 Row #[
                     grow: 1,
                     width: 0,
                     ml: navigation != none ? 4 : 8,
-                    opacity: big ? collapse : 1.0,
+                    opacity: big ? fold : 1.0,
                     justify: centered ? center : start,
                 ] {
                     Text(title) #[
@@ -70,20 +73,20 @@ View TopAppBar(title: Str, variant: TopAppBarVariant = .small, subtitle: Str = "
                     ]
                 }
             }
-            when big && collapse <= 0.0 {
+            when big && fold <= 0.0 {
                 Box #[grow: 1] {}
             }
             when actions != none {
                 actions
             }
         }
-        when big && collapse < 1.0 {
+        when big && fold < 1.0 {
             Column #[
                 height: topBarHeight(variant, subtitle != "") - 64,
                 shrink: 0,
                 justify: end,
                 p: (0, 16, variant == TopAppBarVariant.large ? 20 : 16, 16),
-                opacity: 1.0 - collapse,
+                opacity: 1.0 - fold,
             ] {
                 Text(title) #[
                     typo: variant == TopAppBarVariant.large ? t.headlineMedium : t.headlineSmall,
