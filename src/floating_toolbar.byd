@@ -16,6 +16,8 @@ View FloatingToolbar(label: Str = "Toolbar", color: ToolbarColor = .standard,
     on_fab: Fn() = {}, content) {
     inject Theme as t
 
+    provide ToolbarContent(tinted: color == ToolbarColor.vibrant, ink: t.onPrimaryContainer)
+
     let vibrant = color == ToolbarColor.vibrant
     let across = orientation == ToolbarOrientation.horizontal
 

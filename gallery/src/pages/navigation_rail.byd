@@ -20,33 +20,33 @@ View NavigationRailPage() {
 
 View RailCollapsed() {
     var screen = 0
-    m.NavigationRail(label: "Collapsed", header: { m.Fab("edit", label: "Compose", size: .small) }) {
-        m.NavigationRailItem(0, bind: screen, label: "Home", icon: "home")
-        m.NavigationRailItem(1, bind: screen, label: "Chat", icon: "chat", badge: { NavDemoBadge("3") })
-        m.NavigationRailItem(2, bind: screen, label: "Files", icon: "folder", disabled: true)
-        m.NavigationRailItem(3, bind: screen, label: "Settings", icon: "settings", badge: { NavDemoBadge() })
+    m.NavigationRail(bind: screen, label: "Collapsed", header: { m.Fab("edit", label: "Compose", size: .small) }) {
+        m.NavigationRailItem(0, label: "Home", icon: "home")
+        m.NavigationRailItem(1, label: "Chat", icon: "chat", badge: { NavDemoBadge("3") })
+        m.NavigationRailItem(2, label: "Files", icon: "folder", disabled: true)
+        m.NavigationRailItem(3, label: "Settings", icon: "settings", badge: { NavDemoBadge() })
     }
 }
 
 View RailExpanded() {
     var screen = 1
-    m.NavigationRail(label: "Expanded", expanded: true,
+    m.NavigationRail(bind: screen, expanded: true, label: "Expanded",
         header: { m.IconButton("menu", label: "Menu", variant: .standard) }) {
-        m.NavigationRailItem(0, bind: screen, label: "Home", icon: "home", expanded: true)
-        m.NavigationRailItem(1, bind: screen, label: "Chat", icon: "chat", expanded: true, badge: { NavDemoBadge("3") })
-        m.NavigationRailItem(2, bind: screen, label: "Files", icon: "folder", expanded: true, disabled: true)
-        m.NavigationRailItem(3, bind: screen, label: "Settings", icon: "settings", expanded: true)
+        m.NavigationRailItem(0, label: "Home", icon: "home")
+        m.NavigationRailItem(1, label: "Chat", icon: "chat", badge: { NavDemoBadge("3") })
+        m.NavigationRailItem(2, label: "Files", icon: "folder", disabled: true)
+        m.NavigationRailItem(3, label: "Settings", icon: "settings")
     }
 }
 
 View RailToggle() {
     var screen = 0
     var open = false
-    m.NavigationRail(label: "Toggling", expanded: open,
+    m.NavigationRail(bind: screen, expanded: open, label: "Toggling",
         header: { m.IconButton("menu", label: "Toggle the rail", variant: .standard, on_tap: { open = !open }) }) {
-        m.NavigationRailItem(0, bind: screen, label: "Home", icon: "home", expanded: open)
-        m.NavigationRailItem(1, bind: screen, label: "Search", icon: "search", expanded: open)
-        m.NavigationRailItem(2, bind: screen, label: "Library", icon: "library_music", expanded: open)
+        m.NavigationRailItem(0, label: "Home", icon: "home")
+        m.NavigationRailItem(1, label: "Search", icon: "search")
+        m.NavigationRailItem(2, label: "Library", icon: "library_music")
     }
 }
 
@@ -56,12 +56,12 @@ View NavigationRailScenarios() {
     var screen = 0
     var open = false
     Row #[p: 24, gap: 16, bg: t.surface, grow: 1, align: start] {
-        m.NavigationRail(label: "Main", expanded: open,
+        m.NavigationRail(bind: screen, expanded: open, label: "Main",
             header: { m.IconButton("menu", label: "Menu", variant: .standard, on_tap: { open = !open }) }) {
-            m.NavigationRailItem(0, bind: screen, label: "Home", icon: "home", expanded: open)
-            m.NavigationRailItem(1, bind: screen, label: "Search", icon: "search", expanded: open)
-            m.NavigationRailItem(2, bind: screen, label: "Locked", icon: "lock", expanded: open, disabled: true)
-            m.NavigationRailItem(3, bind: screen, label: "Library", icon: "library_music", expanded: open)
+            m.NavigationRailItem(0, label: "Home", icon: "home")
+            m.NavigationRailItem(1, label: "Search", icon: "search")
+            m.NavigationRailItem(2, label: "Locked", icon: "lock", disabled: true)
+            m.NavigationRailItem(3, label: "Library", icon: "library_music")
         }
         Column #[gap: 8, align: start] {
             Text("Screen is {screen}, rail {open ? "open" : "closed"}")

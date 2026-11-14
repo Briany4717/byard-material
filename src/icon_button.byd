@@ -6,7 +6,10 @@
 //     m.IconButton("favorite", label: "Favourite", variant: .tonal, toggle: true,
 //         selected: liked, on_tap: { liked = !liked })
 //
-// `label` is what a screen reader says: an icon button has no text of its own.
+// `label` is what a screen reader says: an icon button has no text of its own. `color` replaces the
+// icon colour (and so the state layers) when a surface needs another one, as the vibrant toolbars
+// do with `on_primary_container`; left out, the variant's own colour is used. A toolbar gives its
+// standard buttons its content colour itself (a context), so a caller needs no `color` there.
 
 enum IconButtonVariant {
     standard,
@@ -31,8 +34,10 @@ private fn iconButtonWidth(size: ButtonSize, width: IconButtonWidth) -> Int =>
 
 View IconButton(icon: Str, label: Str, variant: IconButtonVariant = .standard,
     size: ButtonSize = .s, width: IconButtonWidth = .default, shape: ButtonShape = .round,
-    toggle: Bool = false, selected: Bool = false, disabled: Bool = false, on_tap: Fn() = {}) {
+    toggle: Bool = false, selected: Bool = false, disabled: Bool = false, color: Color? = none,
+    on_tap: Fn() = {}) {
     inject Theme as t
+    inject ToolbarContent as bar
 
     let on = toggle && selected
     let resting = toggle && !selected
@@ -46,6 +51,8 @@ View IconButton(icon: Str, label: Str, variant: IconButtonVariant = .standard,
         : variant == IconButtonVariant.outlined ? (on ? t.inverseSurface : t.surface.alpha(0.0))
         : t.surface.alpha(0.0)
     let ink = disabled ? t.onSurface.alpha(disabledContent)
+        : color != none ? color ?? t.onSurfaceVariant
+        : variant == IconButtonVariant.standard && !on && bar.tinted ? bar.ink
         : variant == IconButtonVariant.filled ? (resting ? t.primary : t.onPrimary)
         : variant == IconButtonVariant.tonal ? (resting ? t.onSurfaceVariant : t.onSecondaryContainer)
         : variant == IconButtonVariant.outlined ? (on ? t.inverseOnSurface : t.onSurfaceVariant)
