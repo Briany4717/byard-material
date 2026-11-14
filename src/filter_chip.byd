@@ -10,7 +10,7 @@
 // Web uses the same (a listbox option is for a chip inside a chosen set, which this is not).
 
 View FilterChip(label: Str, look: ChipLook = .flat, selected: Bool = false, icon: Str = "",
-    dropdown: Bool = false, expanded: Bool = false, disabled: Bool = false, on_tap: Fn() = {}) {
+    dropdown: Bool = false, expanded: Bool = false, disabled: Bool = false, on_tap: Fn() = none) {
     inject Theme as t
 
     let elevated = look == ChipLook.elevated
@@ -37,7 +37,7 @@ View FilterChip(label: Str, look: ChipLook = .flat, selected: Bool = false, icon
         border_width: outlined ? chipLineWidth : 0,
         shadow: restShadow,
         height: chipHeight,
-        pl: lead ? 8 : 16,
+        pl: (lead ? 8 : 16) with t.springSpatialFast,
         pr: dropdown ? 8 : 16,
         shrink: 0,
         align: center,
@@ -56,8 +56,13 @@ View FilterChip(label: Str, look: ChipLook = .flat, selected: Bool = false, icon
         }
         on pressed { overlay: ink.alpha(statePress) with t.springEffectsFast }
 
-        // The leading slot opens to the icon's width plus the gap, so the label slides over.
-        Box #[width: lead ? chipIconSize + chipGap : 0, height: chipIconSize, shrink: 0] {
+        // The leading slot opens to the icon's width plus the gap, and the chip's padding closes
+        // from 16 to 8, so the chip grows and the label slides over on a spring.
+        Box #[
+            width: (lead ? chipIconSize + chipGap : 0) with t.springSpatialFast,
+            height: chipIconSize,
+            shrink: 0,
+        ] {
             Box #[
                 opacity: (lead ? 1.0 : 0.0) with t.springEffectsFast,
                 scale: (lead ? 1.0 : 0.6) with t.springSpatialFast,
@@ -67,9 +72,7 @@ View FilterChip(label: Str, look: ChipLook = .flat, selected: Bool = false, icon
         }
         Text(label) #[typo: t.labelLarge, color: ink with t.springEffectsFast, wrap: false]
         when dropdown {
-            Box #[ml: chipGap] {
-                Icon("arrow_drop_down", size: chipIconSize, color: ink)
-            }
+            Icon("arrow_drop_down", size: chipIconSize, color: ink) #[ml: chipGap]
         }
     }
 }

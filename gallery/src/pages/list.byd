@@ -1,0 +1,84 @@
+use material as m
+
+// Every line count, leading and trailing part and state of m.ListItem, and m.Divider.
+
+View ListPage() {
+    inject Theme as t
+    var agree = true
+    var wifi = true
+    var pick = "a"
+    Column #[p: 24, gap: 32, bg: t.surface, grow: 1] {
+        Section("One, two and three lines") {
+            m.List(label: "Lines") {
+                m.ListItem("One line")
+                m.Divider(inset: .start)
+                m.ListItem("Two lines", supporting: "Supporting text")
+                m.Divider(inset: .start)
+                m.ListItem("Three lines", overline: "Overline", supporting: "Supporting text that is long enough to run onto a second line when the list is narrow")
+            }
+        }
+        Section("Long text is cut") {
+            m.List(label: "Cut") {
+                m.ListItem("A headline that is far too long to fit on one line of this narrow list item", supporting: "Supporting text that is also far too long to fit on a single line of this list")
+            }
+        }
+        Section("Leading and trailing slots") {
+            m.List(label: "Parts") {
+                m.ListItem("Icon", supporting: "Leading and trailing icons", leading: { m.ListItemIcon("folder") }, trailing: { m.ListItemIcon("chevron_right") })
+                m.Divider(inset: .start)
+                m.ListItem("Avatar", supporting: "Trailing text", leading: { m.ListItemAvatar("A") }, trailing: { m.ListItemText("10:24") })
+                m.Divider(inset: .start)
+                m.ListItem("Three lines", overline: "Top aligned", supporting: "The leading and trailing parts sit at the top of the item", leading: { m.ListItemAvatar("B") }, trailing: { m.ListItemText("Now") })
+                m.Divider(inset: .start)
+                m.ListItem("Checkbox", supporting: "A control in the leading slot", leading: { m.Checkbox(bind: agree, name: "Agree") })
+                m.Divider(inset: .start)
+                m.ListItem("Wi-Fi", supporting: "A switch in the trailing slot", leading: { m.ListItemIcon("wifi") }, trailing: { m.Switch(bind: wifi, label: "Wi-Fi") })
+                m.Divider(inset: .start)
+                m.ListItem("Radio", supporting: "Leading radio", leading: { m.Radio("a", bind: pick, name: "Option A") })
+                m.Divider(inset: .start)
+                m.ListItem("Button", supporting: "An icon button after the text", leading: { m.ListItemIcon("wifi") }, trailing: { m.IconButton("more_vert", label: "More") })
+            }
+        }
+        Section("States") {
+            m.List(label: "States") {
+                m.ListItem("Clickable", supporting: "Hover, press, focus", leading: { m.ListItemIcon("star") }, on_tap: {})
+                m.ListItem("Selected", supporting: "Secondary container", leading: { m.ListItemIcon("check") }, selected: true, on_tap: {})
+                m.ListItem("Disabled", supporting: "Dimmed to 38%", leading: { m.ListItemIcon("block") }, trailing: { m.ListItemText("Off") }, disabled: true, on_tap: {})
+            }
+        }
+        Section("Dividers") {
+            Column #[gap: 12, width: 360] {
+                m.Divider()
+                m.Divider(inset: .start)
+                m.Divider(inset: .end)
+                m.Divider(inset: .middle)
+                Row #[gap: 16, height: 48, align: stretch] {
+                    Text("left") #[typo: t.bodyMedium, color: t.onSurface]
+                    m.Divider(orientation: .vertical)
+                    Text("right") #[typo: t.bodyMedium, color: t.onSurface]
+                    m.Divider(orientation: .vertical, inset: .middle)
+                    Text("inset") #[typo: t.bodyMedium, color: t.onSurface]
+                }
+            }
+        }
+    }
+}
+
+View ListScenarios() {
+    inject Theme as t
+    var picked = 0
+    var chosen = false
+    var muted = false
+    Column #[p: 24, gap: 16, align: start, bg: t.surface, grow: 1] {
+        m.List(label: "Inbox") {
+            m.ListItem("Plain", supporting: "Not interactive")
+            m.ListItem("Open", supporting: "Tap me", selected: chosen, leading: { m.ListItemAvatar("O") }, on_tap: { picked += 1 chosen = !chosen })
+            m.ListItem("Locked", disabled: true, on_tap: { picked += 100 }, trailing: { m.ListItemText("Off") })
+            m.ListItem("Mute", leading: { m.ListItemIcon("notifications") }, trailing: { m.Switch(bind: muted, label: "Mute") })
+            m.ListItem("Pinned", on_tap: { picked += 10 }, trailing: { m.IconButton("more_vert", label: "More", on_tap: { picked += 1000 }) })
+        }
+        m.Divider()
+        Text("Picked: {picked}")
+        Text("Muted: {muted}")
+    }
+}

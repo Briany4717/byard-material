@@ -19,6 +19,12 @@ enum Page {
     tabs,
     navigationBar,
     navigationRail,
+    topAppBar,
+    bottomAppBar,
+    toolbars,
+    card,
+    list,
+    badge,
 }
 
 View Main() {
@@ -62,6 +68,18 @@ View Main() {
                 NavigationBarPage()
             } else when page == Page.navigationRail {
                 NavigationRailPage()
+            } else when page == Page.topAppBar {
+                TopAppBarPage()
+            } else when page == Page.bottomAppBar {
+                BottomAppBarPage()
+            } else when page == Page.toolbars {
+                ToolbarsPage()
+            } else when page == Page.card {
+                CardPage()
+            } else when page == Page.list {
+                ListPage()
+            } else when page == Page.badge {
+                BadgePage()
             } else {
                 Column #[p: 24, gap: 16, align: start] {
                     Text("Components") #[typo: t.titleMedium, color: t.primary]
@@ -79,6 +97,12 @@ View Main() {
                     m.Button("Tabs", variant: .tonal, on_tap: { page = Page.tabs })
                     m.Button("NavigationBar", variant: .tonal, on_tap: { page = Page.navigationBar })
                     m.Button("NavigationRail", variant: .tonal, on_tap: { page = Page.navigationRail })
+                    m.Button("TopAppBar", variant: .tonal, on_tap: { page = Page.topAppBar })
+                    m.Button("BottomAppBar", variant: .tonal, on_tap: { page = Page.bottomAppBar })
+                    m.Button("Toolbars", variant: .tonal, on_tap: { page = Page.toolbars })
+                    m.Button("Card", variant: .tonal, on_tap: { page = Page.card })
+                    m.Button("ListItem and Divider", variant: .tonal, on_tap: { page = Page.list })
+                    m.Button("Badge", variant: .tonal, on_tap: { page = Page.badge })
                 }
             }
         }

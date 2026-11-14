@@ -3,12 +3,16 @@
 //     m.RangeSlider(bind lower: priceMin, bind upper: priceMax, label: "Price", min: 0.0,
 //         max: 100.0, step: 5.0)
 //
-// Each handle is a `Slider` underneath, named "<label> start" and "<label> end" for a screen
-// reader, with the arrow keys and Tab as for `Slider`. The built-in `Slider` has one thumb, so
-// the track is shared between two of them split at the value halfway between the handles
-// (rounded down to a step): the left one is the lower value over `min` to that point, the right
-// one the upper value over that point to `max`. A handle can be dragged right up to the other
-// but not past it, and the split follows as they move.
+// Composed, like `Slider`. Each handle is a control of its own with role `slider`, named
+// "<label> start" and "<label> end", with the keys of `Slider` (arrows, PageUp and PageDown,
+// Home and End); a handle stops one step short of the other (the same value when continuous).
+// Dragging a handle moves it by how far the pointer has travelled (`e.dx`) from where it was
+// pressed; a press on the track moves the nearer handle to it and a drag from there carries on
+// with that handle. Each handle narrows while pressed and shows its value above it while pressed
+// or focused by the keyboard.
+//
+// A handle is placed with `ml`, not `translate`: the hit area of a translated element stays
+// where it was laid out (see the notes), so a translated handle could not be pressed.
 //
 // `lower` and `upper` are the two bound values; `size`, `length`, `step`, `stops` and
 // `disabled` are as for Slider.
@@ -18,8 +22,9 @@ View RangeSlider(bind lower: Float, bind upper: Float, label: Str, min: Float = 
     stops: Bool = true, disabled: Bool = false) {
     inject Theme as t
 
-    var focLow = false
-    var focHigh = false
+    // Where each handle was when the press on it began; `e.dx` is added to it.
+    var lowAnchor: Float = 0.0
+    var highAnchor: Float = 0.0
 
     let span = length * 1.0
     let travel = span - 16.0
@@ -32,26 +37,78 @@ View RangeSlider(bind lower: Float, bind upper: Float, label: Str, min: Float = 
     let highX = 8.0 + highFrac * travel
     let steps = (stops && step > 0.0) ? ((max - min) / step).round() + 1 : 0
 
-    // Where the two sliders meet, as a value, and how long the left one is.
-    let half = (lower + upper) / 2.0
-    let split = step > 0.0 ? min + step * ((half - min) / step).floor() : half
-    let leftLength = travel * (split - min) / range
-
     let hh = sliderHandle(size)
+    let apart = step > 0.0 ? step : 0.0
+    let active = disabled ? t.onSurface.alpha(disabledContent) : t.primary
 
-    ZStack #[width: span, height: hh, alignment: top_start, shrink: 0] {
-        ZStack #[width: span, height: hh, alignment: start] {
-            SliderDrawing(size, span, lowX, highX, true, false, steps, disabled)
-            Box #[ml: 8] {
-                SliderInput(bind value: lower, lo: min, hi: split, step: step, length: leftLength,
-                    label: "{label} start", disabled: disabled, bind focus: focLow)
+    ZStack #[
+        width: span,
+        height: hh,
+        alignment: top_start,
+        shrink: 0,
+        disabled: disabled,
+        pointer_down(e) => {
+            if e.x < (lowX + highX) / 2.0 {
+                lower = sliderCap(sliderAt(e.x, span, min, max, step), upper - apart)
+            } else {
+                upper = sliderFloor(sliderAt(e.x, span, min, max, step), lower + apart)
             }
-            Box #[ml: 8.0 + leftLength] {
-                SliderInput(bind value: upper, lo: split, hi: max, step: step,
-                    length: travel - leftLength, label: "{label} end", disabled: disabled,
-                    bind focus: focHigh)
+        },
+        drag(e) => {
+            if e.x < (lowX + highX) / 2.0 {
+                lower = sliderCap(sliderAt(e.x, span, min, max, step), upper - apart)
+            } else {
+                upper = sliderFloor(sliderAt(e.x, span, min, max, step), lower + apart)
+            }
+        },
+    ] {
+        SliderDrawing(size, span, lowX, highX, true, false, steps, disabled, "")
+
+        Box #[
+            width: 4,
+            height: hh,
+            radius: 2,
+            bg: active with t.springEffectsFast,
+            ml: lowX - 2.0,
+            a11y_role: slider,
+            a11y_label: "{label} start",
+            a11y_value: "{lower}",
+            disabled: disabled,
+            focus => {},
+            pointer_down => lowAnchor = lower,
+            drag(e) => lower = sliderCap(sliderAt(8.0 + (lowAnchor - min) / range * travel + e.dx, span, min, max, step), upper - apart),
+            key_down(k) => lower = sliderCap(sliderKey(k, lower, min, max, step), upper - apart),
+        ] as lo {
+            on pressed { scale: (0.5, 1.0) with t.springSpatialFast }
+            on focus_visible {
+                outline: t.secondary
+                outline_width: focusRingWidth
+                outline_offset: focusRingOffset
             }
         }
+        Box #[
+            width: 4,
+            height: hh,
+            radius: 2,
+            bg: active with t.springEffectsFast,
+            ml: highX - 2.0,
+            a11y_role: slider,
+            a11y_label: "{label} end",
+            a11y_value: "{upper}",
+            disabled: disabled,
+            focus => {},
+            pointer_down => highAnchor = upper,
+            drag(e) => upper = sliderFloor(sliderAt(8.0 + (highAnchor - min) / range * travel + e.dx, span, min, max, step), lower + apart),
+            key_down(k) => upper = sliderFloor(sliderKey(k, upper, min, max, step), lower + apart),
+        ] as hi {
+            on pressed { scale: (0.5, 1.0) with t.springSpatialFast }
+            on focus_visible {
+                outline: t.secondary
+                outline_width: focusRingWidth
+                outline_offset: focusRingOffset
+            }
+        }
+
         Box #[
             width: 48,
             height: 44,
@@ -59,9 +116,11 @@ View RangeSlider(bind lower: Float, bind upper: Float, label: Str, min: Float = 
             bg: t.inverseSurface,
             align: center,
             justify: center,
-            opacity: focLow && !disabled ? 1.0 : 0.0 with t.springEffectsFast,
+            opacity: 0.0,
             translate: (lowX - 24.0, -48.0),
         ] {
+            on lo.pressed { opacity: 1.0 with t.springEffectsFast }
+            on lo.focus_visible { opacity: 1.0 with t.springEffectsFast }
             Text(step >= 1.0 ? "{lower:.0}" : "{lower:.2}") #[
                 typo: t.labelLarge,
                 color: t.inverseOnSurface,
@@ -76,9 +135,11 @@ View RangeSlider(bind lower: Float, bind upper: Float, label: Str, min: Float = 
             bg: t.inverseSurface,
             align: center,
             justify: center,
-            opacity: focHigh && !disabled ? 1.0 : 0.0 with t.springEffectsFast,
+            opacity: 0.0,
             translate: (highX - 24.0, -48.0),
         ] {
+            on hi.pressed { opacity: 1.0 with t.springEffectsFast }
+            on hi.focus_visible { opacity: 1.0 with t.springEffectsFast }
             Text(step >= 1.0 ? "{upper:.0}" : "{upper:.2}") #[
                 typo: t.labelLarge,
                 color: t.inverseOnSurface,

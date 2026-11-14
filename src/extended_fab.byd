@@ -3,15 +3,19 @@
 //
 //     m.ExtendedFab("Compose", icon: "edit", expanded: !scrolled, on_tap: { compose() })
 //
-// The label goes when it collapses and the container follows at once: a width cannot be animated
-// in Byard yet (see the notes), so it snaps rather than slides. The label stays the accessible
-// name when collapsed.
+// Collapsing slides the container's width closed on a spatial spring while the label fades; the
+// label is measured (`on measure`) so its slot knows what width to open to. The label stays the
+// accessible name when collapsed.
+//
+// Elevation: level 3 at rest and pressed, level 4 under the pointer; lowered, 1 and 2.
 
 View ExtendedFab(label: Str, icon: Str, size: FabSize = .medium, color: FabColor = .primaryContainer,
-    expanded: Bool = true, lowered: Bool = false, on_tap: Fn() = {}) {
+    expanded: Bool = true, lowered: Bool = false, on_tap: Fn() = none) {
     inject Theme as t
 
     let h = extendedHeight(size)
+    // The label's own width, once it has been laid out: the slot opens to it, or to nothing.
+    var labelW: Float = 0.0
 
     let container = color == FabColor.primaryContainer ? t.primaryContainer
         : color == FabColor.secondaryContainer ? t.secondaryContainer
@@ -29,10 +33,9 @@ View ExtendedFab(label: Str, icon: Str, size: FabSize = .medium, color: FabColor
     Row #[
         bg: container with t.springEffectsFast,
         radius: extendedRadius(size) with t.springSpatialFast,
-        shadow: lowered ? "sm" : "lg",
+        shadow: (lowered ? "sm" : "lg") with t.springEffectsFast,
         height: h,
-        p: (0, expanded ? extendedPadding(size) : extendedCollapsedPadding(size)),
-        gap: extendedGap(size),
+        p: (0, expanded ? extendedPadding(size) : extendedCollapsedPadding(size)) with t.springSpatialFast,
         shrink: 0,
         align: center,
         justify: center,
@@ -42,7 +45,7 @@ View ExtendedFab(label: Str, icon: Str, size: FabSize = .medium, color: FabColor
     ] {
         on hover {
             overlay: ink.alpha(stateHover) with t.springEffectsFast
-            shadow: lowered ? "md" : "lg"
+            shadow: lowered ? "md" : "xl"
         }
         on focus_visible {
             overlay: ink.alpha(stateFocus) with t.springEffectsFast
@@ -56,12 +59,29 @@ View ExtendedFab(label: Str, icon: Str, size: FabSize = .medium, color: FabColor
         }
 
         Icon(icon, size: extendedIconSize(size), color: ink)
-        when expanded {
-            Text(label) #[
-                typo: size == FabSize.small ? t.titleMedium : size == FabSize.medium ? t.titleLarge : t.headlineSmall,
-                color: ink,
-                wrap: false,
-            ]
+        // The slot is the gap plus the label, clipped; it is as wide as the label until it is
+        // measured, and a collapsed one is measured too, so that opening it is a slide.
+        Clip #[
+            width: (expanded ? labelW + extendedGap(size) : 0.0) with t.springSpatialFast,
+            height: h,
+            shrink: 0,
+        ] {
+            Row #[
+                pl: extendedGap(size),
+                height: h,
+                align: center,
+                shrink: 0,
+                align_self: start,
+                opacity: (expanded ? 1.0 : 0.0) with t.springEffectsFast,
+            ] {
+                on measure => labelW = it.w - extendedGap(size)
+                Text(label) #[
+                    typo: size == FabSize.small ? t.titleMedium : size == FabSize.medium ? t.titleLarge : t.headlineSmall,
+                    color: ink,
+                    wrap: false,
+                    shrink: 0,
+                ]
+            }
         }
     }
 }
