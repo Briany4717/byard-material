@@ -21,6 +21,8 @@ View TextFieldPage() {
     var grow = "A text that grows with what is written in it, wrapping at the width of the field"
     var grow2 = "Short"
     var onCard = "On a card"
+    var short = "x"
+    var long = "y"
     var dis = ""
     var dis2 = "Locked"
     Column #[p: 24, gap: 32, bg: t.surface, grow: 1] {
@@ -64,6 +66,12 @@ View TextFieldPage() {
             Row #[gap: 24, align: start] {
                 m.TextField(bind: grow, label: "Grows", min_lines: 2, max_lines: 4, supporting_text: "2 to 4 lines")
                 m.TextField(bind: grow2, variant: .outlined, label: "Grows", min_lines: 2, max_lines: 4, supporting_text: "2 to 4 lines")
+            }
+        }
+        Section("Notch fits the label") {
+            Row #[gap: 24, align: start] {
+                m.TextField(bind: short, variant: .outlined, label: "ID", width: 200)
+                m.TextField(bind: long, variant: .outlined, label: "A rather long label for the notch", width: 280)
             }
         }
         Section("Outlined on a card") {

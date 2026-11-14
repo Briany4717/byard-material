@@ -37,6 +37,7 @@ View TextField(bind value: Str, label: Str, variant: TextFieldVariant = .filled,
     inject Theme as t
 
     var focused = false
+    var labelW = 0.0
 
     let filled = variant == TextFieldVariant.filled
     let multi = lines > 1 || min_lines > 0 || max_lines > 0
@@ -68,10 +69,9 @@ View TextField(bind value: Str, label: Str, variant: TextFieldVariant = .filled,
     let shown = error && error_text != "" ? error_text : supporting_text
     let hasFooter = shown != "" || max_length > 0
 
-    // Where the floated label cuts the outline: from 4 dp before it, as long as the label at
-    // 0.75 scale plus 8 dp after it. The length is an estimate (6.5 dp a letter at bodySmall
-    // size): Byld cannot measure a text.
-    let notch = (left - 4.0, label.len * 6.5 + 12.0)
+    // Where the floated label cuts the outline: 4 dp before the label, the label's measured
+    // width at 0.75 scale, and 4 dp after it.
+    let notch = (left - 4.0, labelW * 0.75 + 8.0)
     let noNotch = (0.0, 0.0)
 
     Column #[width: width, shrink: 0] {
@@ -180,19 +180,23 @@ View TextField(bind value: Str, label: Str, variant: TextFieldVariant = .filled,
             }
 
             // The label: resting inside, floated to the top edge with text or focus.
-            Text(label) #[
-                typo: t.bodyLarge,
-                color: labelInk with t.springEffectsFast,
-                wrap: false,
+            Row #[
                 origin: (0, 0),
                 scale: hasText ? 0.75 : 1.0 with t.springSpatialFast,
                 translate: (left, hasText ? (filled ? 8 : -9) : 16) with t.springSpatialFast,
-                a11y_hidden: true,
             ] {
+                on measure => labelW = it.w
                 on field.focused {
-                    color: focusInk with t.springEffectsFast
                     scale: 0.75 with t.springSpatialFast
                     translate: (left, filled ? 8 : -9) with t.springSpatialFast
+                }
+                Text(label) #[
+                    typo: t.bodyLarge,
+                    color: labelInk with t.springEffectsFast,
+                    wrap: false,
+                    a11y_hidden: true,
+                ] {
+                    on field.focused { color: focusInk with t.springEffectsFast }
                 }
             }
         }
