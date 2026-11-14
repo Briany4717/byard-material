@@ -34,6 +34,7 @@ enum Page {
     card,
     list,
     badge,
+    datePicker,
 }
 
 View Main() {
@@ -107,6 +108,8 @@ View Main() {
                 ListPage()
             } else when page == Page.badge {
                 BadgePage()
+            } else when page == Page.datePicker {
+                DatePickerPage()
             } else {
                 Column #[p: 24, gap: 16, align: start] {
                     Text("Components") #[typo: t.titleMedium, color: t.primary]
@@ -139,6 +142,7 @@ View Main() {
                     m.Button("Card", variant: .tonal, on_tap: { page = Page.card })
                     m.Button("ListItem and Divider", variant: .tonal, on_tap: { page = Page.list })
                     m.Button("Badge", variant: .tonal, on_tap: { page = Page.badge })
+                    m.Button("DatePicker", variant: .tonal, on_tap: { page = Page.datePicker })
                 }
             }
         }

@@ -1,0 +1,541 @@
+// What the date pickers share: the calendar arithmetic, the month grid and the text field that
+// takes a typed date. Private, except the two enums a caller writes.
+//
+// Dates are ISO text, `2026-11-16`, everywhere: they compare and sort as text, `formatDate`
+// reads them, and a bound `Str` holds one (or `""` for none). Byld has no date type and no
+// date arithmetic, so it is written here as functions over whole numbers:
+//
+//   days in a month, leap years   plain `%` and `?:`
+//   day number                    days since 0000-03-01, after Howard Hinnant's `days_from_civil`
+//                                 (all `Int` division here is of non-negative numbers, so it
+//                                 truncates the way the algorithm wants)
+//   weekday                       `(day number + 3) % 7`, 0 = Sunday (1970-01-01, a Thursday,
+//                                 is day 719468, and 719468 % 7 is 1)
+//   a day number back to a date   Hinnant's `civil_from_days`, one small function per step
+//                                 because a `fn` is a single expression
+//
+// Text to date, for the input mode, is `slice` and `toInt` at fixed places: Byld has no date
+// parser, so a typed date must be `mm/dd/yyyy` (or the order the caller picks), two digits, two
+// digits and four, with `/`.
+
+// The day a week starts on. Material's default (the US one) is Sunday.
+enum Weekday {
+    sunday,
+    monday,
+    tuesday,
+    wednesday,
+    thursday,
+    friday,
+    saturday,
+}
+
+// The order of a typed date: month, day, year (the US one, Material's default), day, month,
+// year, or year, month, day. The separator is always `/`.
+enum DateFormat {
+    mdy,
+    dmy,
+    ymd,
+}
+
+private fn weekdayIndex(w: Weekday) -> Int =>
+    w == Weekday.sunday ? 0
+    : w == Weekday.monday ? 1
+    : w == Weekday.tuesday ? 2
+    : w == Weekday.wednesday ? 3
+    : w == Weekday.thursday ? 4
+    : w == Weekday.friday ? 5
+    : 6
+
+private let weekdayLetters = ["S", "M", "T", "W", "T", "F", "S"]
+private let gridWeeks = [0, 1, 2, 3, 4, 5]
+private let gridDays = [0, 1, 2, 3, 4, 5, 6]
+private let tens = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+private let twenties = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
+
+// ---- the calendar -------------------------------------------------------------------------
+
+private fn isLeap(y: Int) -> Bool => (y % 4 == 0 && y % 100 != 0) || y % 400 == 0
+
+private fn daysIn(y: Int, m: Int) -> Int =>
+    m == 2 ? (isLeap(y) ? 29 : 28) : (m == 4 || m == 6 || m == 9 || m == 11) ? 30 : 31
+
+private fn pad2(n: Int) -> Str => n < 10 ? "0{n}" : "{n}"
+
+private fn pad4(n: Int) -> Str => n < 10 ? "000{n}" : n < 100 ? "00{n}" : n < 1000 ? "0{n}" : "{n}"
+
+private fn isoOf(y: Int, m: Int, d: Int) -> Str => "{pad4(y)}-{pad2(m)}-{pad2(d)}"
+
+private fn isoYear(s: Str) -> Int => s.slice(0, 4).toInt() ?? 0
+
+private fn isoMonth(s: Str) -> Int => s.slice(5, 7).toInt() ?? 0
+
+private fn isoDay(s: Str) -> Int => s.slice(8, 10).toInt() ?? 0
+
+// The year a day belongs to when the year starts in March, as the day number counts.
+private fn marchYear(y: Int, m: Int) -> Int => m <= 2 ? y - 1 : y
+
+private fn yearOfEra(y: Int, m: Int) -> Int => marchYear(y, m) % 400
+
+private fn dayNumber(y: Int, m: Int, d: Int) -> Int =>
+    marchYear(y, m) / 400 * 146097 + yearOfEra(y, m) * 365 + yearOfEra(y, m) / 4
+- yearOfEra(y, m) / 100 + (153 * (m > 2 ? m - 3 : m + 9) + 2) / 5 + d - 1
+
+private fn dayNumberOf(s: Str) -> Int => dayNumber(isoYear(s), isoMonth(s), isoDay(s))
+
+private fn weekdayOf(s: Str) -> Int => (dayNumberOf(s) + 3) % 7
+
+// Steps of `civil_from_days` on a day number `z`.
+private fn inEra(z: Int) -> Int => z % 146097
+
+private fn eraYear(z: Int) -> Int =>
+    (inEra(z) - inEra(z) / 1460 + inEra(z) / 36524 - inEra(z) / 146096) / 365
+
+private fn inYear(z: Int) -> Int =>
+    inEra(z) - (365 * eraYear(z) + eraYear(z) / 4 - eraYear(z) / 100)
+
+private fn marchMonth(z: Int) -> Int => (5 * inYear(z) + 2) / 153
+
+private fn zDay(z: Int) -> Int => inYear(z) - (153 * marchMonth(z) + 2) / 5 + 1
+
+private fn zMonth(z: Int) -> Int => marchMonth(z) < 10 ? marchMonth(z) + 3 : marchMonth(z) - 9
+
+private fn zYear(z: Int) -> Int =>
+    eraYear(z) + z / 146097 * 400 + (zMonth(z) <= 2 ? 1 : 0)
+
+private fn fromDayNumber(z: Int) -> Str => isoOf(zYear(z), zMonth(z), zDay(z))
+
+private fn addDays(s: Str, n: Int) -> Str => fromDayNumber(dayNumberOf(s) + n)
+
+// A month later or earlier, on the same day or the last one of that month.
+private fn monthsTotal(s: Str, n: Int) -> Int => isoYear(s) * 12 + isoMonth(s) - 1 + n
+
+private fn addMonths(s: Str, n: Int) -> Str =>
+    isoOf(monthsTotal(s, n) / 12, monthsTotal(s, n) % 12 + 1,
+        isoDay(s).min(daysIn(monthsTotal(s, n) / 12, monthsTotal(s, n) % 12 + 1)))
+
+private fn monthStart(s: Str, n: Int) -> Str => addMonths(s, n).slice(0, 7) + "-01"
+
+private fn monthEnd(s: Str, n: Int) -> Str =>
+    addMonths(s, n).slice(0, 7) + "-" + pad2(daysIn(isoYear(addMonths(s, n)), isoMonth(addMonths(s, n))))
+
+private fn withYear(s: Str, y: Int) -> Str =>
+    isoOf(y, isoMonth(s), isoDay(s).min(daysIn(y, isoMonth(s))))
+
+// How many days a date is from the first column of its week.
+private fn weekColumn(s: Str, ws: Int) -> Int => (weekdayOf(s) - ws + 7) % 7
+
+private fn beyond(s: Str, lo: Str, hi: Str) -> Bool => (lo != "" && s < lo) || (hi != "" && s > hi)
+
+private fn clampDate(s: Str, lo: Str, hi: Str) -> Str =>
+    lo != "" && s < lo ? lo : hi != "" && s > hi ? hi : s
+
+// The date a key moves to: arrows by a day or a week, Home and End to the ends of the week,
+// PageUp and PageDown by a month. A date outside `lo`..`hi` is not moved to.
+private fn keyTarget(s: Str, k: Str, ws: Int) -> Str =>
+    k == "ArrowLeft" ? addDays(s, -1)
+    : k == "ArrowRight" ? addDays(s, 1)
+    : k == "ArrowUp" ? addDays(s, -7)
+    : k == "ArrowDown" ? addDays(s, 7)
+    : k == "Home" ? addDays(s, 0 - weekColumn(s, ws))
+    : k == "End" ? addDays(s, 6 - weekColumn(s, ws))
+    : k == "PageUp" ? addMonths(s, -1)
+    : k == "PageDown" ? addMonths(s, 1)
+    : s
+
+private fn keyMove(s: Str, k: Str, ws: Int, lo: Str, hi: Str) -> Str =>
+    beyond(keyTarget(s, k, ws), lo, hi) ? s : keyTarget(s, k, ws)
+
+// The first year's row in the year list, so that the list opens with the year in view.
+private fn yearListTop(year: Int, first: Int) -> Float => ((year - first) / 3 - 2).max(0).toFloat() * 52.0
+
+// ---- typed dates --------------------------------------------------------------------------
+
+private fn fieldHint(f: DateFormat) -> Str =>
+    f == DateFormat.mdy ? "mm/dd/yyyy" : f == DateFormat.dmy ? "dd/mm/yyyy" : "yyyy/mm/dd"
+
+private fn fieldYear(t: Str, f: DateFormat) -> Int =>
+    (f == DateFormat.ymd ? t.slice(0, 4) : t.slice(6, 10)).toInt() ?? 0
+
+private fn fieldMonth(t: Str, f: DateFormat) -> Int =>
+    (f == DateFormat.mdy ? t.slice(0, 2) : f == DateFormat.dmy ? t.slice(3, 5) : t.slice(5, 7)).toInt() ?? 0
+
+private fn fieldDay(t: Str, f: DateFormat) -> Int =>
+    (f == DateFormat.mdy ? t.slice(3, 5) : f == DateFormat.dmy ? t.slice(0, 2) : t.slice(8, 10)).toInt() ?? 0
+
+// Where the two separators are, and that the digits are digits.
+private fn fieldShaped(t: Str, f: DateFormat) -> Bool =>
+    t.len == 10
+    && (f == DateFormat.ymd ? (t.slice(4, 5) == "/" && t.slice(7, 8) == "/") : (t.slice(2, 3) == "/" && t.slice(5, 6) == "/"))
+
+// The ISO date a text spells, or `""` when it is not a whole, real date inside `lo`..`hi`.
+private fn parseField(t: Str, f: DateFormat, lo: Str, hi: Str) -> Str =>
+    fieldShaped(t, f) && fieldYear(t, f) >= 1000 && fieldMonth(t, f) >= 1 && fieldMonth(t, f) <= 12
+    && fieldDay(t, f) >= 1 && fieldDay(t, f) <= daysIn(fieldYear(t, f), fieldMonth(t, f))
+    && !beyond(isoOf(fieldYear(t, f), fieldMonth(t, f), fieldDay(t, f)), lo, hi)
+    ? isoOf(fieldYear(t, f), fieldMonth(t, f), fieldDay(t, f)) : ""
+
+private fn formatField(s: Str, f: DateFormat) -> Str =>
+    s == "" ? ""
+    : f == DateFormat.mdy ? "{s.slice(5, 7)}/{s.slice(8, 10)}/{s.slice(0, 4)}"
+    : f == DateFormat.dmy ? "{s.slice(8, 10)}/{s.slice(5, 7)}/{s.slice(0, 4)}"
+    : "{s.slice(0, 4)}/{s.slice(5, 7)}/{s.slice(8, 10)}"
+
+// ---- the text field -----------------------------------------------------------------------
+
+// A TextField holding a date as typed. `value` is the ISO date it spells, or `""` while the
+// text is not a whole date, so a caller reads one value and a half-typed date is never one.
+// The error shows once ten characters are in. A date written by someone else (a tap on the
+// calendar) is written into the text in the field's format.
+private View DateField(bind value: Str, label: Str, format: DateFormat = .mdy,
+    variant: TextFieldVariant = .outlined, width: Int = 280, earliest: Str = "", latest: Str = "",
+    trailing_icon: Str = "", trailing_label: Str = "", autofocus: Bool = false,
+    on_trailing_tap: Fn() = {}) {
+    var text = formatField(value, format)
+
+    on change(text) => {
+        if parseField(text, format, earliest, latest) != value {
+            value = parseField(text, format, earliest, latest)
+        }
+    }
+    on change(value) => {
+        if parseField(text, format, earliest, latest) != value {
+            text = formatField(value, format)
+        }
+    }
+
+    material.TextField(bind: text, label: label, variant: variant, placeholder: fieldHint(format),
+        supporting_text: fieldHint(format), error: text.len >= 10 && value == "",
+        error_text: "Invalid date", width: width, trailing_icon: trailing_icon,
+        trailing_label: trailing_label, autofocus: autofocus, on_trailing_tap: on_trailing_tap)
+}
+
+// ---- the month ----------------------------------------------------------------------------
+
+// The pane every picture of a calendar is made of: the month and year selector with its arrows,
+// the weekday letters, the grid of days, and the list of years in place of both. It selects a
+// date (`value`) or a range (`start` and `end`, with `range`), and has a cursor, the date the
+// keyboard is on and the month on show.
+//
+// The grid is one Tab stop and the arrows move inside it (WAI-ARIA's grid pattern). Byard has no
+// grid role, and a `tab_list` moves by one on every arrow, so the grid keeps the cursor itself and
+// has one button with no area, named for the day under the cursor, that takes focus and the keys
+// (`key_down`, and its tap for Enter and Space). The days are groups a tap reaches, and the
+// cursor's one shows the focus ring through the button's state (`on keys.focus_visible`). The ring
+// also shows after a pointer opened the picker and a key moves the cursor (`keyed`). `grab` puts
+// focus on the button when the pane is drawn, for a picker that opens over the page. A day
+// chosen with the pointer moves focus to the button (`lit`) so the arrows work from there.
+private View CalendarPane(bind value: Str = "", bind start: Str = "", bind end: Str = "",
+    range: Bool = false, week_start: Weekday = .sunday, earliest: Str = "", latest: Str = "",
+    first_year: Int = 1900, grab: Bool = false, on_done: Fn() = {}) {
+    inject Theme as t
+
+    var today = ""
+    var cursor = ""
+    var yearsOpen = false
+    var yearY = 0.0
+    var lit = false
+    var keyed = false
+
+    on mount => {
+        today = now().slice(0, 10)
+        cursor = clampDate(range ? (start != "" ? start : today) : (value != "" ? value : today), earliest, latest)
+    }
+
+    let ws = weekdayIndex(week_start)
+    let cy = isoYear(cursor)
+    let cm = isoMonth(cursor)
+    let dim = daysIn(cy, cm)
+    let lead = weekColumn(isoOf(cy, cm, 1), ws)
+    let cursorName = (cursor.formatDate("dddd, MMMM D, YYYY") ?? "") + (cursor == today ? ", today" : "")
+    let monthYear = cursor.formatDate("MMMM YYYY") ?? ""
+    let canPrev = !beyond(monthEnd(cursor, -1), earliest, "")
+    let canNext = !beyond(monthStart(cursor, 1), "", latest)
+
+    on change(value) => {
+        if value != "" {
+            cursor = value
+        }
+    }
+
+    Column #[width: 336] {
+        Row #[height: 48, p: (0, 0, 0, 12), align: center] {
+            Row #[
+                height: 40,
+                radius: 20,
+                p: (0, 8, 0, 16),
+                gap: 4,
+                align: center,
+                shrink: 0,
+                a11y_role: button,
+                a11y_label: monthYear,
+                a11y_description: "Choose year",
+                a11y_expanded: yearsOpen,
+                tap => {
+                    yearsOpen = !yearsOpen
+                    yearY = yearListTop(cy, first_year)
+                },
+            ] {
+                on hover { overlay: t.onSurfaceVariant.alpha(stateHover) with t.springEffectsFast }
+                on focus_visible {
+                    overlay: t.onSurfaceVariant.alpha(stateFocus) with t.springEffectsFast
+                    outline: t.secondary
+                    outline_width: focusRingWidth
+                    outline_offset: focusRingOffset
+                }
+                on pressed { overlay: t.onSurfaceVariant.alpha(statePress) with t.springEffectsFast }
+
+                Text(monthYear) #[
+                    typo: t.labelLarge,
+                    color: t.onSurfaceVariant,
+                    wrap: false,
+                    a11y_hidden: true,
+                ]
+                Icon(yearsOpen ? "arrow_drop_up" : "arrow_drop_down", size: 24, color: t.onSurfaceVariant)
+            }
+            Box #[grow: 1]
+            when !yearsOpen {
+                IconButton("chevron_left", label: "Previous month", disabled: !canPrev,
+                    on_tap: { cursor = clampDate(addMonths(cursor, -1), earliest, latest) })
+                IconButton("chevron_right", label: "Next month", disabled: !canNext,
+                    on_tap: { cursor = clampDate(addMonths(cursor, 1), earliest, latest) })
+            }
+        }
+
+        when yearsOpen {
+            ScrollView #[width: 336, height: 328, offset: (0.0, yearY)] {
+                Grid #[
+                    columns: "1fr 1fr 1fr",
+                    a11y_role: tab_list,
+                    a11y_label: "Year",
+                    opacity: 1.0 with t.springEffectsFast,
+                ] {
+                    on enter { opacity: 0.0 }
+                    on leave { opacity: 0.0 }
+                    for a in twenties {
+                        for b in tens {
+                            YearCell(year: first_year + a * 10 + b, current: cy, earliest: earliest, latest: latest,
+                                on_pick: {
+                                    cursor = clampDate(withYear(cursor, first_year + a * 10 + b), earliest, latest)
+                                    yearsOpen = false
+                                })
+                        }
+                    }
+                }
+            }
+        } else {
+            Row #[height: 40] {
+                for c in gridDays {
+                    Box #[width: 48, height: 40, align: center, justify: center] {
+                        Text(weekdayLetters[(ws + c) % 7]) #[
+                            typo: t.bodyLarge,
+                            color: t.onSurface,
+                            a11y_hidden: true,
+                        ]
+                    }
+                }
+            }
+            Column #[a11y_role: group, a11y_label: monthYear] {
+                // The keyboard's one stop: a button with no area, named for the day under the
+                // cursor. It takes the arrow keys, and Enter and Space (its tap) choose the day.
+                Box #[
+                    width: 0,
+                    height: 0,
+                    a11y_role: button,
+                    a11y_label: cursorName,
+                    a11y_selected: cursor == value || cursor == start || cursor == end,
+                    autofocus: grab,
+                    focused: lit,
+                    key_down(k) => {
+                        cursor = keyMove(cursor, k, ws, earliest, latest)
+                        keyed = true
+                    },
+                    tap => {
+                        if !beyond(cursor, earliest, latest) {
+                            if !range {
+                                value = cursor
+                                on_done()
+                            } else if start == "" || end != "" || cursor < start {
+                                start = cursor
+                                end = ""
+                            } else {
+                                end = cursor
+                                on_done()
+                            }
+                        }
+                    },
+                ] as keys
+                for w in gridWeeks {
+                    Row {
+                        for c in gridDays {
+                            let n = w * 7 + c - lead + 1
+                            let date = n >= 1 && n <= dim ? isoOf(cy, cm, n) : ""
+                            let blocked = beyond(date, earliest, latest)
+                            let chosen = range ? (date == start || (end != "" && date == end)) : date == value
+                            let between = range && start != "" && end != "" && date > start && date < end
+                            let spans = range && start != "" && end != "" && start != end
+                            let isToday = date == today
+                            let ink = blocked ? t.onSurface.alpha(disabledContent)
+                                : chosen ? t.onPrimary
+                                : between ? t.onSecondaryContainer
+                                : isToday ? t.primary
+                                : t.onSurface
+                            let here = date == cursor
+                            when date == "" {
+                                Box #[width: 48, height: 48, shrink: 0]
+                            } else {
+                                ZStack #[width: 48, height: 48, shrink: 0, alignment: center] {
+                                    Row #[width: 48, height: 40] {
+                                        Box #[
+                                            grow: 1,
+                                            bg: (between || (spans && date == end)) ? t.secondaryContainer : t.secondaryContainer.alpha(0.0) with t.springEffectsFast,
+                                        ]
+                                        Box #[
+                                            grow: 1,
+                                            bg: (between || (spans && date == start)) ? t.secondaryContainer : t.secondaryContainer.alpha(0.0) with t.springEffectsFast,
+                                        ]
+                                    }
+                                    Box #[
+                                        width: 40,
+                                        height: 40,
+                                        radius: 20,
+                                        bg: chosen ? t.primary : t.primary.alpha(0.0) with t.springEffectsFast,
+                                        border: t.outline,
+                                        border_width: isToday && !chosen ? 1 : 0,
+                                        align: center,
+                                        justify: center,
+                                        a11y_role: group,
+                                        a11y_label: (date.formatDate("dddd, MMMM D, YYYY") ?? "") + (isToday ? ", today" : ""),
+                                        a11y_selected: chosen,
+                                        disabled: blocked,
+                                        tap => {
+                                            cursor = date
+                                            lit = true
+                                            keyed = false
+                                            if !range {
+                                                value = date
+                                                on_done()
+                                            } else if start == "" || end != "" || date < start {
+                                                start = date
+                                                end = ""
+                                            } else {
+                                                end = date
+                                                on_done()
+                                            }
+                                        },
+                                    ] {
+                                        on hover { overlay: ink.alpha(stateHover) with t.springEffectsFast }
+                                        on keys.focused {
+                                            overlay: ink.alpha(here && keyed ? stateFocus : 0.0) with t.springEffectsFast
+                                            outline: t.secondary
+                                            outline_width: here && keyed ? focusRingWidth : 0
+                                            outline_offset: focusRingOffset
+                                        }
+                                        on keys.focus_visible {
+                                            overlay: ink.alpha(here ? stateFocus : 0.0) with t.springEffectsFast
+                                            outline: t.secondary
+                                            outline_width: here ? focusRingWidth : 0
+                                            outline_offset: focusRingOffset
+                                        }
+                                        on pressed { overlay: ink.alpha(statePress) with t.springEffectsFast }
+
+                                        Text("{n}") #[
+                                            typo: t.bodyLarge,
+                                            color: ink with t.springEffectsFast,
+                                            a11y_hidden: true,
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// One year of the year list: 72 by 36 in a 52 high row, `primary` when it is the one on show.
+// The list is a `tab_list`, so it is one Tab stop and the arrows walk it.
+private View YearCell(year: Int, current: Int, earliest: Str, latest: Str, on_pick: Fn()) {
+    inject Theme as t
+
+    let chosen = year == current
+    let blocked = (earliest != "" && year < isoYear(earliest)) || (latest != "" && year > isoYear(latest))
+    let ink = blocked ? t.onSurface.alpha(disabledContent) : chosen ? t.onPrimary : t.onSurfaceVariant
+
+    Row #[height: 52, justify: center, align: center] {
+        Box #[
+            width: 72,
+            height: 36,
+            radius: 18,
+            bg: chosen ? t.primary : t.primary.alpha(0.0) with t.springEffectsFast,
+            align: center,
+            justify: center,
+            a11y_role: tab,
+            a11y_label: "{year}",
+            a11y_selected: chosen,
+            disabled: blocked,
+            tap => on_pick(),
+        ] {
+            on hover { overlay: ink.alpha(stateHover) with t.springEffectsFast }
+            on focus_visible {
+                overlay: ink.alpha(stateFocus) with t.springEffectsFast
+                outline: t.secondary
+                outline_width: focusRingWidth
+                outline_offset: focusRingOffset
+            }
+            on pressed { overlay: ink.alpha(statePress) with t.springEffectsFast }
+
+            Text("{year}") #[typo: t.bodyLarge, color: ink, a11y_hidden: true]
+        }
+    }
+}
+
+// ---- the frames ---------------------------------------------------------------------------
+
+// The modal frame of both pickers: a dialog on a scrim with the header (the title, the chosen
+// date or range as a headline, the button that switches between the calendar and typing), a
+// divider, what `content` draws, and Cancel and OK. Escape, a tap on the scrim and Cancel close it
+// without a change; OK calls `on_ok`, which writes the dates and closes it.
+private View DateDialog(bind open: Bool, bind entering: Bool, title: Str, headline: Str, compact: Bool = false,
+    cancel_label: Str, ok_label: Str, ok_disabled: Bool, on_ok: Fn(), content) {
+    inject Theme as t
+
+    when open {
+        Overlay #[dismiss => open = false] {
+            Column #[
+                anchor: center,
+                bg: t.surfaceContainerHigh,
+                radius: t.cornerXl,
+                shadow: "lg",
+                width: 360,
+                opacity: 1.0 with t.springEffectsFast,
+                scale: 1.0 with t.springSpatialFast,
+                a11y_role: dialog,
+                a11y_label: title,
+            ] {
+                on enter { opacity: 0.0, scale: 0.8 }
+                on leave { opacity: 0.0, scale: 0.8 }
+                Row #[height: 120, p: (16, 12, 12, 24), align: end] {
+                    Column #[grow: 1, height: 92, justify: between] {
+                        Text(title) #[typo: t.labelLarge, color: t.onSurfaceVariant, wrap: false]
+                        Text(headline) #[
+                            typo: compact ? t.headlineMedium : t.headlineLarge,
+                            color: t.onSurface,
+                            wrap: false,
+                        ]
+                    }
+                    IconButton(entering ? "calendar_today" : "edit",
+                        label: entering ? "Switch to calendar" : "Switch to text input",
+                        on_tap: { entering = !entering })
+                }
+                Box #[height: 1, bg: t.outlineVariant, shrink: 0]
+                content
+                Row #[gap: 8, justify: end, align: center, p: (8, 12, 8, 12)] {
+                    material.Button(cancel_label, variant: .text, on_tap: { open = false })
+                    material.Button(ok_label, variant: .text, disabled: ok_disabled, on_tap: on_ok)
+                }
+            }
+        }
+    }
+}
