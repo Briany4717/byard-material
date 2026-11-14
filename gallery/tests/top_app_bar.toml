@@ -1,0 +1,44 @@
+# Scenarios for m.TopAppBar, on the TopAppBarScenarios view: a large bar in a collapsing
+# ScrollView, driven by the Scroll and Top buttons.
+view = "TopAppBarScenarios"
+size = "400x700"
+
+[[test]]
+name = "the bar is a toolbar with a heading, its subtitle and named actions"
+expect = ['Toolbar', 'Heading "Inbox"', 'Label "12 unread"', 'Button "Back" [focusable]', 'Button "Search" [focusable]', 'Button "More" [focusable disabled]']
+
+[[test]]
+name = "the expanded bar is 152 tall"
+expect = ['Toolbar @ 0,64 360x152']
+
+[[test]]
+name = "scrolling collapses it to 64, drops the subtitle and keeps one heading"
+steps = [{ tap = 'Button "Scroll"' }]
+expect = ['Toolbar @ 0,64 360x64', 'Heading "Inbox"', 'Button "Back"']
+not = ['12 unread']
+
+[[test]]
+name = "scrolling back expands it again"
+steps = [{ tap = 'Button "Scroll"' }, { tap = 'Button "Top"' }]
+expect = ['Toolbar @ 0,64 360x152', 'Label "12 unread"']
+
+[[test]]
+name = "a tap on the navigation icon acts"
+steps = [{ tap = 'Button "Back"' }]
+expect = ['Label "Taps: 1"']
+
+[[test]]
+name = "a tap on a disabled action does nothing"
+steps = [{ tap = 'Button "More"' }]
+expect = ['Label "Taps: 0"']
+
+[[test]]
+name = "Tab order: Scroll, Top, then the bar's Back"
+steps = [{ key = "Tab" }, { key = "Tab" }, { key = "Tab" }, { key = "Space" }]
+expect = ['Label "Taps: 1"', 'Button "Back" [focusable focused]']
+
+[[test]]
+name = "the same collapsed, in the dark scheme"
+scheme = "dark"
+steps = [{ tap = 'Button "Scroll"' }]
+expect = ['Toolbar @ 0,64 360x64']

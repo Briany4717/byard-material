@@ -1,0 +1,51 @@
+use material as m
+
+// m.BottomAppBar: actions only, actions and a FAB, and a bar of its own on the surface.
+
+View BottomAppBarPage() {
+    inject Theme as t
+    Column #[p: 24, gap: 32, bg: t.surface, grow: 1] {
+        Section("Actions only") {
+            Column #[width: 400] {
+                m.BottomAppBar {
+                    m.IconButton("check_box", label: "Checklist")
+                    m.IconButton("brush", label: "Draw")
+                    m.IconButton("mic", label: "Record")
+                    m.IconButton("image", label: "Image")
+                }
+            }
+        }
+        Section("With a FAB") {
+            Column #[width: 400] {
+                m.BottomAppBar(fab: { m.Fab("add", label: "New", lowered: true) }) {
+                    m.IconButton("check_box", label: "Checklist")
+                    m.IconButton("brush", label: "Draw")
+                    m.IconButton("mic", label: "Record")
+                    m.IconButton("image", label: "Image")
+                }
+            }
+            Column #[width: 400] {
+                m.BottomAppBar(fab: { m.Fab("edit", label: "Compose", color: .tertiaryContainer, lowered: true) }) {
+                    m.IconButton("search", label: "Search")
+                    m.IconButton("more_vert", label: "More")
+                }
+            }
+        }
+    }
+}
+
+// For `tests/bottom_app_bar.toml`.
+View BottomAppBarScenarios() {
+    inject Theme as t
+    var taps = 0
+    var added = 0
+    Column #[bg: t.surface, grow: 1, gap: 16] {
+        Text("Taps: {taps}") #[p: 16]
+        Text("Added: {added}") #[p: 16]
+        m.BottomAppBar(label: "Notes bar", fab: { m.Fab("add", label: "Add note", lowered: true, on_tap: { added += 1 }) }) {
+            m.IconButton("check_box", label: "Checklist", on_tap: { taps += 1 })
+            m.IconButton("brush", label: "Draw")
+            m.IconButton("mic", label: "Record", disabled: true)
+        }
+    }
+}

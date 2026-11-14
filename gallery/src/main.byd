@@ -16,6 +16,9 @@ enum Page {
     fab,
     textField,
     chips,
+    topAppBar,
+    bottomAppBar,
+    toolbars,
 }
 
 View Main() {
@@ -53,6 +56,12 @@ View Main() {
                 TextFieldPage()
             } else when page == Page.chips {
                 ChipsPage()
+            } else when page == Page.topAppBar {
+                TopAppBarPage()
+            } else when page == Page.bottomAppBar {
+                BottomAppBarPage()
+            } else when page == Page.toolbars {
+                ToolbarsPage()
             } else {
                 Column #[p: 24, gap: 16, align: start] {
                     Text("Components") #[typo: t.titleMedium, color: t.primary]
@@ -67,6 +76,9 @@ View Main() {
                     m.Button("Fab", variant: .tonal, on_tap: { page = Page.fab })
                     m.Button("TextField", variant: .tonal, on_tap: { page = Page.textField })
                     m.Button("Chips", variant: .tonal, on_tap: { page = Page.chips })
+                    m.Button("TopAppBar", variant: .tonal, on_tap: { page = Page.topAppBar })
+                    m.Button("BottomAppBar", variant: .tonal, on_tap: { page = Page.bottomAppBar })
+                    m.Button("Toolbars", variant: .tonal, on_tap: { page = Page.toolbars })
                 }
             }
         }

@@ -1,0 +1,24 @@
+// Material 3 Expressive docked toolbar: a full-width bar, 64 high, of IconButtons spread
+// across it. Standard colours sit on `surface_container`, vibrant on `primary_container`.
+//
+//     m.DockedToolbar(label: "Formatting") {
+//         m.IconButton("format_bold", label: "Bold")
+//         m.IconButton("format_italic", label: "Italic")
+//     }
+
+View DockedToolbar(label: Str = "Toolbar", color: ToolbarColor = .standard, content) {
+    inject Theme as t
+
+    Row #[
+        bg: (color == ToolbarColor.vibrant ? t.primaryContainer : t.surfaceContainer) with t.springEffectsFast,
+        height: 64,
+        p: (0, 16),
+        gap: 8,
+        align: center,
+        justify: around,
+        a11y_role: toolbar,
+        a11y_label: label,
+    ] {
+        content
+    }
+}

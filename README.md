@@ -28,7 +28,8 @@ are Material's (a `seed` there recolours all of it).
 It is early. The design is RFC-0050 in Byard's repository. So far there are `Button`,
 `IconButton`, `Icon`, `TextField`, the four chips (`AssistChip`, `FilterChip`, `InputChip`,
 `SuggestionChip`), `ButtonGroup`, `SplitButton`, `Fab`, `ExtendedFab`, `FabMenu`, `Switch`,
-`Checkbox`, `Radio`, `RadioGroup`, `Slider` and `RangeSlider`; the rest of the components are on
+`Checkbox`, `Radio`, `RadioGroup`, `Slider`, `RangeSlider`, `TopAppBar`, `BottomAppBar`,
+`DockedToolbar` and `FloatingToolbar`; the rest of the components are on
 their way. How a component is
 written here is in [CONVENTIONS.md](CONVENTIONS.md).
 

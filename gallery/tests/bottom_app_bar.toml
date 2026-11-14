@@ -1,0 +1,33 @@
+# Scenarios for m.BottomAppBar, on the BottomAppBarScenarios view.
+view = "BottomAppBarScenarios"
+size = "400x400"
+
+[[test]]
+name = "a named toolbar holding its actions and the FAB"
+expect = ['Toolbar "Notes bar"', 'Button "Checklist" [focusable]', 'Button "Draw" [focusable]', 'Button "Record" [focusable disabled]', 'Button "Add note" [focusable]']
+
+[[test]]
+name = "an action acts"
+steps = [{ tap = 'Button "Checklist"' }]
+expect = ['Label "Taps: 1"']
+
+[[test]]
+name = "the FAB acts"
+steps = [{ tap = 'Button "Add note"' }]
+expect = ['Label "Added: 1"']
+
+[[test]]
+name = "a disabled action does not act"
+steps = [{ tap = 'Button "Record"' }]
+expect = ['Label "Taps: 0"']
+
+[[test]]
+name = "Tab goes through the actions, skips the disabled one, and ends on the FAB"
+steps = [{ key = "Tab" }, { key = "Tab" }, { key = "Tab" }, { key = "Space" }]
+expect = ['Label "Added: 1"', 'Button "Add note" [focusable focused]']
+
+[[test]]
+name = "the same in the dark scheme"
+scheme = "dark"
+steps = [{ key = "Tab" }, { key = "Space" }]
+expect = ['Label "Taps: 1"']

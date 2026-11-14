@@ -1,0 +1,87 @@
+use material as m
+
+// m.TopAppBar: small, center-aligned, medium and large (each static), then the collapsing
+// ones in a ScrollView. The collapsing demos are driven by a `var` so a test or a shot can
+// scroll them: "Scroll" moves the list by a fixed amount and "Top" brings it back.
+
+View TopAppBarPage() {
+    inject Theme as t
+    Column #[p: 24, gap: 32, bg: t.surface, grow: 1] {
+        Section("Small and center-aligned") {
+            Frame(h: 64) { m.TopAppBar("Inbox", navigation: { m.IconButton("menu", label: "Open menu") }, actions: { m.IconButton("search", label: "Search") m.IconButton("more_vert", label: "More") }) }
+            Frame(h: 64) { m.TopAppBar("Inbox", variant: .centerAligned, navigation: { m.IconButton("arrow_back", label: "Back") }, actions: { m.IconButton("more_vert", label: "More") }) }
+            Frame(h: 64) { m.TopAppBar("No icons") }
+            Frame(h: 64) { m.TopAppBar("Scrolled", scrolled: true, navigation: { m.IconButton("menu", label: "Open menu") }) }
+        }
+        Section("Medium flexible, with and without a subtitle") {
+            Frame(h: 112) { m.TopAppBar("Inbox", variant: .medium, navigation: { m.IconButton("arrow_back", label: "Back") }, actions: { m.IconButton("search", label: "Search") m.IconButton("more_vert", label: "More") }) }
+            Frame(h: 136) { m.TopAppBar("Inbox", variant: .medium, subtitle: "12 unread", navigation: { m.IconButton("arrow_back", label: "Back") }, actions: { m.IconButton("search", label: "Search") }) }
+        }
+        Section("Large flexible, with and without a subtitle") {
+            Frame(h: 120) { m.TopAppBar("Inbox", variant: .large, navigation: { m.IconButton("arrow_back", label: "Back") }, actions: { m.IconButton("search", label: "Search") m.IconButton("more_vert", label: "More") }) }
+            Frame(h: 152) { m.TopAppBar("Inbox", variant: .large, subtitle: "12 unread", navigation: { m.IconButton("arrow_back", label: "Back") }, actions: { m.IconButton("search", label: "Search") }) }
+        }
+        Section("Collapsing: large, then medium: at the top, part way, fully collapsed") {
+            Row #[gap: 16] {
+                CollapsingDemo(y0: 0.0, variant: m.TopAppBarVariant.large)
+                CollapsingDemo(y0: 44.0, variant: m.TopAppBarVariant.large)
+                CollapsingDemo(y0: 300.0, variant: m.TopAppBarVariant.large)
+            }
+            Row #[gap: 16] {
+                CollapsingDemo(y0: 0.0, variant: m.TopAppBarVariant.medium)
+                CollapsingDemo(y0: 24.0, variant: m.TopAppBarVariant.medium)
+                CollapsingDemo(y0: 300.0, variant: m.TopAppBarVariant.medium)
+            }
+        }
+    }
+}
+
+// A bar's rectangle: the page's width would stretch it too far to read.
+View Frame(h: Int, content) {
+    Clip #[width: 400, height: h] { content }
+}
+
+View CollapsingDemo(y0: Float, variant: m.TopAppBarVariant) {
+    inject Theme as t
+    var y = y0
+    Clip #[width: 300, height: 320, rrect: 12] {
+        ScrollView #[collapse_header: true, collapse_min: 64, offset: (0, y), grow: 1] {
+            m.TopAppBar("Inbox", variant: variant, subtitle: "12 unread", collapse: scroll_fraction,
+                navigation: { m.IconButton("arrow_back", label: "Back") },
+                actions: { m.IconButton("search", label: "Search") })
+            Column #[p: 16, gap: 8, bg: t.surface] {
+                for i in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] {
+                    Box #[bg: t.surfaceContainerHigh, radius: 12, p: 16] {
+                        Text("Message {i}") #[typo: t.bodyLarge, color: t.onSurface]
+                    }
+                }
+            }
+        }
+    }
+}
+
+// For `tests/top_app_bar.toml`.
+View TopAppBarScenarios() {
+    inject Theme as t
+    var y = 0.0
+    var taps = 0
+    Column #[bg: t.surface, grow: 1, gap: 8] {
+        Row #[gap: 8, p: 8] {
+            m.Button("Scroll", variant: .tonal, on_tap: { y = 300.0 })
+            m.Button("Top", variant: .tonal, on_tap: { y = 0.0 })
+            Text("Taps: {taps}")
+        }
+        Clip #[width: 360, height: 400] {
+            ScrollView #[collapse_header: true, collapse_min: 64, offset: (0, y), grow: 1] {
+                m.TopAppBar("Inbox", variant: .large, subtitle: "12 unread", collapse: scroll_fraction,
+                    navigation: { m.IconButton("arrow_back", label: "Back", on_tap: { taps += 1 }) },
+                    actions: { m.IconButton("search", label: "Search") m.IconButton("more_vert", label: "More", disabled: true) })
+                Column #[p: 16, gap: 8] {
+                    for i in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] {
+                        Text("Message {i}") #[typo: t.bodyLarge, color: t.onSurface]
+                    }
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,100 @@
+// Material 3 Expressive top app bar: small, center-aligned, medium flexible and large flexible.
+// A navigation icon slot, a title (and a subtitle on the two flexible ones that have room for
+// it) and an actions slot, which holds IconButtons.
+//
+//     m.TopAppBar("Inbox", navigation: { m.IconButton("menu", label: "Menu") },
+//         actions: { m.IconButton("search", label: "Search") })
+//
+// Collapsing: a medium or large bar is the first child of a `ScrollView #[collapse_header:
+// true, collapse_min: 64]`. The engine shrinks that child to `collapse_min` as the list
+// scrolls and publishes `scroll_fraction` (0 expanded, 1 collapsed) to the header's own
+// children, so the caller writes `collapse: scroll_fraction`: the big title fades out, the
+// small one fades in, and the container changes from `surface` to `surface_container`.
+//
+//     ScrollView #[collapse_header: true, collapse_min: 64] {
+//         m.TopAppBar("Inbox", variant: .large, collapse: scroll_fraction)
+//         ...content...
+//     }
+//
+// A small or center-aligned bar does not collapse; `scrolled: true` gives it the scrolled
+// container when its list has gone under it.
+
+enum TopAppBarVariant {
+    small,
+    centerAligned,
+    medium,
+    large,
+}
+
+// The bar's own height before it collapses: the 64 of the row of icons, plus the room for the
+// big title of a medium or large one (and its subtitle).
+//   variant   no subtitle  with subtitle
+//   small          64           64
+//   medium        112          136
+//   large         120          152
+private fn topBarHeight(variant: TopAppBarVariant, subtitle: Bool) -> Int =>
+    variant == TopAppBarVariant.medium ? (subtitle ? 136 : 112)
+    : variant == TopAppBarVariant.large ? (subtitle ? 152 : 120)
+    : 64
+
+View TopAppBar(title: Str, variant: TopAppBarVariant = .small, subtitle: Str = "",
+    collapse: Float = 0.0, scrolled: Bool = false, navigation: Slot = none, actions: Slot = none) {
+    inject Theme as t
+
+    let big = variant == TopAppBarVariant.medium || variant == TopAppBarVariant.large
+    let centered = variant == TopAppBarVariant.centerAligned
+    let on = scrolled || collapse > 0.0
+
+    Column #[
+        bg: (on ? t.surfaceContainer : t.surface) with t.springEffectsFast,
+        a11y_role: toolbar,
+    ] {
+        Row #[height: 64, p: (0, 8), gap: 8, align: center, shrink: 0] {
+            when navigation != none {
+                navigation
+            }
+            // The small title: always on a small bar, and the collapsed form of a big one.
+            when !big || collapse > 0.0 {
+                Row #[
+                    grow: 1,
+                    width: 0,
+                    ml: navigation != none ? 4 : 8,
+                    opacity: big ? collapse : 1.0,
+                    justify: centered ? center : start,
+                ] {
+                    Text(title) #[
+                        typo: t.titleLarge,
+                        color: t.onSurface,
+                        a11y_role: heading,
+                        wrap: false,
+                    ]
+                }
+            }
+            when big && collapse <= 0.0 {
+                Box #[grow: 1] {}
+            }
+            when actions != none {
+                actions
+            }
+        }
+        when big && collapse < 1.0 {
+            Column #[
+                height: topBarHeight(variant, subtitle != "") - 64,
+                shrink: 0,
+                justify: end,
+                p: (0, 16, variant == TopAppBarVariant.large ? 20 : 16, 16),
+                opacity: 1.0 - collapse,
+            ] {
+                Text(title) #[
+                    typo: variant == TopAppBarVariant.large ? t.headlineMedium : t.headlineSmall,
+                    color: t.onSurface,
+                    a11y_role: heading,
+                    wrap: false,
+                ]
+                when subtitle != "" {
+                    Text(subtitle) #[typo: t.labelMedium, color: t.onSurfaceVariant, wrap: false]
+                }
+            }
+        }
+    }
+}
