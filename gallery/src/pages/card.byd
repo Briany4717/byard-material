@@ -1,0 +1,73 @@
+use material as m
+
+// Every variant and state of m.Card.
+
+View CardPage() {
+    inject Theme as t
+    Column #[p: 24, gap: 32, bg: t.surface, grow: 1] {
+        Section("Inert") {
+            Line("elevated") { m.Card(variant: .elevated) { Sample("Elevated", "Not interactive") } }
+            Line("filled") { m.Card(variant: .filled) { Sample("Filled", "Not interactive") } }
+            Line("outlined") { m.Card(variant: .outlined) { Sample("Outlined", "Not interactive") } }
+        }
+        Section("Clickable") {
+            Line("elevated") { m.Card(variant: .elevated, on_tap: {}, label: "Elevated card") { Sample("Elevated", "Tap me") } }
+            Line("filled") { m.Card(variant: .filled, on_tap: {}, label: "Filled card") { Sample("Filled", "Tap me") } }
+            Line("outlined") { m.Card(variant: .outlined, on_tap: {}, label: "Outlined card") { Sample("Outlined", "Tap me") } }
+        }
+        Section("With a control inside") {
+            Line("clickable") {
+                m.Card(variant: .filled, on_tap: {}, label: "Trip card") {
+                    Column #[gap: 12, width: 240] {
+                        Sample("Trip", "The button keeps its own tap")
+                        m.Button("Book", variant: .tonal, on_tap: {})
+                    }
+                }
+            }
+            Line("disabled") {
+                m.Card(variant: .filled, disabled: true, on_tap: {}, label: "Trip off") {
+                    Column #[gap: 12, width: 240] {
+                        Sample("Trip", "Dimmed to 38%")
+                        m.Button("Book", variant: .tonal, disabled: true, on_tap: {})
+                    }
+                }
+            }
+        }
+        Section("Disabled") {
+            Line("elevated") { m.Card(variant: .elevated, disabled: true, on_tap: {}, label: "Elevated off") { Sample("Elevated", "Disabled") } }
+            Line("filled") { m.Card(variant: .filled, disabled: true, on_tap: {}, label: "Filled off") { Sample("Filled", "Disabled") } }
+            Line("outlined") { m.Card(variant: .outlined, disabled: true, on_tap: {}, label: "Outlined off") { Sample("Outlined", "Disabled") } }
+        }
+    }
+}
+
+View Sample(title: Str, body: Str) {
+    inject Theme as t
+    Column #[gap: 4, width: 200] {
+        Text(title) #[typo: t.titleMedium, color: t.onSurface]
+        Text(body) #[typo: t.bodyMedium, color: t.onSurfaceVariant]
+    }
+}
+
+View CardScenarios() {
+    inject Theme as t
+    var opened = 0
+    var booked = 0
+    Column #[p: 24, gap: 16, align: start, bg: t.surface, grow: 1] {
+        m.Card(variant: .outlined) { Sample("Static", "Just text") }
+        m.Card(variant: .elevated, label: "Open trip", on_tap: { opened += 1 }) {
+            Sample("Trip", "Lisbon")
+        }
+        m.Card(variant: .filled, disabled: true, label: "Locked", on_tap: { opened += 100 }) {
+            Sample("Locked", "Disabled")
+        }
+        m.Card(variant: .filled, on_tap: { opened += 10 }, label: "Booking") {
+            Column #[gap: 8] {
+                Sample("Booking", "Card with a button")
+                m.Button("Confirm", on_tap: { booked += 1 })
+            }
+        }
+        Text("Opened: {opened}")
+        Text("Booked: {booked}")
+    }
+}
