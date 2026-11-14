@@ -1,0 +1,190 @@
+# Scenarios for the date pickers, on the DatePickerScenarios view. Today is 14 November 2026.
+view = "DatePickerScenarios"
+size = "440x880"
+now = "2026-11-14T09:00:00"
+
+[[test]]
+name = "closed, there is only the page"
+expect = ['Button "Open picker"', 'Label "Day: 2026-11-18"']
+not = ['Dialog']
+
+[[test]]
+name = "a tap opens a dialog with the date as its headline and the month as a group of days"
+steps = [{ tap = 'Button "Open picker"' }]
+expect = ['Dialog "Select date" [modal]', 'Label "Wed, Nov 18"', 'Button "Switch to text input"', 'Button "November 2026"', 'Button "Previous month"', 'Group "November 2026"', 'Group "Saturday, November 14, 2026, today"', 'Button "Cancel"', 'Button "OK"']
+not = ['(unnamed)']
+
+[[test]]
+name = "focus goes to the selected day, which is selected and named by its full date"
+steps = [{ tap = 'Button "Open picker"' }]
+expect = ['Button "Wednesday, November 18, 2026" [focusable focused selected]']
+
+[[test]]
+name = "with no date chosen the focus goes to today"
+steps = [{ tap = 'Button "Open range"' }]
+expect = ['Dialog "Select dates"', 'Label "Start date – End date"', 'Button "Saturday, November 14, 2026, today" [focusable focused]', 'Button "OK" [focusable disabled]']
+
+[[test]]
+name = "the grid is one Tab stop: Tab leaves it for the buttons and never visits another day"
+steps = [{ tap = 'Button "Open picker"' }, { key = "Tab" }]
+expect = ['Button "Cancel" [focusable focused]']
+not = ['Button "Thursday, November 19, 2026"']
+
+[[test]]
+name = "the arrows move by a day and a week"
+steps = [{ tap = 'Button "Open picker"' }, { key = "Right" }, { expect = ['Button "Thursday, November 19, 2026" [focusable focused'] }, { key = "Down" }, { expect = ['Button "Thursday, November 26, 2026" [focusable focused'] }, { key = "Left" }, { expect = ['Button "Wednesday, November 25, 2026"'] }, { key = "Up" }]
+expect = ['Button "Wednesday, November 18, 2026" [focusable focused selected]']
+
+[[test]]
+name = "Home and End go to the ends of the week"
+steps = [{ tap = 'Button "Open picker"' }, { key = "Home" }, { expect = ['Button "Sunday, November 15, 2026" [focusable focused'] }, { key = "End" }]
+expect = ['Button "Saturday, November 21, 2026" [focusable focused']
+
+[[test]]
+name = "PageDown and PageUp change the month, and the day is kept"
+steps = [{ tap = 'Button "Open picker"' }, { key = "PageDown" }, { expect = ['Group "December 2026"', 'Button "Friday, December 18, 2026" [focusable focused'] }, { key = "PageUp" }, { key = "PageUp" }]
+expect = ['Group "October 2026"', 'Button "Sunday, October 18, 2026" [focusable focused']
+
+[[test]]
+name = "an arrow past the end of the month carries into the next"
+steps = [{ tap = 'Button "Open picker"' }, { key = "Down" }, { key = "Down" }, { key = "Left" }]
+expect = ['Group "December 2026"', 'Button "Tuesday, December 1, 2026" [focusable focused]']
+
+[[test]]
+name = "Enter chooses the day under the cursor and OK writes it"
+steps = [{ tap = 'Button "Open picker"' }, { key = "Right" }, { key = "Enter" }, { expect = ['Label "Thu, Nov 19"', 'Button "Thursday, November 19, 2026" [focusable focused selected'] }, { tap = 'Button "OK"' }]
+expect = ['Label "Day: 2026-11-19"']
+not = ['Dialog']
+
+[[test]]
+name = "the next and previous buttons change the month"
+steps = [{ tap = 'Button "Open picker"' }, { tap = 'Button "Next month"' }]
+expect = ['Group "December 2026"', 'Group "Tuesday, December 1, 2026"', 'Button "December 2026"']
+not = ['Group "Saturday, November 14, 2026, today"']
+
+[[test]]
+name = "a day of another month can be chosen and kept"
+steps = [{ tap = 'Button "Open picker"' }, { tap = 'Button "Previous month"' }, { tap = 'Group "Friday, October 9, 2026"' }, { tap = 'Button "OK"' }]
+expect = ['Label "Day: 2026-10-09"']
+
+[[test]]
+name = "a tap on a day chooses it and leaves the dialog open until OK"
+steps = [{ tap = 'Button "Open picker"' }, { tap = 'Group "Wednesday, November 25, 2026"' }]
+expect = ['Button "Wednesday, November 25, 2026" [focusable focused selected]', 'Group "Wednesday, November 18, 2026"', 'Label "Wed, Nov 25"', 'Label "Day: 2026-11-18"']
+not = ['Group "Wednesday, November 18, 2026" [selected]']
+
+[[test]]
+name = "OK writes the chosen day and closes"
+steps = [{ tap = 'Button "Open picker"' }, { tap = 'Group "Wednesday, November 25, 2026"' }, { tap = 'Button "OK"' }, { wait = 400 }]
+expect = ['Label "Day: 2026-11-25"']
+not = ['Dialog']
+
+[[test]]
+name = "Cancel closes without a change"
+steps = [{ tap = 'Button "Open picker"' }, { tap = 'Group "Wednesday, November 25, 2026"' }, { tap = 'Button "Cancel"' }, { wait = 400 }]
+expect = ['Label "Day: 2026-11-18"']
+not = ['Dialog']
+
+[[test]]
+name = "Escape cancels, and a reopened dialog starts from the date again"
+steps = [{ tap = 'Button "Open picker"' }, { tap = 'Group "Wednesday, November 25, 2026"' }, { key = "Escape" }, { wait = 400 }, { tap = 'Button "Open picker"' }]
+expect = ['Label "Wed, Nov 18"', 'Button "Wednesday, November 18, 2026" [focusable focused selected']
+
+[[test]]
+name = "opened with the keyboard, closing gives focus back to the opener"
+steps = [{ key = "Tab" }, { key = "Space" }, { expect = ['Dialog "Select date"', 'Button "Wednesday, November 18, 2026" [focusable focused'] }, { key = "Escape" }]
+expect = ['Button "Open picker" [focusable focused]']
+not = ['Dialog']
+
+[[test]]
+name = "Tab stays inside the dialog"
+steps = [{ tap = 'Button "Open picker"' }, { key = "Tab" }, { key = "Tab" }, { key = "Tab" }, { key = "Tab" }, { key = "Tab" }, { key = "Tab" }]
+not = ['Button "Open picker" [focusable focused]', 'Button "Open typed" [focusable focused]']
+
+[[test]]
+name = "the month and year button opens a list of years, one Tab stop, and a year changes the year"
+steps = [{ tap = 'Button "Open picker"' }, { wait = 400 }, { tap = 'Button "November 2026"' }, { wait = 400 }, { expect = ['Button "November 2026" description "Choose year" [focusable focused expanded]', 'TabList "Year"', 'Tab "2026" [focusable selected'] }, { tap = 'Tab "2031"' }]
+expect = ['Group "November 2031"', 'Group "Wednesday, November 12, 2031"']
+not = ['TabList "Year"']
+
+[[test]]
+name = "a leap day: February 2028 has 29 days and 2027 has 28"
+steps = [{ tap = 'Button "Open picker"' }, { wait = 400 }, { tap = 'Button "November 2026"' }, { wait = 400 }, { tap = 'Tab "2028"' }, { wait = 400 }, { tap = 'Button "Previous month"' }, { tap = 'Button "Previous month"' }, { tap = 'Button "Previous month"' }, { tap = 'Button "Previous month"' }, { tap = 'Button "Previous month"' }, { tap = 'Button "Previous month"' }, { tap = 'Button "Previous month"' }, { tap = 'Button "Previous month"' }, { tap = 'Button "Previous month"' }]
+expect = ['Group "February 2028"', 'Group "Tuesday, February 29, 2028"']
+
+[[test]]
+name = "the pencil swaps the calendar for a text field with the date as typed"
+steps = [{ tap = 'Button "Open picker"' }, { tap = 'Button "Switch to text input"' }]
+expect = ['Dialog "Enter date"', 'TextInput "Date" description "mm/dd/yyyy" = "11/18/2026"', 'Button "Switch to calendar"']
+not = ['Group "November 2026"']
+
+[[test]]
+name = "a typed date is read, and OK writes it"
+steps = [{ tap = 'Button "Open typed"' }, { tap = 'TextInput "Date"' }, { key = "ctrl+a" }, { type = "02/29/2028" }, { expect = ['Label "Tue, Feb 29"'] }, { tap = 'Button "OK"' }]
+expect = ['Label "Day: 2028-02-29"']
+
+[[test]]
+name = "an invalid date shows an error and OK waits for a real one"
+steps = [{ tap = 'Button "Open typed"' }, { tap = 'TextInput "Date"' }, { key = "ctrl+a" }, { type = "02/30/2026" }]
+expect = ['description "Invalid date"', 'Label "Date"', 'Button "OK" [focusable disabled]']
+not = ['Label "Fri, Feb 30"']
+
+[[test]]
+name = "a half-typed date is no error yet"
+steps = [{ tap = 'Button "Open typed"' }, { tap = 'TextInput "Date"' }, { key = "ctrl+a" }, { type = "02/2" }]
+not = ['Invalid date']
+expect = ['Button "OK" [focusable disabled]']
+
+[[test]]
+name = "a typed date shows on the calendar when switching back"
+steps = [{ tap = 'Button "Open typed"' }, { tap = 'TextInput "Date"' }, { key = "ctrl+a" }, { type = "03/05/2027" }, { tap = 'Button "Switch to calendar"' }]
+expect = ['Group "March 2027"', 'Button "Friday, March 5, 2027" [focusable selected']
+
+[[test]]
+name = "a range: the first tap is the start, the second the end, and OK writes both"
+steps = [{ tap = 'Button "Open range"' }, { tap = 'Group "Monday, November 16, 2026"' }, { expect = ['Label "Nov 16 – End date"', 'Button "OK" [focusable disabled]'] }, { tap = 'Group "Friday, November 20, 2026"' }, { expect = ['Label "Nov 16 – Nov 20"'] }, { tap = 'Button "OK"' }]
+expect = ['Label "Range: 2026-11-16 to 2026-11-20"']
+not = ['Dialog']
+
+[[test]]
+name = "a tap before the start begins the range again"
+steps = [{ tap = 'Button "Open range"' }, { tap = 'Group "Friday, November 20, 2026"' }, { tap = 'Group "Monday, November 16, 2026"' }]
+expect = ['Label "Nov 16 – End date"']
+
+[[test]]
+name = "a third tap begins again"
+steps = [{ tap = 'Button "Open range"' }, { tap = 'Group "Monday, November 16, 2026"' }, { tap = 'Group "Friday, November 20, 2026"' }, { tap = 'Group "Tuesday, November 24, 2026"' }]
+expect = ['Label "Nov 24 – End date"', 'Button "OK" [focusable disabled]']
+
+[[test]]
+name = "Cancel leaves the range alone"
+steps = [{ tap = 'Button "Open range"' }, { tap = 'Group "Monday, November 16, 2026"' }, { tap = 'Group "Friday, November 20, 2026"' }, { tap = 'Button "Cancel"' }]
+expect = ['Label "Range:  to "']
+
+[[test]]
+name = "the docked field takes a typed date"
+steps = [{ tap = 'TextInput "Due"' }, { type = "12/25/2026" }]
+expect = ['Label "Due: 2026-12-25"']
+
+[[test]]
+name = "the docked calendar opens under the field, takes focus, and a day writes the date and closes it"
+steps = [{ tap = 'Button "Choose date"' }, { expect = ['Dialog "Choose date"', 'Button "Saturday, November 14, 2026, today" [focusable focused'] }, { tap = 'Group "Monday, November 16, 2026"' }, { wait = 400 }]
+expect = ['Label "Due: 2026-11-16"', 'TextInput "Due" description "mm/dd/yyyy" = "11/16/2026"']
+not = ['Dialog']
+
+[[test]]
+name = "Escape closes the docked calendar with no change and focus goes back to its button"
+steps = [{ key = "Tab" }, { key = "Tab" }, { key = "Tab" }, { key = "Tab" }, { key = "Tab" }, { key = "Space" }, { expect = ['Dialog "Choose date"'] }, { key = "Escape" }, { wait = 400 }]
+expect = ['Label "Due: "', 'Button "Choose date" [focusable focused]']
+not = ['Dialog']
+
+[[test]]
+name = "the same in the dark scheme"
+scheme = "dark"
+steps = [{ tap = 'Button "Open picker"' }, { key = "Right" }]
+expect = ['Dialog "Select date"', 'Button "Thursday, November 19, 2026" [focusable focused']
+
+[[test]]
+name = "opened for typing, focus is in the field"
+steps = [{ tap = 'Button "Open typed"' }]
+expect = ['TextInput "Date" description "mm/dd/yyyy" = "11/18/2026" [focusable focused]']

@@ -40,11 +40,12 @@ group:
 | Overlays | `Dialog`, `Menu` (with `MenuGroup`, `MenuItem`, `MenuDivider`), `BottomSheet`, `SideSheet`, `Tooltip`, `Snackbar`, `SnackbarHost` | 0066 (focus scopes, `on enter`/`on leave`, live regions) |
 | Progress | `LinearProgressIndicator`, `CircularProgressIndicator`, `LoadingIndicator` | 0064 (`sin`/`cos` in 0066) |
 | Layout | `Scaffold` | 0065 |
+| Pickers | `DatePicker`, `DatePickerDocked`, `DatePickerModal`, `DateRangePicker`, `DateRangePickerDocked`, `DateRangePickerModal` | 0065, 0066 |
 | Icons | `Icon` (Material Symbols Rounded) | icon font axes |
 
 "Needs Byard" is the oldest Byard that has what the group uses: all of it needs Byard's `main`
-since 2026-11-14 (RFC-0061 to 0066) until Byard 0.1.0 is tagged, and then 0.1.0. The date and time
-pickers are being added.
+since 2026-11-14 (RFC-0061 to 0066) until Byard 0.1.0 is tagged, and then 0.1.0. The time picker
+is being added.
 
 This package is also how Byard's package system gets tested for real: it lives in its own
 repository and goes through `byard add`, `byard get`, the lockfile, `byard publish` and

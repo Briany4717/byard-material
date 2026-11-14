@@ -20,6 +20,8 @@
 // More lines: `lines: 3` is a fixed height; `min_lines: 2, max_lines: 6` grows with the text
 // and then scrolls. Enter inserts a newline there. Left alone it is one line.
 //
+// `autofocus: true` puts focus in the field when it appears in an overlay (a dialog's field).
+//
 // The placeholder is the one thing that still reads focus from a `var`: it is an attribute of
 // the field, not something a state block paints.
 
@@ -33,7 +35,7 @@ View TextField(bind value: Str, label: Str, variant: TextFieldVariant = .filled,
     error_text: Str = "", max_length: Int = 0, prefix: Str = "", suffix: Str = "",
     leading_icon: Str = "", trailing_icon: Str = "", trailing_label: Str = "",
     lines: Int = 1, min_lines: Int = 0, max_lines: Int = 0,
-    width: Int = 280, disabled: Bool = false, on_trailing_tap: Fn() = {}) {
+    width: Int = 280, disabled: Bool = false, autofocus: Bool = false, on_trailing_tap: Fn() = {}) {
     inject Theme as t
 
     var focused = false
@@ -123,6 +125,7 @@ View TextField(bind value: Str, label: Str, variant: TextFieldVariant = .filled,
                     TextField #[
                         bind: value,
                         focused: focused,
+                        autofocus: autofocus,
                         disabled: disabled,
                         indicator: none,
                         grow: 1,

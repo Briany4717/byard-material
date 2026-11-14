@@ -1,0 +1,126 @@
+// Material 3 date picker: a calendar to choose one date from, docked under a field, as a modal
+// dialog, or as a modal with the date typed instead.
+//
+//     m.DatePickerDocked(bind value: due, label: "Due date")
+//     m.DatePickerModal(bind open: open, bind value: due)
+//     m.DatePickerModal(bind open: open, bind value: due, input: true, week_start: .monday, format: .dmy)
+//     m.DatePicker(bind: due)
+//
+// The date is an ISO text, `2026-11-16`, and `""` is no date: every picker takes `bind value`
+// with that default, so one left unbound keeps its own. `earliest` and `latest` are ISO dates too and
+// grey out the days outside them. `week_start` is the first column of the grid (Sunday, Material's
+// US default); `format` the order of a typed date (`mm/dd/yyyy`, Material's US default); `first_year`
+// the first of the 200 years the year list shows (1900).
+//
+// `DatePicker` is the calendar itself, drawn where you put it. `DatePickerDocked` is a text field
+// with a calendar button; the button (or the field's date being typed) and the picker share the
+// date, and a tap on a day writes it and closes the calendar. `DatePickerModal` is a dialog:
+// it works on a copy of the date, which OK writes back and Cancel, Escape and a tap on the scrim
+// leave alone. The pencil in its header swaps the calendar for a text field (`input: true`
+// starts there); an invalid date in it shows an error and OK waits for a real one.
+//
+// The grid is one Tab stop: Left and Right move a day, Up and Down a week, Home and End to the
+// ends of the week, PageUp and PageDown a month, Enter and Space choose. It is announced as a
+// group named for the month, each day a button or group named by its full date ("Monday,
+// November 16, 2026, today") and `selected`. The month and year button opens a list of years,
+// one Tab stop as well. Previous and next month are IconButtons.
+//
+// Measurements (starred: not sure of them)
+//   modal    container surface_container_high, corner extra large (28), width 360, level 3;
+//            header 120: title label_large on_surface_variant, headline headline_large on_surface,
+//            24 at the start and 12 at the end*; divider 1 outline_variant; actions end aligned,
+//            gap 8, 12 at the end*
+//   docked   container surface_container_high, corner large (16)*, width 360, padding 12, level 3,
+//            4 below its field*
+//   month    selector 48 high, a 40 button with label_large on_surface_variant and a drop arrow,
+//            the arrows IconButtons; weekday letters body_large* on_surface in 48 by 40 cells
+//   day      cell 48 by 48, state 40 round, body_large; selected primary with on_primary; today
+//            outlined with outline and primary text; disabled on_surface at 38%
+//   years    72 by 36 in 52 high rows, three to a row, body_large; the year on show primary
+
+View DatePicker(bind value: Str = "", week_start: Weekday = .sunday, earliest: Str = "", latest: Str = "",
+    first_year: Int = 1900) {
+    inject Theme as t
+
+    Column #[
+        bg: t.surfaceContainerHigh,
+        radius: t.cornerLg,
+        shadow: "lg",
+        p: 12,
+        width: 360,
+        shrink: 0,
+    ] {
+        CalendarPane(bind value: value, week_start: week_start, earliest: earliest, latest: latest, first_year: first_year)
+    }
+}
+
+View DatePickerDocked(bind value: Str = "", bind open: Bool = false, label: Str = "Date",
+    variant: TextFieldVariant = .outlined, week_start: Weekday = .sunday, format: DateFormat = .mdy,
+    earliest: Str = "", latest: Str = "", first_year: Int = 1900, width: Int = 360) {
+    inject Theme as t
+
+    Box #[shrink: 0, width: width] as anchorField {
+        DateField(bind: value, label: label, format: format, variant: variant, width: width,
+            earliest: earliest, latest: latest, trailing_icon: "calendar_today", trailing_label: "Choose date",
+            on_trailing_tap: { open = !open })
+    }
+
+    when open {
+        Overlay #[modal: false] {
+            Column #[
+                anchor_to: anchorField,
+                anchor_edge: below,
+                anchor_align: start,
+                anchor_gap: 4,
+                bg: t.surfaceContainerHigh,
+                radius: t.cornerLg,
+                shadow: "lg",
+                p: 12,
+                width: 360,
+                opacity: 1.0 with t.springEffectsFast,
+                translate: (0, 0) with t.springSpatialFast,
+                a11y_role: dialog,
+                a11y_label: "Choose date",
+                dismiss => open = false,
+            ] {
+                on enter { opacity: 0.0, translate: (0, -8) }
+                on leave { opacity: 0.0, translate: (0, -8) }
+                CalendarPane(bind value: value, week_start: week_start, earliest: earliest, latest: latest,
+                    first_year: first_year, grab: true, on_done: { open = false })
+            }
+        }
+    }
+}
+
+View DatePickerModal(bind open: Bool, bind value: Str = "", input: Bool = false,
+    title: Str = "Select date", input_title: Str = "Enter date", week_start: Weekday = .sunday,
+    format: DateFormat = .mdy, earliest: Str = "", latest: Str = "", first_year: Int = 1900,
+    cancel_label: Str = "Cancel", ok_label: Str = "OK", on_confirm: Fn() = {}) {
+    var draft = value
+    var entering = input
+
+    on change(open) => {
+        draft = value
+        entering = input
+    }
+
+    DateDialog(bind open: open, bind entering: entering, title: entering ? input_title : title,
+        headline: draft != "" ? (draft.formatDate("ddd, MMM D") ?? "") : "Date",
+        cancel_label: cancel_label, ok_label: ok_label, ok_disabled: draft == "",
+        on_ok: {
+            value = draft
+            open = false
+            on_confirm()
+        }) {
+        when entering {
+            Box #[p: 24] {
+                DateField(bind: draft, label: "Date", format: format, width: 312, autofocus: true, earliest: earliest, latest: latest)
+            }
+        } else {
+            Box #[p: (12, 12, 0, 12)] {
+                CalendarPane(bind value: draft, week_start: week_start, earliest: earliest, latest: latest,
+                    first_year: first_year, grab: true)
+            }
+        }
+    }
+}
