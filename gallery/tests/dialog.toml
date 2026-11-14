@@ -1,0 +1,70 @@
+# Scenarios for m.Dialog, on the DialogScenarios view.
+view = "DialogScenarios"
+size = "440x560"
+
+[[test]]
+name = "closed, there is no dialog"
+expect = ['Button "Open dialog"', 'Label "Open: no"']
+not = ['Dialog']
+
+[[test]]
+name = "a tap opens a dialog with its headline, text and actions"
+steps = [{ tap = 'Button "Open dialog"' }]
+expect = ['Dialog (unnamed) [modal]', 'Dialog "Discard draft?"', 'Label "It will be deleted."', 'Button "Cancel"', 'Button "Discard"']
+
+[[test]]
+name = "an action closes it and reports"
+steps = [{ tap = 'Button "Open dialog"' }, { tap = 'Button "Discard"' }]
+expect = ['Label "Result: discard"']
+not = ['Dialog']
+
+[[test]]
+name = "Escape dismisses"
+steps = [{ tap = 'Button "Open dialog"' }, { key = "Escape" }]
+expect = ['Label "Open: no"']
+not = ['Dialog']
+
+[[test]]
+name = "a tap on the scrim dismisses"
+steps = [{ tap = 'Button "Open dialog"' }, { tap = [10, 10] }]
+expect = ['Label "Open: no"']
+not = ['Dialog']
+
+[[test]]
+name = "a tap inside the dialog keeps it open"
+steps = [{ tap = 'Button "Open dialog"' }, { tap = 'Label "It will be deleted."' }]
+expect = ['Dialog "Discard draft?"']
+
+[[test]]
+name = "Tab stays inside the dialog and wraps"
+steps = [{ tap = 'Button "Open dialog"' }, { key = "Tab" }, { expect = ['Button "Cancel" [focusable focused]'] }, { key = "Tab" }, { expect = ['Button "Discard" [focusable focused]'] }, { key = "Tab" }]
+expect = ['Button "Cancel" [focusable focused]']
+not = ['Button "Open dialog" [focusable focused]']
+
+[[test]]
+name = "Space presses the focused action"
+steps = [{ tap = 'Button "Open dialog"' }, { key = "Tab" }, { key = "Tab" }, { key = "Space" }]
+expect = ['Label "Result: discard"']
+
+[[test]]
+name = "the opener keeps focus through opening and closing by keyboard"
+steps = [{ key = "Tab" }, { key = "Space" }, { expect = ['Dialog "Discard draft?"'] }, { key = "Escape" }]
+expect = ['Button "Open dialog" [focusable focused]', 'Label "Open: no"']
+not = ['Dialog']
+
+[[test]]
+name = "the full-screen dialog has a close button and an action"
+steps = [{ tap = 'Button "Open full"' }]
+expect = ['Dialog (unnamed)', 'Button "Close"', 'Button "Save"', 'Label "Event details"']
+
+[[test]]
+name = "the full-screen dialog closes with its button, with Escape and with its action"
+steps = [{ tap = 'Button "Open full"' }, { tap = 'Button "Close"' }, { expect = ['Label "Open: no"'] }, { tap = 'Button "Open full"' }, { key = "Escape" }, { tap = 'Button "Open full"' }, { tap = 'Button "Save"' }]
+expect = ['Label "Result: saved"']
+not = ['Dialog']
+
+[[test]]
+name = "the same in the dark scheme"
+scheme = "dark"
+steps = [{ tap = 'Button "Open dialog"' }]
+expect = ['Dialog "Discard draft?"']

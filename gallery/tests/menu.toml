@@ -1,0 +1,62 @@
+# Scenarios for m.Menu, on the MenuScenarios view.
+view = "MenuScenarios"
+size = "440x560"
+
+[[test]]
+name = "closed, there is only the button"
+expect = ['Button "Actions"', 'Label "Open: no"']
+not = ['TabList', 'Tab "Cut"']
+
+[[test]]
+name = "a tap opens it, with its items and the disabled one marked"
+steps = [{ tap = 'Button "Actions"' }]
+expect = ['TabList "Menu"', 'Tab "Cut" [focusable]', 'Tab "Copy"', 'Tab "Paste" [focusable disabled]', 'Tab "Wrap"', 'Tab "Delete"']
+
+[[test]]
+name = "Tab goes to the first item, the arrows move, Enter chooses"
+steps = [{ tap = 'Button "Actions"' }, { key = "Tab" }, { expect = ['Tab "Cut" [focusable focused]'] }, { key = "Down" }, { expect = ['Tab "Copy" [focusable focused]'] }, { key = "Enter" }]
+expect = ['Label "Last: copy"', 'Label "Open: no"']
+not = ['TabList']
+
+[[test]]
+name = "the arrows cross from one group to the next, skipping the disabled item"
+steps = [{ tap = 'Button "Actions"' }, { key = "Tab" }, { key = "Down" }, { key = "Down" }]
+expect = ['Tab "Wrap" [focusable focused]']
+
+[[test]]
+name = "Up wraps to the last item"
+steps = [{ tap = 'Button "Actions"' }, { key = "Tab" }, { key = "Up" }]
+expect = ['Tab "Delete" [focusable focused]']
+
+[[test]]
+name = "Escape closes it"
+steps = [{ tap = 'Button "Actions"' }, { key = "Escape" }]
+expect = ['Label "Open: no"']
+not = ['TabList']
+
+[[test]]
+name = "a tap outside closes it"
+steps = [{ tap = 'Button "Actions"' }, { tap = [400, 500] }]
+expect = ['Label "Open: no"']
+not = ['TabList']
+
+[[test]]
+name = "a tap on an item chooses it"
+steps = [{ tap = 'Button "Actions"' }, { tap = 'Tab "Delete"' }]
+expect = ['Label "Last: delete"', 'Label "Open: no"']
+
+[[test]]
+name = "a disabled item does nothing"
+steps = [{ tap = 'Button "Actions"' }, { tap = 'Tab "Paste"' }]
+expect = ['Label "Open: yes"', 'Label "Last: none"']
+
+[[test]]
+name = "Tab enters at the selected item"
+steps = [{ tap = 'Button "Actions"' }, { tap = 'Tab "Wrap"' }, { tap = 'Button "Actions"' }, { key = "Tab" }]
+expect = ['Tab "Wrap" [focusable focused selected]']
+
+[[test]]
+name = "the same in the dark scheme"
+scheme = "dark"
+steps = [{ tap = 'Button "Actions"' }]
+expect = ['Tab "Cut"']

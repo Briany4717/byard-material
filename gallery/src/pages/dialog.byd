@@ -1,0 +1,73 @@
+use material as m
+
+// m.Dialog: basic (with and without an icon), and full screen. Each opens from its button.
+
+View DialogPage() {
+    inject Theme as t
+    var basic = false
+    var withIcon = false
+    var full = false
+    var last = "nothing yet"
+    Column #[p: 24, gap: 32, bg: t.surface, grow: 1] {
+        Section("Dialog") {
+            Line("basic") {
+                m.Button("Basic", variant: .tonal, on_tap: { basic = true })
+                m.Button("With icon", variant: .tonal, on_tap: { withIcon = true })
+                m.Button("Full screen", variant: .tonal, on_tap: { full = true })
+            }
+            Line("last") { Text(last) #[typo: t.bodyMedium, color: t.onSurfaceVariant] }
+        }
+    }
+    m.Dialog(bind: basic, headline: "Discard draft?",
+        supporting_text: "Your message has not been sent. If you leave now, it will be deleted.",
+        actions: {
+            m.Button("Cancel", variant: .text, on_tap: { basic = false
+                last = "cancelled" })
+            m.Button("Discard", variant: .text, on_tap: { basic = false
+                last = "discarded" })
+        })
+    m.Dialog(bind: withIcon, headline: "Delete this photo?", icon: "delete",
+        supporting_text: "It will be removed from every album and from your devices.",
+        actions: {
+            m.Button("Keep", variant: .text, on_tap: { withIcon = false
+                last = "kept" })
+            m.Button("Delete", variant: .text, on_tap: { withIcon = false
+                last = "deleted" })
+        })
+    m.Dialog(bind: full, headline: "New event", fullscreen: true,
+        actions: { m.Button("Save", variant: .text, on_tap: { full = false
+            last = "saved" }) }) {
+        Text("Add a title, a time and the people who are coming.") #[
+            typo: t.bodyLarge,
+            color: t.onSurface,
+        ]
+    }
+}
+
+// For `tests/dialog.byd`.
+View DialogScenarios() {
+    inject Theme as t
+    var open = false
+    var fullOpen = false
+    var result = "none"
+    Column #[p: 24, gap: 16, align: start, bg: t.surface, grow: 1] {
+        Row #[gap: 16, align: center] {
+            m.Button("Open dialog", on_tap: { open = true })
+            m.Button("Open full", variant: .tonal, on_tap: { fullOpen = true })
+        }
+        Text("Result: {result}")
+        Text("Open: {open ? "yes" : "no"}")
+    }
+    m.Dialog(bind: open, headline: "Discard draft?", supporting_text: "It will be deleted.",
+        icon: "delete", actions: {
+            m.Button("Cancel", variant: .text, on_tap: { open = false
+                result = "cancel" })
+            m.Button("Discard", variant: .text, on_tap: { open = false
+                result = "discard" })
+        })
+    m.Dialog(bind: fullOpen, headline: "New event", fullscreen: true,
+        actions: { m.Button("Save", variant: .text, on_tap: { fullOpen = false
+            result = "saved" }) }) {
+        Text("Event details")
+    }
+}

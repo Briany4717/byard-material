@@ -1,0 +1,84 @@
+// Material 3 dialog: a basic one (icon, headline, supporting text, actions) centred over a
+// scrim, and a full-screen one (a header with a close button, a headline and an action, and
+// the content under it).
+//
+//     m.Dialog(bind: open, headline: "Discard draft?", supporting_text: "It will be deleted.",
+//         icon: "delete", actions: {
+//             m.Button("Cancel", variant: .text, on_tap: { open = false })
+//             m.Button("Discard", variant: .text, on_tap: { discard() })
+//         })
+//     m.Dialog(bind: open, headline: "New event", fullscreen: true,
+//         actions: { m.Button("Save", variant: .text, on_tap: { save() }) }) { fields() }
+//
+// A dialog is an `Overlay`: it is there while `open` is true. A tap on the scrim or Escape
+// writes `open = false`. The scrim is the theme's `scrim` at 32%, which the engine draws.
+// A full-screen dialog has no scrim to tap, so Escape and its close button dismiss it.
+//
+// Tab stays inside the dialog (the engine traps it). The engine cannot yet move focus into the
+// dialog when it opens or put it back on the opener when it closes: see the notes.
+//
+// Measurements (starred: not sure of them)
+//   basic: container surface_container_high, corner 28, padding 24, width 280 to 560, level 3
+//          icon 24 secondary, 16 under it; headline headline_small on_surface, 16 under it;
+//          supporting body_medium on_surface_variant, 24 under it; actions gap 8, end aligned
+//   full screen: container surface, header 56 high*, close button 48*, headline title_large*,
+//          horizontal padding 24*
+
+View Dialog(bind open: Bool, headline: Str, supporting_text: Str = "", icon: Str = "",
+    fullscreen: Bool = false, close_label: Str = "Close", actions: Slot = none, content) {
+    inject Theme as t
+
+    when open {
+        Overlay #[dismiss => open = false] {
+            when fullscreen {
+                Column #[bg: t.surface, grow: 1, a11y_role: dialog] {
+                    Row #[height: 56, p: (0, 24, 0, 8), gap: 8, align: center, shrink: 0] {
+                        IconButton("close", label: close_label, on_tap: { open = false })
+                        Text(headline) #[
+                            typo: t.titleLarge,
+                            color: t.onSurface,
+                            grow: 1,
+                            wrap: false,
+                        ]
+                        when actions != none { actions }
+                    }
+                    Column #[grow: 1, p: (8, 24, 24, 24), gap: 16] {
+                        when supporting_text != "" {
+                            Text(supporting_text) #[typo: t.bodyMedium, color: t.onSurfaceVariant]
+                        }
+                        content
+                    }
+                }
+            } else {
+                Column #[
+                    anchor: center,
+                    bg: t.surfaceContainerHigh,
+                    radius: t.cornerXl,
+                    shadow: "lg",
+                    p: 24,
+                    gap: 16,
+                    min_width: 280,
+                    max_width: 560,
+                    a11y_role: dialog,
+                    a11y_label: headline,
+                ] {
+                    when icon != "" {
+                        Icon(icon, size: 24, color: t.secondary) #[align_self: center]
+                    }
+                    Text(headline) #[
+                        typo: t.headlineSmall,
+                        color: t.onSurface,
+                        align_self: icon != "" ? center : start,
+                    ]
+                    when supporting_text != "" {
+                        Text(supporting_text) #[typo: t.bodyMedium, color: t.onSurfaceVariant]
+                    }
+                    content
+                    when actions != none {
+                        Row #[gap: 8, justify: end, align: center, mt: 8] { actions }
+                    }
+                }
+            }
+        }
+    }
+}

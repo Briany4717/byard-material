@@ -1,0 +1,131 @@
+// Material 3 Expressive menu: a list of items (leading and trailing icon, trailing text, a
+// selected one), in groups, with dividers, hanging under the button that opens it.
+//
+//     m.Menu(bind: open, anchor: {
+//         m.Button("Edit", variant: .tonal, on_tap: { open = !open })
+//     }) {
+//         m.MenuGroup {
+//             m.MenuItem("Cut", icon: "content_cut", trailing_text: "Ctrl+X",
+//                 on_tap: { open = false })
+//             m.MenuItem("Copy", icon: "content_copy", on_tap: { open = false })
+//         }
+//         m.MenuGroup(label: "View") {
+//             m.MenuItem("Wrap lines", selected: wrap, on_tap: { wrap = !wrap
+//                 open = false })
+//         }
+//     }
+//
+// `anchor` is the button; the menu opens below it, lined up with its start, or above it when
+// there is no room. An item's action closes the menu by writing `open = false` itself: a slot is
+// the caller's code, so the menu cannot do it for them.
+//
+// Keyboard: the opener keeps focus when the menu opens (the engine has no way to move it, see
+// the notes), so Tab goes into the menu, at the selected item or the first, and the arrow keys
+// move between items, across groups. Enter or Space chooses, Escape closes.
+//
+// Measurements (starred: not sure of them)
+//   group    container surface_container_low*, corner large (16)*, padding 4*, level 2*, width 112 to 280
+//            2 dp between groups*; the label label_large* in on_surface_variant, 12 inside
+//   item     height 48*, padding 12 each side*, gap 12*, corner medium (12)*, icons 24
+//            label body_large on_surface; trailing text label_large on_surface_variant
+//            selected: tertiary_container with on_tertiary_container*
+//   states   on_surface at 8, 10 and 10 percent (on_tertiary_container for the selected one)
+//   divider  1 dp outline_variant, 8 above and below*
+
+View Menu(bind open: Bool, anchor: Slot, content) {
+    inject Theme as t
+
+    Box #[shrink: 0] as menuAnchor { anchor }
+
+    when open {
+        Overlay #[scrim: t.scrim.alpha(0.0), dismiss => open = false] {
+            Column #[
+                anchor_to: "menuAnchor",
+                anchor_edge: below,
+                anchor_align: start,
+                anchor_gap: 2,
+                gap: 2,
+                a11y_role: tab_list,
+                a11y_label: "Menu",
+            ] {
+                content
+            }
+        }
+    }
+}
+
+// A group of items in a container of its own, with an optional heading.
+View MenuGroup(label: Str = "", content) {
+    inject Theme as t
+
+    Column #[
+        bg: t.surfaceContainerLow,
+        radius: t.cornerLg,
+        shadow: "md",
+        p: 4,
+        gap: 0,
+        min_width: 112,
+        max_width: 280,
+    ] {
+        when label != "" {
+            Text(label) #[
+                typo: t.labelLarge,
+                color: t.onSurfaceVariant,
+                p: (8, 12, 4, 12),
+                wrap: false,
+            ]
+        }
+        content
+    }
+}
+
+View MenuDivider() {
+    inject Theme as t
+
+    Box #[height: 1, bg: t.outlineVariant, mx: 4, my: 8, shrink: 0]
+}
+
+View MenuItem(label: Str, icon: Str = "", trailing_icon: Str = "", trailing_text: Str = "",
+    selected: Bool = false, disabled: Bool = false, on_tap: Fn() = {}) {
+    inject Theme as t
+
+    let container = selected ? t.tertiaryContainer : t.surfaceContainerLow.alpha(0.0)
+    let ink = disabled ? t.onSurface.alpha(disabledContent)
+        : selected ? t.onTertiaryContainer : t.onSurface
+    let quiet = disabled ? t.onSurface.alpha(disabledContent)
+        : selected ? t.onTertiaryContainer : t.onSurfaceVariant
+
+    Row #[
+        bg: container with t.springEffectsFast,
+        radius: t.cornerMd,
+        height: 48,
+        p: (0, 12),
+        gap: 12,
+        align: center,
+        a11y_role: tab,
+        a11y_label: label,
+        a11y_selected: selected,
+        disabled: disabled,
+        tap => on_tap(),
+    ] {
+        on hover { overlay: ink.alpha(stateHover) with t.springEffectsFast }
+        on focus_visible {
+            overlay: ink.alpha(stateFocus) with t.springEffectsFast
+            outline: t.secondary
+            outline_width: focusRingWidth
+            outline_offset: focusRingOffset
+        }
+        on pressed { overlay: ink.alpha(statePress) with t.springEffectsFast }
+
+        when icon != "" {
+            Icon(icon, size: 24, color: quiet, fill: selected ? 1.0 : 0.0)
+        }
+        Text(label) #[typo: t.bodyLarge, color: ink, grow: 1, wrap: false]
+        when trailing_text != "" {
+            Text(trailing_text) #[typo: t.labelLarge, color: quiet, wrap: false]
+        }
+        when trailing_icon != "" {
+            Icon(trailing_icon, size: 24, color: quiet)
+        }
+    }
+}

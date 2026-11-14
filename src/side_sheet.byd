@@ -1,0 +1,56 @@
+// Material 3 side sheet: standard (the page stays live beside it) or modal (a scrim, Escape and a
+// tap on the scrim dismiss). A header with a title and a close button, the content, and optional
+// actions along the bottom.
+//
+//     m.SideSheet(bind: open, headline: "Filters", modal: true,
+//         actions: { m.Button("Apply", on_tap: { open = false }) }) { Text("...") }
+//
+// It sits at the end edge, the full height of the window.
+//
+// Measurements (starred: not sure of them)
+//   container surface_container_low (modal) or surface (standard)*, width 320*, 256 to 400 allowed
+//   modal corners 16 on the leading side*, level 1*; padding 24, header 56 high*, title title_large
+
+View SideSheet(bind open: Bool, headline: Str, modal: Bool = true, close_label: Str = "Close",
+    actions: Slot = none, content) {
+    inject Theme as t
+
+    when open {
+        when modal {
+            Overlay #[dismiss => open = false] {
+                SideSheetPanel(bind: open, headline: headline, modal: true,
+                    close_label: close_label, actions: actions) { content }
+            }
+        } else {
+            Overlay #[modal: false] {
+                SideSheetPanel(bind: open, headline: headline, modal: false,
+                    close_label: close_label, actions: actions) { content }
+            }
+        }
+    }
+}
+
+private View SideSheetPanel(bind open: Bool, headline: Str, modal: Bool, close_label: Str,
+    actions: Slot = none, content) {
+    inject Theme as t
+
+    Column #[
+        anchor: end,
+        bg: modal ? t.surfaceContainerLow : t.surface,
+        radius: modal ? (t.cornerLg, 0, 0, t.cornerLg) : 0,
+        shadow: modal ? "sm" : (),
+        width: 320,
+        grow: 1,
+        a11y_role: dialog,
+        a11y_label: headline,
+    ] {
+        Row #[height: 56, p: (0, 12, 0, 24), gap: 8, align: center, shrink: 0] {
+            Text(headline) #[typo: t.titleLarge, color: t.onSurfaceVariant, grow: 1, wrap: false]
+            IconButton("close", label: close_label, on_tap: { open = false })
+        }
+        Column #[grow: 1, p: (8, 24, 24, 24), gap: 16] { content }
+        when actions != none {
+            Row #[gap: 8, justify: end, align: center, p: (16, 24, 24, 24), shrink: 0] { actions }
+        }
+    }
+}

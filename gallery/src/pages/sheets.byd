@@ -1,0 +1,66 @@
+use material as m
+
+// m.BottomSheet and m.SideSheet, standard and modal. Each opens from its button.
+
+View SheetsPage() {
+    inject Theme as t
+    var bottomModal = false
+    var bottomStd = false
+    var sideModal = false
+    var sideStd = false
+    Column #[p: 24, gap: 32, bg: t.surface, grow: 1] {
+        Section("BottomSheet") {
+            Line("kind") {
+                m.Button("Modal", variant: .tonal, on_tap: { bottomModal = true })
+                m.Button("Standard", variant: .tonal, on_tap: { bottomStd = !bottomStd })
+            }
+        }
+        Section("SideSheet") {
+            Line("kind") {
+                m.Button("Modal", variant: .tonal, on_tap: { sideModal = true })
+                m.Button("Standard", variant: .tonal, on_tap: { sideStd = !sideStd })
+            }
+        }
+    }
+    m.BottomSheet(bind: bottomModal, modal: true) {
+        Text("Share with") #[typo: t.titleMedium, color: t.onSurface]
+        Text("Pick a person or an app.") #[typo: t.bodyMedium, color: t.onSurfaceVariant]
+    }
+    m.BottomSheet(bind: bottomStd, modal: false) {
+        Text("Now playing") #[typo: t.titleMedium, color: t.onSurface]
+        Text("A standard sheet leaves the page usable.") #[
+            typo: t.bodyMedium,
+            color: t.onSurfaceVariant,
+        ]
+    }
+    m.SideSheet(bind: sideModal, headline: "Filters", modal: true, actions: {
+        m.Button("Cancel", variant: .text, on_tap: { sideModal = false })
+        m.Button("Apply", on_tap: { sideModal = false })
+    }) {
+        Text("Only show items that are in stock.") #[typo: t.bodyMedium, color: t.onSurfaceVariant]
+    }
+    m.SideSheet(bind: sideStd, headline: "Details", modal: false) {
+        Text("A standard sheet sits beside the page.") #[
+            typo: t.bodyMedium,
+            color: t.onSurfaceVariant,
+        ]
+    }
+}
+
+// For `tests/sheets.toml`.
+View SheetsScenarios() {
+    inject Theme as t
+    var bottom = false
+    var side = false
+    var sideStd = false
+    Column #[p: 24, gap: 16, align: start, bg: t.surface, grow: 1] {
+        m.Button("Open bottom", on_tap: { bottom = true })
+        m.Button("Open side", on_tap: { side = true })
+        m.Button("Toggle standard", on_tap: { sideStd = !sideStd })
+        Text("Bottom: {bottom ? "yes" : "no"}")
+        Text("Side: {side ? "yes" : "no"}")
+    }
+    m.BottomSheet(bind: bottom) { Text("Share with") }
+    m.SideSheet(bind: side, headline: "Filters") { Text("Stock") }
+    m.SideSheet(bind: sideStd, headline: "Details", modal: false) { Text("Beside") }
+}

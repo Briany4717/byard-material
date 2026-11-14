@@ -1,0 +1,81 @@
+// Material 3 bottom sheet: standard (the page stays live above it) or modal (a scrim, Escape and
+// a tap on the scrim dismiss). Rests at the bottom with a drag handle; drag the handle down to
+// dismiss, up to expand.
+//
+//     m.BottomSheet(bind: open, modal: true) { Text("Share with") }
+//
+// It is there while `open` is true; its drag state starts over each time it opens. A drag down
+// of more than 80 dp, released, closes it; a drag up of more
+// than 40 dp expands it to 400 dp; a drag short of that springs back.
+//
+// Measurements (starred: not sure of them)
+//   container surface_container_low, top corners 28, level 1 (modal)*, width up to 640
+//   handle    32 x 4, on_surface_variant at 40%*, in a 48 high strip
+//   thresholds 80 down to dismiss*, 40 up to expand*, expanded height 400*
+
+View BottomSheet(bind open: Bool, modal: Bool = true, drag_handle: Bool = true,
+    handle_label: Str = "Drag handle", content) {
+    inject Theme as t
+
+    when open {
+        when modal {
+            Overlay #[dismiss => open = false] {
+                BottomSheetPanel(bind: open, modal: true, drag_handle: drag_handle,
+                    handle_label: handle_label) { content }
+            }
+        } else {
+            Overlay #[modal: false] {
+                BottomSheetPanel(bind: open, modal: false, drag_handle: drag_handle,
+                    handle_label: handle_label) { content }
+            }
+        }
+    }
+}
+
+private View BottomSheetPanel(bind open: Bool, modal: Bool, drag_handle: Bool,
+    handle_label: Str, content) {
+    inject Theme as t
+
+    var dy = 0.0
+    var tall = false
+
+    Column #[
+        anchor: bottom,
+        align_self: stretch,
+        bg: t.surfaceContainerLow,
+        radius: (t.cornerXl, t.cornerXl, 0, 0),
+        shadow: modal ? "md" : "sm",
+        min_width: 320,
+        max_width: 640,
+        min_height: tall ? 400 : 0,
+        translate: (0, dy < 0.0 ? 0.0 : dy) with t.springSpatialFast,
+        a11y_role: dialog,
+        a11y_label: "Bottom sheet",
+    ] {
+        when drag_handle {
+            Box #[
+                height: 48,
+                shrink: 0,
+                align: center,
+                justify: center,
+                a11y_role: slider,
+                a11y_label: handle_label,
+                a11y_value: tall ? "expanded" : "collapsed",
+                drag(e) => dy = e.dy,
+                drag_end(e) => {
+                    if e.dy > 80.0 {
+                        open = false
+                    } else if e.dy < -40.0 {
+                        tall = true
+                        dy = 0.0
+                    } else {
+                        dy = 0.0
+                    }
+                },
+            ] {
+                Box #[width: 32, height: 4, radius: 2, bg: t.onSurfaceVariant.alpha(0.4)]
+            }
+        }
+        Column #[p: (drag_handle ? 0 : 16, 24, 24, 24), gap: 16] { content }
+    }
+}
