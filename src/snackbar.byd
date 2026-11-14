@@ -4,8 +4,9 @@
 //     m.Snackbar("Message archived", action: "Undo", closable: true, on_action: { undo() })
 //
 // Use it through `SnackbarHost`, which shows one at a time and takes it away after a timeout;
-// a `Snackbar` on its own is just the surface. A screen reader gets an alert named by the
-// message, with the action and close as buttons.
+// a `Snackbar` on its own is just the surface. A screen reader says the message when it appears,
+// politely (`a11y_live: polite`, so it waits for what it is saying and focus stays where it is),
+// and the action and close are buttons.
 
 View Snackbar(message: Str, action: Str = "", closable: Bool = false, on_action: Fn() = {},
     on_close: Fn() = {}) {
@@ -22,8 +23,6 @@ View Snackbar(message: Str, action: Str = "", closable: Bool = false, on_action:
         pr: (action != "" || closable) ? 8 : 16,
         gap: 8,
         align: center,
-        a11y_role: alert,
-        a11y_label: message,
     ] {
         Text(message) #[
             typo: t.bodyMedium,
@@ -32,7 +31,7 @@ View Snackbar(message: Str, action: Str = "", closable: Bool = false, on_action:
             shrink: 1,
             max_lines: 2,
             my: 14,
-            a11y_hidden: true,
+            a11y_live: polite,
         ]
         when action != "" {
             Box #[

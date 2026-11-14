@@ -6,10 +6,14 @@
 //
 // Each item of the queue is a record with `text`, and optionally `action` (a button's label) and
 // `closable`. The host shows the first one at the bottom of the window, centred, 16 dp up,
-// above everything (an `Overlay`); after `duration` (short is 4 s, long 10 s, indefinite waits for a tap), or when its action or close is tapped,
-// it fades out and is removed from the queue, and the next one comes. `on_action` is called
-// with the item's `text`. Nothing is drawn, and no timer runs, while the queue is empty.
-// A snackbar does not take the focus.
+// above everything (an `Overlay`); after `duration` (short is 4 s, long 10 s, indefinite waits
+// for a tap), or when its action or close is tapped, it slides and fades out (`on leave`) and
+// is removed from the queue, and the next one comes in as the first leaves. `on_action` is
+// called with the item's `text`. Nothing is drawn, and no timer runs, while the queue is empty.
+// A snackbar does not take the focus; a screen reader says it politely.
+//
+// Two copies of the snackbar are mounted in turn, one on even turns and one on odd, so that the
+// one that goes and the one that comes are different elements, each with its own motion.
 
 enum SnackbarDuration {
     short,
@@ -17,43 +21,70 @@ enum SnackbarDuration {
     indefinite,
 }
 
+// The timeout in milliseconds; 0 is none.
+private fn timeoutMs(d: SnackbarDuration) -> Int =>
+    d == SnackbarDuration.short ? 4000 : d == SnackbarDuration.long ? 10000 : 0
+
 View SnackbarHost(bind queue: List, duration: SnackbarDuration = .short, on_action: Fn(Str) = {|_| }) {
+    var turn = 0
+
+    when queue.len > 0 && turn % 2 == 0 {
+        Shown(
+            text: queue[0].text,
+            action: queue[0].action ?? "",
+            closable: queue[0].closable ?? false,
+            timeout: timeoutMs(duration),
+            on_action: on_action,
+            on_done: {
+                queue = queue.removeAt(0)
+                turn = turn + 1
+            },
+        )
+    }
+    when queue.len > 0 && turn % 2 == 1 {
+        Shown(
+            text: queue[0].text,
+            action: queue[0].action ?? "",
+            closable: queue[0].closable ?? false,
+            timeout: timeoutMs(duration),
+            on_action: on_action,
+            on_done: {
+                queue = queue.removeAt(0)
+                turn = turn + 1
+            },
+        )
+    }
+}
+
+// One snackbar on screen: its timer, which starts when it appears, and its motion.
+private View Shown(text: Str, action: Str, closable: Bool, timeout: Int, on_action: Fn(Str),
+    on_done: Fn()) {
     inject Theme as t
 
-    var leaving = false
-
-    when queue.len > 0 && !leaving && duration == SnackbarDuration.short {
-        after 4s => leaving = true
-    }
-    when queue.len > 0 && !leaving && duration == SnackbarDuration.long {
-        after 10s => leaving = true
-    }
-    when leaving {
-        after 150ms => {
-            queue = queue.removeAt(0)
-            leaving = false
-        }
+    when timeout > 0 {
+        after timeout * 1ms => on_done()
     }
 
-    when queue.len > 0 {
-        Overlay #[modal: false] {
-            Box #[
-                anchor: bottom,
-                mb: 16,
-                opacity: leaving ? 0.0 : 1.0 with anim.ease(150ms, from: 0.0),
-                translate: (0, leaving ? 16 : 0) with anim.ease(150ms, from: (0, 16)),
-            ] {
-                Snackbar(
-                    queue[0].text,
-                    action: queue[0].action ?? "",
-                    closable: queue[0].closable ?? false,
-                    on_action: {
-                        on_action(queue[0].text)
-                        leaving = true
-                    },
-                    on_close: { leaving = true },
-                )
-            }
+    Overlay #[modal: false] {
+        Box #[
+            anchor: bottom,
+            mb: 16,
+            opacity: 1.0 with t.springEffectsFast,
+            translate: (0, 0) with t.springSpatialFast,
+        ] {
+            on enter { opacity: 0.0, translate: (0, 16) }
+            on leave { opacity: 0.0, translate: (0, 16) }
+
+            Snackbar(
+                text,
+                action: action,
+                closable: closable,
+                on_action: {
+                    on_action(text)
+                    on_done()
+                },
+                on_close: { on_done() },
+            )
         }
     }
 }

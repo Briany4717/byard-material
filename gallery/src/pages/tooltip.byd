@@ -8,17 +8,17 @@ View TooltipPage() {
         Section("Plain") {
             Row #[gap: 24, p: (64, 24, 0, 24)] {
                 m.Tooltip("Add to favourites") { m.IconButton("favorite", label: "Favourite") }
-                m.Tooltip("Share", slot: 1) { m.IconButton("share", label: "Share") }
+                m.Tooltip("Share") { m.IconButton("share", label: "Share") }
             }
         }
         Section("Rich") {
             Row #[gap: 24, p: (128, 24, 0, 24)] {
                 m.Tooltip("Sync keeps your files up to date on every device you sign in on.",
-                    variant: .rich, title: "Sync", slot: 2,
+                    variant: .rich, title: "Sync",
                     actions: { m.Button("Learn more", variant: .text, size: .xs) }) {
                     m.IconButton("sync", label: "Sync")
                 }
-                m.Tooltip("Rich tooltips can be text alone.", variant: .rich, slot: 3) {
+                m.Tooltip("Rich tooltips can be text alone.", variant: .rich) {
                     m.IconButton("info", label: "Info")
                 }
             }
@@ -31,7 +31,7 @@ View TooltipScenarios() {
     var learned = 0
     Column #[p: (96, 24, 24, 24), gap: 16, align: start, bg: t.surface, grow: 1] {
         m.Tooltip("Add to favourites") { m.IconButton("favorite", label: "Favourite") }
-        m.Tooltip("Sync keeps files current.", variant: .rich, title: "Sync", slot: 1,
+        m.Tooltip("Sync keeps files current.", variant: .rich, title: "Sync",
             actions: { m.Button("Learn more", variant: .text, size: .xs, on_tap: { learned = learned + 1 }) }) {
             m.IconButton("sync", label: "Sync")
         }

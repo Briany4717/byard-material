@@ -1,13 +1,19 @@
-# Scenarios for m.Tooltip, on the TooltipScenarios view.
+# Scenarios for m.Tooltip, on the TooltipScenarios view. The hover delay is the delay of the fade
+# in, so a tooltip is in the tree from the moment the pointer arrives; what the delay does is
+# looked at in the shots (`--hover` with `--at`).
 view = "TooltipScenarios"
 size = "400x300"
 
 [[test]]
-name = "the targets keep their own names and roles, and a plain tooltip is not read"
+name = "the targets keep their own names and are described by their tooltips"
 exact = [
     'Button "Favourite" [focusable]',
     'Button "Sync" [focusable]',
     'Label "Learned 0"',
+]
+expect = [
+    'described_by "Add to favourites"',
+    'described_by "Sync keeps files current."',
 ]
 
 [[test]]
@@ -16,26 +22,63 @@ steps = [{ tap = 'Button "Favourite"' }]
 expect = ['Button "Favourite" [focusable focused]']
 
 [[test]]
-name = "a rich tooltip shows after the pointer rests on its target"
-steps = [{ hover = 'Button "Sync"' }]
-expect = ['Label "Sync keeps files current."', 'Button "Learn more"']
+name = "a plain tooltip shows when the pointer is on its target"
+steps = [{ hover = 'Button "Favourite"' }, { wait = 600 }]
+expect = ['Label "Add to favourites"']
+
+[[test]]
+name = "and goes when the pointer leaves, once its fade has ended"
+steps = [{ hover = 'Button "Favourite"' }, { wait = 600 }, { hover = 'Label "Learned 0"' }, { wait = 400 }]
+not = ['Label "Add to favourites"']
+
+[[test]]
+name = "a long press shows it"
+steps = [{ hold = 'Button "Favourite"' }, { wait = 700 }]
+expect = ['Label "Add to favourites"']
+
+[[test]]
+name = "a long press keeps it up after the pointer has moved off (a finger lifted)"
+steps = [{ hold = 'Button "Favourite"' }, { wait = 700 }, { hover = 'Label "Learned 0"' }, { wait = 400 }]
+expect = ['Label "Add to favourites"']
+
+[[test]]
+name = "Tab shows the tooltip of the control that gets focus"
+steps = [{ key = "Tab" }]
+expect = ['Button "Favourite" [focusable focused]', 'Label "Add to favourites"']
+not = ['Label "Sync keeps files current."']
+
+[[test]]
+name = "and Tab again moves it to the next target"
+steps = [{ key = "Tab" }, { key = "Tab" }, { wait = 400 }]
+expect = ['Button "Sync" [focusable focused]', 'Label "Sync keeps files current."', 'Button "Learn more"']
+not = ['Label "Add to favourites"']
+
+[[test]]
+name = "Escape closes it"
+steps = [{ key = "Tab" }, { key = "Escape" }, { wait = 400 }]
+not = ['Label "Add to favourites"']
+
+[[test]]
+name = "a rich tooltip shows with its action when the pointer is on its target"
+steps = [{ hover = 'Button "Sync"' }, { wait = 600 }]
+expect = ['Label "Sync keeps files current."', 'Label "Sync"', 'Button "Learn more"']
 
 [[test]]
 name = "its action can be tapped"
-steps = [{ hover = 'Button "Sync"' }, { tap = 'Button "Learn more"' }]
+steps = [{ hover = 'Button "Sync"' }, { wait = 600 }, { tap = 'Button "Learn more"' }]
 expect = ['Label "Learned 1"']
 
 [[test]]
-name = "Tab reaches the target and Tab again the next"
-steps = [{ key = "Tab" }, { key = "Tab" }]
-expect = ['Button "Sync" [focusable focused]']
+name = "a long press shows a rich one too"
+steps = [{ hold = 'Button "Sync"' }, { wait = 700 }]
+expect = ['Button "Learn more"']
 
 [[test]]
-name = "nothing but the targets is in the tree while no tooltip is shown"
-not = ['Button "Learn more"', 'Label "Sync keeps files current."']
+name = "nothing but the targets is in the tree while no tooltip is wanted"
+not = ['Button "Learn more"', 'Label "Sync keeps files current."', 'Label "Add to favourites"']
 
 [[test]]
 name = "the same in the dark scheme"
 scheme = "dark"
-steps = [{ hover = 'Button "Sync"' }]
+steps = [{ hover = 'Button "Sync"' }, { wait = 600 }]
 expect = ['Button "Learn more"']

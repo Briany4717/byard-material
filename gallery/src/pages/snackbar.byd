@@ -37,7 +37,7 @@ View SnackbarScenarios() {
     var undone = 0
     Column #[p: 24, gap: 16, align: start, bg: t.surface, grow: 1] {
         m.Button("Archive", on_tap: { queue = queue.push({ text: "Archived", action: "Undo", closable: true }) })
-        m.Button("Two", on_tap: { queue = queue.push({ text: "One" }).push({ text: "Two" }) })
+        m.Button("Two", on_tap: { queue = queue.push({ text: "One", closable: true }).push({ text: "Two", closable: true }) })
         Text("Undone {undone}, queued {queue.len}")
         m.SnackbarHost(bind queue: queue, on_action: {|_| undone = undone + 1 })
     }

@@ -3,28 +3,23 @@
 //
 //     m.Tooltip("Add to favourites") { m.IconButton("favorite", label: "Favourite") }
 //     m.Tooltip("Sync keeps your files up to date on every device.", variant: .rich,
-//         title: "Sync", slot: 1, actions: { m.Button("Learn more", variant: .text) }) {
+//         title: "Sync", actions: { m.Button("Learn more", variant: .text) }) {
 //         m.IconButton("sync", label: "Sync")
 //     }
 //
-// It fades in 500 ms after the pointer rests on the target, and on a long press; a plain one
-// also shows at once when the target (or a control in it) has keyboard focus. A plain one goes
-// when the pointer leaves; a rich one stays while the pointer is on it, so its actions can be
-// reached, and a press elsewhere or Escape closes it. It sits above the target, centred, 4 dp
-// off, and flips below when there is no room. The delay is an animation delay, not a timer.
+// It fades in 500 ms after the pointer rests on the target, at once on a long press and on
+// keyboard focus (anything inside the target taking focus), and fades out when they stop. A
+// plain one goes when the pointer leaves, when the target is pressed or on Escape; a rich one
+// stays while the pointer is on it, so its actions can be reached, and a press elsewhere or
+// Escape closes it. It sits above the target, centred, 4 dp off, and flips below when there is
+// no room.
 //
-// Each tooltip on a screen needs its own `slot` (0 to 5): the engine resolves an anchor's name
-// across the whole window, so two tooltips with one name would both hang off the last target.
-// See the notes.
-//
-// How the target is watched is limited by the engine. The pointer is read by a transparent
-// layer over the target that listens for entering and leaving only (so taps still reach the
-// control beneath); focus through the target's `focus_within` state, which can only restyle, so
-// a rich tooltip is not shown on focus; and a long press only reaches a target that does not
-// take the press itself. The plain panel is always in the tree, at no opacity (hidden from
-// readers: the target has its own name; it listens for nothing). A rich one is in the tree only
-// while it is shown, because an invisible one would still catch the pointer: neither `translate`
-// nor a scale of 0 takes its hit area away.
+// The wrapper around the target listens for `pointer_enter`/`pointer_leave`, `focus_in`/
+// `focus_out` and `long_press`, which fire for whatever the slot holds. The panel is mounted
+// while it is wanted. The fade in is a `from: 0.0` with the hover delay as its delay, and the
+// fade out is `on leave` (`on enter` with a delayed `with` ignores the delay: see the notes), so a pointer that has just arrived has a panel at no opacity, and a plain one lets
+// the pointer through (`interactive: false`). The target is described by the tooltip's text
+// (`a11y_described_by`), so a screen reader says it after the control's own name.
 
 enum TooltipVariant {
     plain,
@@ -32,194 +27,97 @@ enum TooltipVariant {
 }
 
 View Tooltip(text: Str, content: Slot, variant: TooltipVariant = .plain, title: Str = "",
-    actions: Slot = none, slot: Int = 0) {
-    when slot == 0 {
-        Tooltip0(text, variant: variant, title: title, actions: actions) { content }
-    }
-    else when slot == 1 {
-        Tooltip1(text, variant: variant, title: title, actions: actions) { content }
-    }
-    else when slot == 2 {
-        Tooltip2(text, variant: variant, title: title, actions: actions) { content }
-    }
-    else when slot == 3 {
-        Tooltip3(text, variant: variant, title: title, actions: actions) { content }
-    }
-    else when slot == 4 {
-        Tooltip4(text, variant: variant, title: title, actions: actions) { content }
-    }
-    else {
-        Tooltip5(text, variant: variant, title: title, actions: actions) { content }
-    }
-}
-
-private View Tooltip0(text: Str, content: Slot, variant: TooltipVariant, title: Str,
     actions: Slot = none) {
     inject Theme as t
 
     var hovering = false
-    var overTip = false
     var pressed = false
+    var focused = false
+    var overTip = false
     var dismissed = false
-    var lingering = false
 
     let rich = variant == TooltipVariant.rich
-    let lit = !dismissed && (hovering || pressed || (rich && overTip))
-    let open = lit || (rich && lingering)
-
-    when lingering {
-        after 200ms => lingering = false
+    let open = !dismissed && (hovering || pressed || focused || (rich && overTip))
+    // Only a resting pointer waits; focus and a long press are answers to the person at once.
+    let wait = (hovering && !pressed && !focused && !overTip) ? 500ms : 0ms
+    // A long press keeps it up for a moment after the finger is lifted.
+    when pressed {
+        after 1500ms => pressed = false
     }
 
     ZStack #[
         alignment: top_start,
         shrink: 0,
+        pointer_enter => {
+            hovering = true
+            dismissed = false
+        },
+        pointer_leave => hovering = false,
+        pointer_down => dismissed = true,
+        focus_in => focused = true,
+        focus_out => {
+            focused = false
+            dismissed = false
+        },
         long_press => {
             pressed = true
             dismissed = false
         },
-    ] as tooltipTarget0 {
+        a11y_role: group,
+        a11y_described_by: tip,
+    ] as target {
         content
+
+        // What the target is described by. A name declared inside the `when` below is not in
+        // scope here, so the description lives in a node of no size that is always there.
         Box #[
-            align_self: stretch,
-            pointer_enter => {
-                hovering = true
-                dismissed = false
-            },
-            pointer_exit => {
-                hovering = false
-                pressed = false
-                lingering = true
-            },
-        ]
+            width: 0,
+            height: 0,
+            interactive: false,
+            a11y_role: group,
+            a11y_label: text,
+        ] as tip
 
-        Overlay #[modal: false] {
-            when !rich {
+        when open && !rich {
+            Overlay #[modal: false] {
                 Box #[
-                    anchor_to: "tooltipTarget0",
+                    anchor_to: target,
                     anchor_edge: above,
                     anchor_align: center,
                     anchor_gap: 4,
-                    bg: t.inverseSurface,
-                    radius: t.cornerXs,
-                    min_width: 40,
-                    max_width: 200,
-                    min_height: 24,
-                    p: (4, 8),
-                    align: center,
-                    justify: center,
-                    opacity: (lit ? 1.0 : 0.0) with anim.ease(150ms, delay: lit ? 500ms : 0ms),
-                    a11y_hidden: true,
-                ] {
-                    on tooltipTarget0.focus_within { opacity: 1.0 with anim.ease(150ms) }
-
-                    Text(text) #[typo: t.bodySmall, color: t.inverseOnSurface]
-                }
-            } else when open {
-                Box #[
-                    anchor_to: "tooltipTarget0",
-                    anchor_edge: above,
-                    anchor_align: center,
-                    anchor_gap: 4,
+                    interactive: false,
                     dismiss => dismissed = true,
                 ] {
-                    Column #[
-                        bg: t.surfaceContainer,
-                        radius: t.cornerMd,
-                        shadow: "md",
-                        min_width: 112,
-                        max_width: 312,
-                        p: (12, 16),
-                        gap: 4,
-                        opacity: 1.0 with anim.ease(150ms, from: 0.0, delay: 500ms),
-                        pointer_enter => overTip = true,
-                        pointer_exit => overTip = false,
+                    Box #[
+                        bg: t.inverseSurface,
+                        radius: t.cornerXs,
+                        min_width: 40,
+                        max_width: 200,
+                        min_height: 24,
+                        p: (4, 8),
+                        align: center,
+                        justify: center,
+                        opacity: 1.0 with anim.ease(t.durationShort3, delay: wait, from: 0.0),
                     ] {
-                        when title != "" {
-                            Text(title) #[typo: t.titleSmall, color: t.onSurfaceVariant]
-                        }
-                        Text(text) #[typo: t.bodyMedium, color: t.onSurfaceVariant]
-                        when actions != none {
-                            Row #[gap: 8, mt: 8, ml: -12] {
-                                actions
-                            }
-                        }
+                        on leave { opacity: 0.0 }
+
+                        Text(text) #[typo: t.bodySmall, color: t.inverseOnSurface]
                     }
                 }
             }
         }
-    }
-}
-
-private View Tooltip1(text: Str, content: Slot, variant: TooltipVariant, title: Str,
-    actions: Slot = none) {
-    inject Theme as t
-
-    var hovering = false
-    var overTip = false
-    var pressed = false
-    var dismissed = false
-    var lingering = false
-
-    let rich = variant == TooltipVariant.rich
-    let lit = !dismissed && (hovering || pressed || (rich && overTip))
-    let open = lit || (rich && lingering)
-
-    when lingering {
-        after 200ms => lingering = false
-    }
-
-    ZStack #[
-        alignment: top_start,
-        shrink: 0,
-        long_press => {
-            pressed = true
-            dismissed = false
-        },
-    ] as tooltipTarget1 {
-        content
-        Box #[
-            align_self: stretch,
-            pointer_enter => {
-                hovering = true
-                dismissed = false
-            },
-            pointer_exit => {
-                hovering = false
-                pressed = false
-                lingering = true
-            },
-        ]
-
-        Overlay #[modal: false] {
-            when !rich {
+        // A rich one is reachable, so the 4 dp between it and the target is padding of the
+        // anchored box: the pointer crosses from one to the other without leaving both.
+        when open && rich {
+            Overlay #[modal: false] {
                 Box #[
-                    anchor_to: "tooltipTarget1",
+                    anchor_to: target,
                     anchor_edge: above,
                     anchor_align: center,
-                    anchor_gap: 4,
-                    bg: t.inverseSurface,
-                    radius: t.cornerXs,
-                    min_width: 40,
-                    max_width: 200,
-                    min_height: 24,
-                    p: (4, 8),
-                    align: center,
-                    justify: center,
-                    opacity: (lit ? 1.0 : 0.0) with anim.ease(150ms, delay: lit ? 500ms : 0ms),
-                    a11y_hidden: true,
-                ] {
-                    on tooltipTarget1.focus_within { opacity: 1.0 with anim.ease(150ms) }
-
-                    Text(text) #[typo: t.bodySmall, color: t.inverseOnSurface]
-                }
-            } else when open {
-                Box #[
-                    anchor_to: "tooltipTarget1",
-                    anchor_edge: above,
-                    anchor_align: center,
-                    anchor_gap: 4,
+                    pb: 4,
                     dismiss => dismissed = true,
+                    pointer_enter => overTip = true,
+                    pointer_leave => overTip = false,
                 ] {
                     Column #[
                         bg: t.surfaceContainer,
@@ -229,402 +127,10 @@ private View Tooltip1(text: Str, content: Slot, variant: TooltipVariant, title: 
                         max_width: 312,
                         p: (12, 16),
                         gap: 4,
-                        opacity: 1.0 with anim.ease(150ms, from: 0.0, delay: 500ms),
-                        pointer_enter => overTip = true,
-                        pointer_exit => overTip = false,
+                        opacity: 1.0 with anim.ease(t.durationShort3, delay: wait, from: 0.0),
                     ] {
-                        when title != "" {
-                            Text(title) #[typo: t.titleSmall, color: t.onSurfaceVariant]
-                        }
-                        Text(text) #[typo: t.bodyMedium, color: t.onSurfaceVariant]
-                        when actions != none {
-                            Row #[gap: 8, mt: 8, ml: -12] {
-                                actions
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
+                        on leave { opacity: 0.0 }
 
-private View Tooltip2(text: Str, content: Slot, variant: TooltipVariant, title: Str,
-    actions: Slot = none) {
-    inject Theme as t
-
-    var hovering = false
-    var overTip = false
-    var pressed = false
-    var dismissed = false
-    var lingering = false
-
-    let rich = variant == TooltipVariant.rich
-    let lit = !dismissed && (hovering || pressed || (rich && overTip))
-    let open = lit || (rich && lingering)
-
-    when lingering {
-        after 200ms => lingering = false
-    }
-
-    ZStack #[
-        alignment: top_start,
-        shrink: 0,
-        long_press => {
-            pressed = true
-            dismissed = false
-        },
-    ] as tooltipTarget2 {
-        content
-        Box #[
-            align_self: stretch,
-            pointer_enter => {
-                hovering = true
-                dismissed = false
-            },
-            pointer_exit => {
-                hovering = false
-                pressed = false
-                lingering = true
-            },
-        ]
-
-        Overlay #[modal: false] {
-            when !rich {
-                Box #[
-                    anchor_to: "tooltipTarget2",
-                    anchor_edge: above,
-                    anchor_align: center,
-                    anchor_gap: 4,
-                    bg: t.inverseSurface,
-                    radius: t.cornerXs,
-                    min_width: 40,
-                    max_width: 200,
-                    min_height: 24,
-                    p: (4, 8),
-                    align: center,
-                    justify: center,
-                    opacity: (lit ? 1.0 : 0.0) with anim.ease(150ms, delay: lit ? 500ms : 0ms),
-                    a11y_hidden: true,
-                ] {
-                    on tooltipTarget2.focus_within { opacity: 1.0 with anim.ease(150ms) }
-
-                    Text(text) #[typo: t.bodySmall, color: t.inverseOnSurface]
-                }
-            } else when open {
-                Box #[
-                    anchor_to: "tooltipTarget2",
-                    anchor_edge: above,
-                    anchor_align: center,
-                    anchor_gap: 4,
-                    dismiss => dismissed = true,
-                ] {
-                    Column #[
-                        bg: t.surfaceContainer,
-                        radius: t.cornerMd,
-                        shadow: "md",
-                        min_width: 112,
-                        max_width: 312,
-                        p: (12, 16),
-                        gap: 4,
-                        opacity: 1.0 with anim.ease(150ms, from: 0.0, delay: 500ms),
-                        pointer_enter => overTip = true,
-                        pointer_exit => overTip = false,
-                    ] {
-                        when title != "" {
-                            Text(title) #[typo: t.titleSmall, color: t.onSurfaceVariant]
-                        }
-                        Text(text) #[typo: t.bodyMedium, color: t.onSurfaceVariant]
-                        when actions != none {
-                            Row #[gap: 8, mt: 8, ml: -12] {
-                                actions
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-private View Tooltip3(text: Str, content: Slot, variant: TooltipVariant, title: Str,
-    actions: Slot = none) {
-    inject Theme as t
-
-    var hovering = false
-    var overTip = false
-    var pressed = false
-    var dismissed = false
-    var lingering = false
-
-    let rich = variant == TooltipVariant.rich
-    let lit = !dismissed && (hovering || pressed || (rich && overTip))
-    let open = lit || (rich && lingering)
-
-    when lingering {
-        after 200ms => lingering = false
-    }
-
-    ZStack #[
-        alignment: top_start,
-        shrink: 0,
-        long_press => {
-            pressed = true
-            dismissed = false
-        },
-    ] as tooltipTarget3 {
-        content
-        Box #[
-            align_self: stretch,
-            pointer_enter => {
-                hovering = true
-                dismissed = false
-            },
-            pointer_exit => {
-                hovering = false
-                pressed = false
-                lingering = true
-            },
-        ]
-
-        Overlay #[modal: false] {
-            when !rich {
-                Box #[
-                    anchor_to: "tooltipTarget3",
-                    anchor_edge: above,
-                    anchor_align: center,
-                    anchor_gap: 4,
-                    bg: t.inverseSurface,
-                    radius: t.cornerXs,
-                    min_width: 40,
-                    max_width: 200,
-                    min_height: 24,
-                    p: (4, 8),
-                    align: center,
-                    justify: center,
-                    opacity: (lit ? 1.0 : 0.0) with anim.ease(150ms, delay: lit ? 500ms : 0ms),
-                    a11y_hidden: true,
-                ] {
-                    on tooltipTarget3.focus_within { opacity: 1.0 with anim.ease(150ms) }
-
-                    Text(text) #[typo: t.bodySmall, color: t.inverseOnSurface]
-                }
-            } else when open {
-                Box #[
-                    anchor_to: "tooltipTarget3",
-                    anchor_edge: above,
-                    anchor_align: center,
-                    anchor_gap: 4,
-                    dismiss => dismissed = true,
-                ] {
-                    Column #[
-                        bg: t.surfaceContainer,
-                        radius: t.cornerMd,
-                        shadow: "md",
-                        min_width: 112,
-                        max_width: 312,
-                        p: (12, 16),
-                        gap: 4,
-                        opacity: 1.0 with anim.ease(150ms, from: 0.0, delay: 500ms),
-                        pointer_enter => overTip = true,
-                        pointer_exit => overTip = false,
-                    ] {
-                        when title != "" {
-                            Text(title) #[typo: t.titleSmall, color: t.onSurfaceVariant]
-                        }
-                        Text(text) #[typo: t.bodyMedium, color: t.onSurfaceVariant]
-                        when actions != none {
-                            Row #[gap: 8, mt: 8, ml: -12] {
-                                actions
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-private View Tooltip4(text: Str, content: Slot, variant: TooltipVariant, title: Str,
-    actions: Slot = none) {
-    inject Theme as t
-
-    var hovering = false
-    var overTip = false
-    var pressed = false
-    var dismissed = false
-    var lingering = false
-
-    let rich = variant == TooltipVariant.rich
-    let lit = !dismissed && (hovering || pressed || (rich && overTip))
-    let open = lit || (rich && lingering)
-
-    when lingering {
-        after 200ms => lingering = false
-    }
-
-    ZStack #[
-        alignment: top_start,
-        shrink: 0,
-        long_press => {
-            pressed = true
-            dismissed = false
-        },
-    ] as tooltipTarget4 {
-        content
-        Box #[
-            align_self: stretch,
-            pointer_enter => {
-                hovering = true
-                dismissed = false
-            },
-            pointer_exit => {
-                hovering = false
-                pressed = false
-                lingering = true
-            },
-        ]
-
-        Overlay #[modal: false] {
-            when !rich {
-                Box #[
-                    anchor_to: "tooltipTarget4",
-                    anchor_edge: above,
-                    anchor_align: center,
-                    anchor_gap: 4,
-                    bg: t.inverseSurface,
-                    radius: t.cornerXs,
-                    min_width: 40,
-                    max_width: 200,
-                    min_height: 24,
-                    p: (4, 8),
-                    align: center,
-                    justify: center,
-                    opacity: (lit ? 1.0 : 0.0) with anim.ease(150ms, delay: lit ? 500ms : 0ms),
-                    a11y_hidden: true,
-                ] {
-                    on tooltipTarget4.focus_within { opacity: 1.0 with anim.ease(150ms) }
-
-                    Text(text) #[typo: t.bodySmall, color: t.inverseOnSurface]
-                }
-            } else when open {
-                Box #[
-                    anchor_to: "tooltipTarget4",
-                    anchor_edge: above,
-                    anchor_align: center,
-                    anchor_gap: 4,
-                    dismiss => dismissed = true,
-                ] {
-                    Column #[
-                        bg: t.surfaceContainer,
-                        radius: t.cornerMd,
-                        shadow: "md",
-                        min_width: 112,
-                        max_width: 312,
-                        p: (12, 16),
-                        gap: 4,
-                        opacity: 1.0 with anim.ease(150ms, from: 0.0, delay: 500ms),
-                        pointer_enter => overTip = true,
-                        pointer_exit => overTip = false,
-                    ] {
-                        when title != "" {
-                            Text(title) #[typo: t.titleSmall, color: t.onSurfaceVariant]
-                        }
-                        Text(text) #[typo: t.bodyMedium, color: t.onSurfaceVariant]
-                        when actions != none {
-                            Row #[gap: 8, mt: 8, ml: -12] {
-                                actions
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-private View Tooltip5(text: Str, content: Slot, variant: TooltipVariant, title: Str,
-    actions: Slot = none) {
-    inject Theme as t
-
-    var hovering = false
-    var overTip = false
-    var pressed = false
-    var dismissed = false
-    var lingering = false
-
-    let rich = variant == TooltipVariant.rich
-    let lit = !dismissed && (hovering || pressed || (rich && overTip))
-    let open = lit || (rich && lingering)
-
-    when lingering {
-        after 200ms => lingering = false
-    }
-
-    ZStack #[
-        alignment: top_start,
-        shrink: 0,
-        long_press => {
-            pressed = true
-            dismissed = false
-        },
-    ] as tooltipTarget5 {
-        content
-        Box #[
-            align_self: stretch,
-            pointer_enter => {
-                hovering = true
-                dismissed = false
-            },
-            pointer_exit => {
-                hovering = false
-                pressed = false
-                lingering = true
-            },
-        ]
-
-        Overlay #[modal: false] {
-            when !rich {
-                Box #[
-                    anchor_to: "tooltipTarget5",
-                    anchor_edge: above,
-                    anchor_align: center,
-                    anchor_gap: 4,
-                    bg: t.inverseSurface,
-                    radius: t.cornerXs,
-                    min_width: 40,
-                    max_width: 200,
-                    min_height: 24,
-                    p: (4, 8),
-                    align: center,
-                    justify: center,
-                    opacity: (lit ? 1.0 : 0.0) with anim.ease(150ms, delay: lit ? 500ms : 0ms),
-                    a11y_hidden: true,
-                ] {
-                    on tooltipTarget5.focus_within { opacity: 1.0 with anim.ease(150ms) }
-
-                    Text(text) #[typo: t.bodySmall, color: t.inverseOnSurface]
-                }
-            } else when open {
-                Box #[
-                    anchor_to: "tooltipTarget5",
-                    anchor_edge: above,
-                    anchor_align: center,
-                    anchor_gap: 4,
-                    dismiss => dismissed = true,
-                ] {
-                    Column #[
-                        bg: t.surfaceContainer,
-                        radius: t.cornerMd,
-                        shadow: "md",
-                        min_width: 112,
-                        max_width: 312,
-                        p: (12, 16),
-                        gap: 4,
-                        opacity: 1.0 with anim.ease(150ms, from: 0.0, delay: 500ms),
-                        pointer_enter => overTip = true,
-                        pointer_exit => overTip = false,
-                    ] {
                         when title != "" {
                             Text(title) #[typo: t.titleSmall, color: t.onSurfaceVariant]
                         }
