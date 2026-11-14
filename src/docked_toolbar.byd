@@ -9,6 +9,8 @@
 View DockedToolbar(label: Str = "Toolbar", color: ToolbarColor = .standard, content) {
     inject Theme as t
 
+    provide ToolbarContent(tinted: color == ToolbarColor.vibrant, ink: t.onPrimaryContainer)
+
     Row #[
         bg: (color == ToolbarColor.vibrant ? t.primaryContainer : t.surfaceContainer) with t.springEffectsFast,
         height: 64,

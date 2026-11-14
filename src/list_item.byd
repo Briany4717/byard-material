@@ -51,7 +51,6 @@ View ListItem(headline: Str, supporting: Str = "", overline: Str = "", lines: In
             a11y_selected: selected,
             disabled: disabled,
             tap => on_tap(),
-            focus => {},
         ] {
             on hover { overlay: t.onSurface.alpha(stateHover) with t.springEffectsFast }
             on focus_visible {

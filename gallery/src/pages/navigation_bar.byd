@@ -23,30 +23,30 @@ View NavigationBarPage() {
 
 View BarThree() {
     var screen = 0
-    m.NavigationBar(label: "Three") {
-        m.NavigationBarItem(0, bind: screen, label: "Home", icon: "home")
-        m.NavigationBarItem(1, bind: screen, label: "Search", icon: "search")
-        m.NavigationBarItem(2, bind: screen, label: "Library", icon: "library_music")
+    m.NavigationBar(bind: screen, label: "Three") {
+        m.NavigationBarItem(0, label: "Home", icon: "home")
+        m.NavigationBarItem(1, label: "Search", icon: "search")
+        m.NavigationBarItem(2, label: "Library", icon: "library_music")
     }
 }
 
 View BarFive() {
     var screen = 1
-    m.NavigationBar(label: "Five") {
-        m.NavigationBarItem(0, bind: screen, label: "Home", icon: "home")
-        m.NavigationBarItem(1, bind: screen, label: "Chat", icon: "chat", badge: { NavDemoBadge("3") })
-        m.NavigationBarItem(2, bind: screen, label: "Alerts", icon: "notifications", badge: { NavDemoBadge() })
-        m.NavigationBarItem(3, bind: screen, label: "Files", icon: "folder", disabled: true)
-        m.NavigationBarItem(4, bind: screen, label: "Settings", icon: "settings")
+    m.NavigationBar(bind: screen, label: "Five") {
+        m.NavigationBarItem(0, label: "Home", icon: "home")
+        m.NavigationBarItem(1, label: "Chat", icon: "chat", badge: { NavDemoBadge("3") })
+        m.NavigationBarItem(2, label: "Alerts", icon: "notifications", badge: { NavDemoBadge() })
+        m.NavigationBarItem(3, label: "Files", icon: "folder", disabled: true)
+        m.NavigationBarItem(4, label: "Settings", icon: "settings")
     }
 }
 
 View BarWide() {
     var screen = 0
-    m.NavigationBar(label: "Wide") {
-        m.NavigationBarItem(0, bind: screen, label: "Home", icon: "home", horizontal: true)
-        m.NavigationBarItem(1, bind: screen, label: "Search", icon: "search", horizontal: true, badge: { NavDemoBadge("9") })
-        m.NavigationBarItem(2, bind: screen, label: "Library", icon: "library_music", horizontal: true)
+    m.NavigationBar(bind: screen, horizontal: true, label: "Wide") {
+        m.NavigationBarItem(0, label: "Home", icon: "home")
+        m.NavigationBarItem(1, label: "Search", icon: "search", badge: { NavDemoBadge("9") })
+        m.NavigationBarItem(2, label: "Library", icon: "library_music")
     }
 }
 
@@ -66,10 +66,10 @@ View BarHosted() {
                 Column #[p: 16] { Text("Library screen") #[typo: t.bodyLarge, color: t.onSurface] }
             }
         }
-        m.NavigationBar(label: "App") {
-            m.NavigationBarItem(0, bind: screen, label: "Home", icon: "home")
-            m.NavigationBarItem(1, bind: screen, label: "Search", icon: "search")
-            m.NavigationBarItem(2, bind: screen, label: "Library", icon: "library_music")
+        m.NavigationBar(bind: screen, label: "App") {
+            m.NavigationBarItem(0, label: "Home", icon: "home")
+            m.NavigationBarItem(1, label: "Search", icon: "search")
+            m.NavigationBarItem(2, label: "Library", icon: "library_music")
         }
     }
 }
@@ -81,11 +81,11 @@ View NavigationBarScenarios() {
     var picked = 0
     Column #[p: 24, gap: 8, align: start, bg: t.surface, grow: 1] {
         Column #[width: 400] {
-            m.NavigationBar(label: "Main") {
-                m.NavigationBarItem(0, bind: screen, label: "Home", icon: "home")
-                m.NavigationBarItem(1, bind: screen, label: "Search", icon: "search", on_select: { picked++ })
-                m.NavigationBarItem(2, bind: screen, label: "Locked", icon: "lock", disabled: true)
-                m.NavigationBarItem(3, bind: screen, label: "Library", icon: "library_music")
+            m.NavigationBar(bind: screen, label: "Main") {
+                m.NavigationBarItem(0, label: "Home", icon: "home")
+                m.NavigationBarItem(1, label: "Search", icon: "search", on_select: { picked++ })
+                m.NavigationBarItem(2, label: "Locked", icon: "lock", disabled: true)
+                m.NavigationBarItem(3, label: "Library", icon: "library_music")
             }
         }
         Text("Screen is {screen}, picked {picked}")
