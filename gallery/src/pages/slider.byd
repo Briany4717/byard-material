@@ -1,0 +1,131 @@
+use material as m
+
+// Every kind of m.Slider and m.RangeSlider: the five sizes, stops, centered, with an icon,
+// range, vertical and disabled. The value bubble shows while a slider has focus, so each is
+// given room above it.
+
+View SliderPage() {
+    inject Theme as t
+    Column #[p: (24, 24, 32, 24), gap: 24, bg: t.surface, grow: 1] {
+        Section("Sizes, xs to xl") {
+            SizeSliders()
+        }
+        Section("Stops, 0 to 100 by 10") {
+            Line("stops") { SteppedSlider() }
+        }
+        Section("Centered") {
+            Line("centered") { CenteredSlider() }
+        }
+        Section("Inset icon, m and larger") {
+            IconSliders()
+        }
+        Section("Range") {
+            Line("range") { RangeRow() }
+            Line("stops") { SteppedRange() }
+        }
+        Section("Vertical") {
+            Line("vertical") { VerticalRow() }
+        }
+        Section("Disabled") {
+            Line("slider") { DisabledSlider() }
+            Line("range") { DisabledRange() }
+        }
+    }
+}
+
+View SizeSliders() {
+    var a: Float = 0.5
+    var b: Float = 0.3
+    var c: Float = 0.7
+    var d: Float = 0.4
+    var e: Float = 0.6
+    Column #[gap: 56, p: (40, 0, 0, 0)] {
+        m.Slider(bind: a, label: "Extra small", size: .xs)
+        m.Slider(bind: b, label: "Small", size: .s)
+        m.Slider(bind: c, label: "Medium", size: .m)
+        m.Slider(bind: d, label: "Large", size: .l)
+        m.Slider(bind: e, label: "Extra large", size: .xl)
+    }
+}
+
+View SteppedSlider() {
+    var v: Float = 40.0
+    Column #[p: (40, 0, 0, 0)] {
+        m.Slider(bind: v, label: "Stepped", min: 0.0, max: 100.0, step: 10.0)
+    }
+}
+
+View CenteredSlider() {
+    var v: Float = -20.0
+    Column #[p: (40, 0, 0, 0)] {
+        m.Slider(bind: v, label: "Balance", min: -50.0, max: 50.0, centered: true)
+    }
+}
+
+View IconSliders() {
+    var a: Float = 0.4
+    var b: Float = 0.6
+    var c: Float = 0.5
+    Column #[gap: 56, p: (40, 0, 0, 0)] {
+        m.Slider(bind: a, label: "Volume", size: .m, icon: "volume_up")
+        m.Slider(bind: b, label: "Brightness", size: .l, icon: "brightness_6")
+        m.Slider(bind: c, label: "Zoom", size: .xl, icon: "zoom_in")
+    }
+}
+
+View RangeRow() {
+    var lo: Float = 20.0
+    var hi: Float = 70.0
+    Column #[p: (40, 0, 0, 0)] {
+        m.RangeSlider(bind lower: lo, bind upper: hi, label: "Price", min: 0.0, max: 100.0)
+    }
+}
+
+View SteppedRange() {
+    var lo: Float = 30.0
+    var hi: Float = 80.0
+    Column #[p: (40, 0, 0, 0)] {
+        m.RangeSlider(bind lower: lo, bind upper: hi, label: "Budget", min: 0.0, max: 100.0,
+            step: 10.0, size: .m)
+    }
+}
+
+View VerticalRow() {
+    var a: Float = 60.0
+    var b: Float = 0.0
+    Row #[gap: 64, p: (0, 0, 0, 56)] {
+        m.Slider(bind: a, label: "Level", min: 0.0, max: 100.0, vertical: true, length: 160)
+        m.Slider(bind: b, label: "Tilt", min: -50.0, max: 50.0, vertical: true, centered: true,
+            length: 160, size: .m)
+    }
+}
+
+View DisabledSlider() {
+    var v: Float = 0.4
+    m.Slider(bind: v, label: "Disabled", disabled: true)
+}
+
+View DisabledRange() {
+    var lo: Float = 0.3
+    var hi: Float = 0.7
+    m.RangeSlider(bind lower: lo, bind upper: hi, label: "Disabled range", disabled: true)
+}
+
+// Sliders with names of their own, for `tests/slider.toml`. They sit at the top left at known
+// places: a 280 wide slider at x 32 has its handle travel from 40 to 304.
+View SliderScenarios() {
+    inject Theme as t
+    var volume: Float = 50.0
+    var level: Float = 0.5
+    var lo: Float = 20.0
+    var hi: Float = 80.0
+    var locked: Float = 0.5
+    Column #[p: (48, 32, 24, 32), gap: 56, align: start, bg: t.surface, grow: 1] {
+        m.Slider(bind: volume, label: "Volume", min: 0.0, max: 100.0, step: 10.0)
+        m.Slider(bind: level, label: "Level")
+        m.RangeSlider(bind lower: lo, bind upper: hi, label: "Range", min: 0.0, max: 100.0,
+            step: 10.0)
+        m.Slider(bind: locked, label: "Locked", disabled: true)
+        Text("Volume {volume:.0}, level {level:.2}, range {lo:.0} to {hi:.0}")
+    }
+}

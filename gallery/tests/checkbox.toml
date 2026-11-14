@@ -1,0 +1,49 @@
+# Scenarios for m.Checkbox, on the CheckboxScenarios view.
+view = "CheckboxScenarios"
+size = "440x400"
+
+[[test]]
+name = "each checkbox has its role, name and state"
+exact = [
+    'CheckBox "Agree" [focusable]',
+    'CheckBox "All" [focusable]',
+    'CheckBox "Required" [focusable]',
+    'CheckBox "Locked" [focusable disabled checked]',
+    'Label "Agree is off, required is off"',
+]
+
+[[test]]
+name = "a tap checks it, and the mixed state follows"
+steps = [{ tap = 'CheckBox "Agree"' }]
+expect = ['CheckBox "Agree" [focusable focused checked]', 'CheckBox "All" [focusable mixed]']
+
+[[test]]
+name = "a second tap unchecks it"
+steps = [{ tap = 'CheckBox "Agree"' }, { tap = 'CheckBox "Agree"' }]
+expect = ['CheckBox "Agree" [focusable focused]', 'Label "Agree is off, required is off"']
+
+[[test]]
+name = "Tab reaches the first and Space checks it"
+steps = [{ key = "Tab" }, { key = "Space" }]
+expect = ['CheckBox "Agree" [focusable focused checked]']
+
+[[test]]
+name = "Enter does nothing on a checkbox"
+steps = [{ key = "Tab" }, { key = "Enter" }]
+expect = ['CheckBox "Agree" [focusable focused]']
+
+[[test]]
+name = "the third checkbox, in error, still flips"
+steps = [{ key = "Tab" }, { key = "Tab" }, { key = "Tab" }, { key = "Space" }]
+expect = ['CheckBox "Required" [focusable focused checked]', 'Label "Agree is off, required is on"']
+
+[[test]]
+name = "Tab skips a disabled checkbox and a tap on it does nothing"
+steps = [{ tap = 'CheckBox "Locked"' }]
+expect = ['CheckBox "Locked" [focusable disabled checked]']
+
+[[test]]
+name = "the same in the dark scheme"
+scheme = "dark"
+steps = [{ key = "Tab" }, { key = "Space" }]
+expect = ['CheckBox "Agree" [focusable focused checked]']

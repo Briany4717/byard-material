@@ -1,0 +1,63 @@
+use material as m
+
+// m.Radio in a m.RadioGroup: selected, unselected, disabled; a column and a row.
+
+View RadioPage() {
+    inject Theme as t
+    Column #[p: 24, gap: 32, bg: t.surface, grow: 1] {
+        Section("A group, in a column") {
+            PlanGroup()
+        }
+        Section("Disabled") {
+            Line("off, on") { DisabledRadios() }
+        }
+        Section("Without labels") {
+            Line("row") { BareRadios() }
+        }
+    }
+}
+
+View PlanGroup() {
+    var plan = "pro"
+    m.RadioGroup(label: "Plan") {
+        m.Radio("free", bind: plan, label: "Free")
+        m.Radio("pro", bind: plan, label: "Pro")
+        m.Radio("team", bind: plan, label: "Team")
+    }
+}
+
+View DisabledRadios() {
+    var a = "x"
+    var b = "y"
+    Row #[gap: 24, align: center] {
+        m.Radio("y", bind: a, name: "Disabled off", disabled: true)
+        m.Radio("y", bind: b, name: "Disabled on", disabled: true)
+    }
+}
+
+View BareRadios() {
+    var pick = "b"
+    m.RadioGroup(label: "Pick") {
+        Row #[gap: 8, align: center] {
+            m.Radio("a", bind: pick, name: "A")
+            m.Radio("b", bind: pick, name: "B")
+            m.Radio("c", bind: pick, name: "C")
+        }
+    }
+}
+
+// Radios with names of their own, for `tests/radio.toml`.
+View RadioScenarios() {
+    inject Theme as t
+    var size = "m"
+    Column #[p: 24, gap: 8, align: start, bg: t.surface, grow: 1] {
+        m.RadioGroup(label: "Size") {
+            m.Radio("s", bind: size, label: "Small")
+            m.Radio("m", bind: size, label: "Medium")
+            m.Radio("l", bind: size, label: "Large", disabled: true)
+            m.Radio("xl", bind: size, label: "Extra large")
+        }
+        Text("Size is {size}")
+        m.Button("Done", variant: .text)
+    }
+}

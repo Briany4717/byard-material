@@ -1,0 +1,49 @@
+# Scenarios for m.Switch, on the SwitchScenarios view.
+view = "SwitchScenarios"
+size = "440x400"
+
+[[test]]
+name = "each switch has the switch role, its name and its state"
+exact = [
+    'Switch "Wi-Fi" = off [focusable]',
+    'Switch "Dark" = on [focusable]',
+    'Switch "Locked" = on [focusable disabled]',
+    'Label "Wi-Fi is off, dark is on"',
+]
+
+[[test]]
+name = "a tap flips the bound var"
+steps = [{ tap = 'Switch "Wi-Fi"' }]
+expect = ['Switch "Wi-Fi" = on', 'Label "Wi-Fi is on, dark is on"']
+
+[[test]]
+name = "a second tap turns it off again"
+steps = [{ tap = 'Switch "Dark"' }]
+expect = ['Switch "Dark" = off', 'Label "Wi-Fi is off, dark is off"']
+
+[[test]]
+name = "Tab reaches the first switch and Space flips it"
+steps = [{ key = "Tab" }, { key = "Space" }]
+expect = ['Switch "Wi-Fi" = on [focusable focused]']
+
+[[test]]
+name = "Enter flips it too"
+steps = [{ key = "Tab" }, { key = "Enter" }]
+expect = ['Switch "Wi-Fi" = on']
+
+[[test]]
+name = "Tab skips a disabled switch"
+steps = [{ key = "Tab" }, { key = "Tab" }, { key = "Tab" }, { key = "Space" }]
+expect = ['Switch "Wi-Fi" = on']
+not = ['Switch "Locked" = off']
+
+[[test]]
+name = "a disabled switch cannot be tapped"
+steps = [{ tap = 'Switch "Locked"' }]
+expect = ['Switch "Locked" = on [focusable disabled]']
+
+[[test]]
+name = "the same in the dark scheme"
+scheme = "dark"
+steps = [{ key = "Tab" }, { key = "Space" }]
+expect = ['Switch "Wi-Fi" = on']

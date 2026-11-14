@@ -1,0 +1,57 @@
+use material as m
+
+// Every state of m.Checkbox: unchecked, checked, indeterminate, error, disabled; with and
+// without a label.
+
+View CheckboxPage() {
+    inject Theme as t
+    Column #[p: 24, gap: 32, bg: t.surface, grow: 1] {
+        Section("States") {
+            Line("normal") { StateRow(error: false, disabled: false) }
+            Line("error") { StateRow(error: true, disabled: false) }
+            Line("disabled") { StateRow(error: false, disabled: true) }
+        }
+        Section("With a label") {
+            Line("list") { LabelledRow() }
+        }
+    }
+}
+
+// Unchecked, checked, then indeterminate.
+View StateRow(error: Bool, disabled: Bool) {
+    var a = false
+    var b = true
+    var c = false
+    Row #[gap: 24, align: center] {
+        m.Checkbox(bind: a, name: "Unchecked", error: error, disabled: disabled)
+        m.Checkbox(bind: b, name: "Checked", error: error, disabled: disabled)
+        m.Checkbox(bind: c, name: "Some", indeterminate: true, error: error, disabled: disabled)
+    }
+}
+
+View LabelledRow() {
+    var a = false
+    var b = true
+    var c = false
+    Row #[gap: 16, align: center] {
+        m.Checkbox(bind: a, label: "Email")
+        m.Checkbox(bind: b, label: "Push")
+        m.Checkbox(bind: c, label: "Both", indeterminate: true)
+    }
+}
+
+// A few checkboxes with names of their own, for `tests/checkbox.toml`.
+View CheckboxScenarios() {
+    inject Theme as t
+    var agree = false
+    var all = false
+    var bad = false
+    var locked = true
+    Column #[p: 24, gap: 8, align: start, bg: t.surface, grow: 1] {
+        m.Checkbox(bind: agree, label: "Agree")
+        m.Checkbox(bind: all, label: "All", indeterminate: agree)
+        m.Checkbox(bind: bad, label: "Required", error: !bad)
+        m.Checkbox(bind: locked, label: "Locked", disabled: true)
+        Text("Agree is {agree ? "on" : "off"}, required is {bad ? "on" : "off"}")
+    }
+}

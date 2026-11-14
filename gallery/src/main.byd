@@ -7,6 +7,15 @@ enum Page {
     index,
     button,
     iconButton,
+    switch,
+    checkbox,
+    radio,
+    slider,
+    buttonGroup,
+    splitButton,
+    fab,
+    textField,
+    chips,
     card,
     list,
     badge,
@@ -29,6 +38,24 @@ View Main() {
                 ButtonPage()
             } else when page == Page.iconButton {
                 IconButtonPage()
+            } else when page == Page.switch {
+                SwitchPage()
+            } else when page == Page.checkbox {
+                CheckboxPage()
+            } else when page == Page.radio {
+                RadioPage()
+            } else when page == Page.slider {
+                SliderPage()
+            } else when page == Page.buttonGroup {
+                ButtonGroupPage()
+            } else when page == Page.splitButton {
+                SplitButtonPage()
+            } else when page == Page.fab {
+                FabPage()
+            } else when page == Page.textField {
+                TextFieldPage()
+            } else when page == Page.chips {
+                ChipsPage()
             } else when page == Page.card {
                 CardPage()
             } else when page == Page.list {
@@ -40,6 +67,15 @@ View Main() {
                     Text("Components") #[typo: t.titleMedium, color: t.primary]
                     m.Button("Button", variant: .tonal, on_tap: { page = Page.button })
                     m.Button("IconButton", variant: .tonal, on_tap: { page = Page.iconButton })
+                    m.Button("Switch", variant: .tonal, on_tap: { page = Page.switch })
+                    m.Button("Checkbox", variant: .tonal, on_tap: { page = Page.checkbox })
+                    m.Button("Radio", variant: .tonal, on_tap: { page = Page.radio })
+                    m.Button("Slider", variant: .tonal, on_tap: { page = Page.slider })
+                    m.Button("ButtonGroup", variant: .tonal, on_tap: { page = Page.buttonGroup })
+                    m.Button("SplitButton", variant: .tonal, on_tap: { page = Page.splitButton })
+                    m.Button("Fab", variant: .tonal, on_tap: { page = Page.fab })
+                    m.Button("TextField", variant: .tonal, on_tap: { page = Page.textField })
+                    m.Button("Chips", variant: .tonal, on_tap: { page = Page.chips })
                     m.Button("Card", variant: .tonal, on_tap: { page = Page.card })
                     m.Button("ListItem and Divider", variant: .tonal, on_tap: { page = Page.list })
                     m.Button("Badge", variant: .tonal, on_tap: { page = Page.badge })

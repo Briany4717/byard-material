@@ -1,0 +1,31 @@
+# Scenarios for m.SplitButton, on the SplitButtonScenarios view.
+view = "SplitButtonScenarios"
+size = "440x400"
+
+[[test]]
+name = "both halves are named"
+expect = [
+    'Button "Save" [focusable]',
+    'Button "More options" [focusable collapsed]',
+    'Button "Send" [focusable disabled]',
+]
+
+[[test]]
+name = "the leading half acts"
+steps = [{ tap = 'Button "Save"' }]
+expect = ['Label "Saves: 1"', 'Label "Menu: closed"']
+
+[[test]]
+name = "the trailing half asks for the menu and reports it expanded"
+steps = [{ tap = 'Button "More options"' }]
+expect = ['Label "Menu: open"', 'Button "More options" [focusable focused expanded]', 'Label "Saves: 0"']
+
+[[test]]
+name = "a disabled one does not act"
+steps = [{ tap = 'Button "Send"' }]
+expect = ['Label "Saves: 0"']
+
+[[test]]
+name = "Tab walks the halves and Space presses"
+steps = [{ key = "Tab" }, { key = "Space" }, { key = "Tab" }, { key = "Space" }]
+expect = ['Label "Saves: 1"', 'Label "Menu: open"']
