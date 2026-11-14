@@ -1,0 +1,44 @@
+use material as m
+
+// m.Snackbar (the surface) and m.SnackbarHost (one at a time, with a timeout).
+
+View SnackbarPage() {
+    inject Theme as t
+    var queue: List = []
+    var count = 0
+    Column #[p: 24, gap: 24, bg: t.surface, grow: 1] {
+        Section("Surfaces") {
+            Column #[gap: 16, align: start] {
+                m.Snackbar("Message archived")
+                m.Snackbar("Message archived", action: "Undo")
+                m.Snackbar("Message archived", action: "Undo", closable: true)
+                m.Snackbar("The connection was lost while the file was uploading, so it was not saved. Check the network and try the upload again when you are back online", closable: true)
+                m.Snackbar("The connection was lost while the file was uploading, so it was not saved. Check the network and try the upload again when you are back online", action: "Retry", closable: true)
+            }
+        }
+        Section("The host") {
+            Row #[gap: 12] {
+                m.Button("Show one", variant: .tonal, on_tap: {
+                    count = count + 1
+                    queue = queue.push({ text: "Saved {count}", action: "Undo", closable: true })
+                })
+                m.Button("Show three", variant: .tonal, on_tap: {
+                    queue = queue.push({ text: "First" }).push({ text: "Second", action: "Undo" }).push({ text: "Third", closable: true })
+                })
+            }
+        }
+        m.SnackbarHost(bind queue: queue)
+    }
+}
+
+View SnackbarScenarios() {
+    inject Theme as t
+    var queue: List = []
+    var undone = 0
+    Column #[p: 24, gap: 16, align: start, bg: t.surface, grow: 1] {
+        m.Button("Archive", on_tap: { queue = queue.push({ text: "Archived", action: "Undo", closable: true }) })
+        m.Button("Two", on_tap: { queue = queue.push({ text: "One" }).push({ text: "Two" }) })
+        Text("Undone {undone}, queued {queue.len}")
+        m.SnackbarHost(bind queue: queue, on_action: {|_| undone = undone + 1 })
+    }
+}

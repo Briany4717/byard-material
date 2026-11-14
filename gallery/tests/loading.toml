@@ -1,0 +1,18 @@
+# Scenarios for m.LoadingIndicator.
+view = "LoadingScenarios"
+size = "300x300"
+
+[[test]]
+name = "a loading indicator is a progress bar named by its label"
+expect = ['ProgressBar "Loading"', 'ProgressBar "Saving"']
+
+[[test]]
+name = "it leaves the tree with its when"
+steps = [{ tap = 'Button "Done"' }]
+expect = ['ProgressBar "Saving"', 'Button "Again"']
+not = ['ProgressBar "Loading"']
+
+[[test]]
+name = "the same in the dark scheme"
+scheme = "dark"
+expect = ['ProgressBar "Saving"']

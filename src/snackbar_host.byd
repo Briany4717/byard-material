@@ -1,0 +1,59 @@
+// Shows snackbars one at a time, from a queue the app owns.
+//
+//     var queue: List = []
+//     m.SnackbarHost(bind queue: queue, on_action: {|i| ... })
+//     queue = queue.push({ text: "Message archived", action: "Undo" })
+//
+// Each item of the queue is a record with `text`, and optionally `action` (a button's label) and
+// `closable`. The host shows the first one at the bottom of the window, centred, 16 dp up,
+// above everything (an `Overlay`); after `duration` (short is 4 s, long 10 s, indefinite waits for a tap), or when its action or close is tapped,
+// it fades out and is removed from the queue, and the next one comes. `on_action` is called
+// with the item's `text`. Nothing is drawn, and no timer runs, while the queue is empty.
+// A snackbar does not take the focus.
+
+enum SnackbarDuration {
+    short,
+    long,
+    indefinite,
+}
+
+View SnackbarHost(bind queue: List, duration: SnackbarDuration = .short, on_action: Fn(Str) = {|_| }) {
+    inject Theme as t
+
+    var leaving = false
+
+    when queue.len > 0 && !leaving && duration == SnackbarDuration.short {
+        after 4s => leaving = true
+    }
+    when queue.len > 0 && !leaving && duration == SnackbarDuration.long {
+        after 10s => leaving = true
+    }
+    when leaving {
+        after 150ms => {
+            queue = queue.removeAt(0)
+            leaving = false
+        }
+    }
+
+    when queue.len > 0 {
+        Overlay #[modal: false] {
+            Box #[
+                anchor: bottom,
+                mb: 16,
+                opacity: leaving ? 0.0 : 1.0 with anim.ease(150ms, from: 0.0),
+                translate: (0, leaving ? 16 : 0) with anim.ease(150ms, from: (0, 16)),
+            ] {
+                Snackbar(
+                    queue[0].text,
+                    action: queue[0].action ?? "",
+                    closable: queue[0].closable ?? false,
+                    on_action: {
+                        on_action(queue[0].text)
+                        leaving = true
+                    },
+                    on_close: { leaving = true },
+                )
+            }
+        }
+    }
+}

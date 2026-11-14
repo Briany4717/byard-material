@@ -1,0 +1,209 @@
+// Material 3 Expressive linear progress indicator: determinate or indeterminate, flat or wavy,
+// with the 4 dp gap between the active part and the track and the stop indicator at the end of
+// the track.
+//
+//     m.LinearProgressIndicator(value: 0.4, label: "Upload")
+//     m.LinearProgressIndicator(indeterminate: true, wavy: true, label: "Loading")
+//
+// `length` is how long the bar is, fixed like Slider's (a canvas has no size of its own); a
+// wavy one is at most 1000 long. The wave of a determinate wavy bar travels while it is shown;
+// `animated: false` holds it still. An indeterminate one loops only while the view is in the
+// tree (put it in a `when`). A screen reader hears a progress bar, and for a determinate one
+// its value as a percentage.
+
+View LinearProgressIndicator(label: Str, value: Float = 0.0, indeterminate: Bool = false,
+    wavy: Bool = false, length: Int = 240, animated: Bool = true) {
+    inject Theme as t
+
+    let w = length * 1.0
+    let h = wavy ? 10.0 : progressThickness
+    let mid = h / 2.0
+    let v = unit(value)
+    let a = w * v
+
+    // Wave: 3 dp amplitude, 40 dp long (20 dp while indeterminate).
+    let lambda = indeterminate ? 20.0 : 40.0
+    let amp = 3.0 * waveRamp(v)
+    let half = lambda / 2.0
+    let clipW = a - 4.0
+    let halves = ((clipW + lambda) / half).ceil()
+    let phase = 360.0 * clipW / lambda
+
+    // Track: from just after the active part (a gap) to the end; all of it when empty.
+    let trackFrom = v <= 0.0 ? 0.0 : a + progressGap
+    let showTrack = !indeterminate && v < 1.0 && trackFrom + 4.0 <= w
+    let showStop = !indeterminate && v < 1.0 && trackFrom + 4.0 <= w - progressStopInset - 4.0
+
+    Box #[
+        width: w,
+        height: h,
+        shrink: 0,
+        a11y_role: progress_bar,
+        a11y_label: label,
+        a11y_value: indeterminate ? "" : "{(v * 100.0).round()} percent",
+    ] {
+        when indeterminate {
+            ZStack #[width: w, height: h, alignment: top_start] {
+                Canvas #[width: w, height: h] {
+                    line(x1: 2, y1: mid, x2: w - 2, y2: mid, stroke: t.secondaryContainer,
+                        stroke_width: 4, cap: round)
+                }
+                BarOne(w: w, h: h, wavy: wavy, lambda: lambda)
+                BarTwo(w: w, h: h, wavy: wavy, lambda: lambda)
+            }
+        } else {
+            ZStack #[width: w, height: h, alignment: top_start] {
+                Canvas #[width: w, height: h] {
+                    when showTrack {
+                        line(x1: trackFrom + 2, y1: mid, x2: w - 2, y2: mid,
+                            stroke: t.secondaryContainer, stroke_width: 4, cap: round)
+                    }
+                    when showStop {
+                        circle(cx: w - progressStopInset - 2, cy: mid, r: 2, fill: t.primary)
+                    }
+                    when !wavy && v > 0.0 {
+                        line(x1: 2, y1: mid, x2: a < 4.0 ? 2.0 : a - 2.0, y2: mid,
+                            stroke: t.primary, stroke_width: 4, cap: round)
+                    }
+                }
+                when wavy && clipW > 0.0 {
+                    Clip #[width: clipW, height: h, ml: 2] {
+                        when animated {
+                            Box #[
+                                ml: 0.0 - lambda,
+                                translate: (lambda, 0) with anim.linear(1s, from: (0.0, 0.0), repeat: infinite),
+                            ] {
+                                WaveStrip(w: clipW + lambda * 2.0, h: h, amp: amp, half: half, halves: halves)
+                            }
+                        } else {
+                            Box #[ml: 0.0 - lambda] {
+                                WaveStrip(w: clipW + lambda * 2.0, h: h, amp: amp, half: half, halves: halves)
+                            }
+                        }
+                    }
+                }
+                when wavy && v > 0.0 {
+                    Canvas #[width: w, height: h] {
+                        when animated {
+                            circle(cx: 2, cy: anim.keyframes(0%: mid - amp * sinDeg(0.0), 14%: mid + amp * sinDeg(51.4), 29%: mid + amp * sinDeg(102.9), 43%: mid + amp * sinDeg(154.3), 57%: mid + amp * sinDeg(205.7), 71%: mid + amp * sinDeg(257.1), 86%: mid + amp * sinDeg(308.6), 100%: mid, duration: 1s, loop: true), r: 2, fill: t.primary)
+                            circle(cx: a < 4.0 ? 2.0 : a - 2.0, cy: anim.keyframes(0%: mid - amp * sinDeg(phase), 14%: mid - amp * sinDeg(phase - 51.4), 29%: mid - amp * sinDeg(phase - 102.9), 43%: mid - amp * sinDeg(phase - 154.3), 57%: mid - amp * sinDeg(phase - 205.7), 71%: mid - amp * sinDeg(phase - 257.1), 86%: mid - amp * sinDeg(phase - 308.6), 100%: mid - amp * sinDeg(phase - 360.0), duration: 1s, loop: true), r: 2, fill: t.primary)
+                        } else {
+                            circle(cx: 2, cy: mid, r: 2, fill: t.primary)
+                            circle(cx: a < 4.0 ? 2.0 : a - 2.0, cy: mid - amp * sinDeg(phase), r: 2, fill: t.primary)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// The two bars of the indeterminate indicator: the left edge and width of each are keyframed, so
+// it grows out of the left, runs along and shrinks into the right, the second one half a cycle
+// behind. A wavy bar is a window onto a travelling wave (the content moves back as the window
+// moves on).
+private View BarOne(w: Float, h: Float, wavy: Bool, lambda: Float) {
+    inject Theme as t
+
+    when wavy {
+        Clip #[
+            width: anim.keyframes(0%: 0, 15%: w * 0.333, 30%: w * 0.238, 45%: w * 0.143, 50%: 0, 100%: 0, duration: 2s, loop: true),
+            height: h,
+            translate: anim.keyframes(0%: (0, 0), 15%: (0, 0), 30%: (w * 0.4286, 0), 45%: (w * 0.857, 0), 50%: (w, 0), 100%: (w, 0), duration: 2s, loop: true),
+        ] {
+            Box #[
+                translate: anim.keyframes(0%: (0, 0), 15%: (0, 0), 30%: (0.0 - w * 0.4286, 0), 45%: (0.0 - w * 0.857, 0), 50%: (0.0 - w, 0), 100%: (0.0 - w, 0), duration: 2s, loop: true),
+            ] {
+                WaveCanvas(w: w, h: h, lambda: lambda)
+            }
+        }
+    } else {
+        Box #[
+            width: anim.keyframes(0%: 0, 15%: w * 0.333, 30%: w * 0.238, 45%: w * 0.143, 50%: 0, 100%: 0, duration: 2s, loop: true),
+            height: h,
+            radius: 2,
+            bg: t.primary,
+            translate: anim.keyframes(0%: (0, 0), 15%: (0, 0), 30%: (w * 0.4286, 0), 45%: (w * 0.857, 0), 50%: (w, 0), 100%: (w, 0), duration: 2s, loop: true),
+        ]
+    }
+}
+
+private View BarTwo(w: Float, h: Float, wavy: Bool, lambda: Float) {
+    inject Theme as t
+
+    when wavy {
+        Clip #[
+            width: anim.keyframes(0%: 0, 40%: 0, 55%: w * 0.3, 70%: w * 0.267, 90%: w * 0.222, 100%: 0, duration: 2s, loop: true),
+            height: h,
+            translate: anim.keyframes(0%: (0, 0), 55%: (0, 0), 70%: (w * 0.333, 0), 90%: (w * 0.778, 0), 100%: (w, 0), duration: 2s, loop: true),
+        ] {
+            Box #[
+                translate: anim.keyframes(0%: (0, 0), 55%: (0, 0), 70%: (0.0 - w * 0.333, 0), 90%: (0.0 - w * 0.778, 0), 100%: (0.0 - w, 0), duration: 2s, loop: true),
+            ] {
+                WaveCanvas(w: w, h: h, lambda: lambda)
+            }
+        }
+    } else {
+        Box #[
+            width: anim.keyframes(0%: 0, 40%: 0, 55%: w * 0.3, 70%: w * 0.267, 90%: w * 0.222, 100%: 0, duration: 2s, loop: true),
+            height: h,
+            radius: 2,
+            bg: t.primary,
+            translate: anim.keyframes(0%: (0, 0), 55%: (0, 0), 70%: (w * 0.333, 0), 90%: (w * 0.778, 0), 100%: (w, 0), duration: 2s, loop: true),
+        ]
+    }
+}
+
+// A full-length wave that slides one wavelength a second.
+private View WaveCanvas(w: Float, h: Float, lambda: Float) {
+    inject Theme as t
+
+    let mid = h / 2.0
+    let half = lambda / 2.0
+    let halves = ((w + lambda * 2.0) / half).ceil()
+
+    Box #[
+        ml: 0.0 - lambda,
+        translate: (lambda, 0) with anim.linear(1s, from: (0.0, 0.0), repeat: infinite),
+    ] {
+        Canvas #[width: w + lambda * 2.0, height: h] {
+            for i in idx.slice(0, halves.min(79)) {
+                bezier(
+                    x1: i * half,
+                    y1: mid,
+                    cx1: i * half + half * 0.38,
+                    cy1: i % 2 == 0 ? mid - 4.0 : mid + 4.0,
+                    cx2: i * half + half * 0.62,
+                    cy2: i % 2 == 0 ? mid - 4.0 : mid + 4.0,
+                    x2: i * half + half,
+                    y2: mid,
+                    stroke: t.primary,
+                    stroke_width: 4,
+                )
+            }
+        }
+    }
+}
+
+// The wave of a determinate bar: half-wavelength beziers, up then down.
+private View WaveStrip(w: Float, h: Float, amp: Float, half: Float, halves: Int) {
+    inject Theme as t
+
+    let mid = h / 2.0
+    Canvas #[width: w, height: h] {
+        for i in idx.slice(0, halves.min(79)) {
+            bezier(
+                x1: i * half,
+                y1: mid,
+                cx1: i * half + half * 0.38,
+                cy1: i % 2 == 0 ? mid - amp * 1.3333 : mid + amp * 1.3333,
+                cx2: i * half + half * 0.62,
+                cy2: i % 2 == 0 ? mid - amp * 1.3333 : mid + amp * 1.3333,
+                x2: i * half + half,
+                y2: mid,
+                stroke: t.primary,
+                stroke_width: 4,
+            )
+        }
+    }
+}

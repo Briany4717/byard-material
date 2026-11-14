@@ -1,0 +1,163 @@
+// Material 3 Expressive circular progress indicator: determinate or indeterminate, flat or
+// wavy, with the 4 dp gap between the active arc and the track. It starts at the top and runs
+// clockwise.
+//
+//     m.CircularProgressIndicator(value: 0.4, label: "Download")
+//     m.CircularProgressIndicator(indeterminate: true, label: "Loading")
+//     m.CircularProgressIndicator(value: 0.7, wavy: true, label: "Sync")
+//
+// A flat one is 40 dp across and a wavy one 48 dp, the stroke 4 dp. A determinate value has a
+// track; an indeterminate one is an arc that grows and shrinks while it turns, with none. An
+// indeterminate indicator loops only while it is in the tree. The wave of a wavy one runs round
+// the ring while it is shown (`animated: false` holds it). The active arc of a wavy ring is
+// cut off square at its ends, and a wavy indeterminate one keeps a fixed length: see the notes.
+
+View CircularProgressIndicator(label: Str, value: Float = 0.0, indeterminate: Bool = false,
+    wavy: Bool = false, animated: Bool = true) {
+    inject Theme as t
+
+    let d = wavy ? 48.0 : 40.0
+    let c = d / 2.0
+    let amp = wavy ? 1.6 : 0.0
+    // Radius of the stroke's centre line.
+    let r = c - 2.0 - amp
+    let perDp = 57.29578 / r
+    let cap = 2.0 * perDp
+    let gap = progressGap * perDp
+    let v = unit(value)
+    let sweep = 360.0 * v
+
+    Box #[
+        width: d,
+        height: d,
+        shrink: 0,
+        a11y_role: progress_bar,
+        a11y_label: label,
+        a11y_value: indeterminate ? "" : "{(v * 100.0).round()} percent",
+    ] {
+        when indeterminate {
+            Box #[
+                width: d,
+                height: d,
+                origin: center,
+                rotate: 360deg with anim.linear(6s, from: 0deg, repeat: infinite),
+            ] {
+                when wavy {
+                    WavyArc(d: d, r: r, from: 0.0, to: 250.0, spin: true, ring: -1.0)
+                } else {
+                    Box #[
+                        width: d,
+                        height: d,
+                        origin: center,
+                        rotate: 140deg with anim.linear(1333ms, from: 0deg, repeat: infinite),
+                    ] {
+                        Canvas #[width: d, height: d] {
+                            arc(
+                                cx: c,
+                                cy: c,
+                                r: r,
+                                start: anim.keyframes(0%: -90 + cap, 50%: -90 + cap, 100%: 130 + cap, duration: 1333ms, loop: true),
+                                sweep: anim.keyframes(0%: 30, 50%: 250 easeInOut, 100%: 30 easeIn, duration: 1333ms, loop: true),
+                                stroke: t.primary,
+                                stroke_width: 4,
+                                cap: round,
+                            )
+                        }
+                    }
+                }
+            }
+        } else {
+            ZStack #[width: d, height: d, alignment: top_start] {
+                Canvas #[width: d, height: d] {
+                    when v <= 0.0 {
+                        arc(cx: c, cy: c, r: r, stroke: t.secondaryContainer, stroke_width: 4)
+                    } else when v < 1.0 && 360.0 - sweep - 2.0 * gap - 2.0 * cap > 0.0 {
+                        arc(
+                            cx: c,
+                            cy: c,
+                            r: r,
+                            start: -90.0 + sweep + gap + cap,
+                            sweep: 360.0 - sweep - 2.0 * gap - 2.0 * cap,
+                            stroke: t.secondaryContainer,
+                            stroke_width: 4,
+                            cap: round,
+                        )
+                    }
+                    when !wavy && v >= 1.0 {
+                        arc(cx: c, cy: c, r: r, stroke: t.primary, stroke_width: 4)
+                    } else when !wavy && v > 0.0 {
+                        arc(
+                            cx: c,
+                            cy: c,
+                            r: r,
+                            start: -90.0 + cap,
+                            sweep: sweep - 2.0 * cap < 1.0 ? 1.0 : sweep - 2.0 * cap,
+                            stroke: t.primary,
+                            stroke_width: 4,
+                            cap: round,
+                        )
+                    }
+                }
+                when wavy && v > 0.0 {
+                    WavyArc(d: d, r: r, from: v >= 1.0 ? 0.0 : cap, to: v >= 1.0 ? 360.0 : sweep - cap, spin: animated, ring: waveRamp(v))
+                }
+            }
+        }
+    }
+}
+
+// A wavy ring (eight waves, 1.6 dp high) seen through a wedge: `from` to `to` degrees clockwise
+// from the top. The ring turns a wave's width at a time, so the waves run round while the wedge
+// stands still. `ring` scales the amplitude (-1 means a full one, for the indeterminate arc).
+private View WavyArc(d: Float, r: Float, from: Float, to: Float, spin: Bool, ring: Float) {
+    inject Theme as t
+
+    let c = d / 2.0
+    let k = ring < 0.0 ? 1.0 : ring
+    let span = to - from
+
+    Clip #[width: d, height: d] {
+        path {
+            move(c, c)
+            for i in idx.slice(0, 13) {
+                line(
+                    c + c * 1.5 * cosDeg(-90.0 + from + i * span / 12.0),
+                    c + c * 1.5 * sinDeg(-90.0 + from + i * span / 12.0),
+                )
+            }
+            close()
+        }
+        when spin {
+            Box #[
+                width: d,
+                height: d,
+                origin: center,
+                rotate: 45deg with anim.linear(1s, from: 0deg, repeat: infinite),
+            ] {
+                WavyRing(d: d, r: r, k: k)
+            }
+        } else {
+            WavyRing(d: d, r: r, k: k)
+        }
+    }
+}
+
+// The full ring: 72 straight pieces whose radius follows a sine of eight waves.
+private View WavyRing(d: Float, r: Float, k: Float) {
+    inject Theme as t
+
+    let c = d / 2.0
+    Canvas #[width: d, height: d] {
+        for i in idx.slice(0, 72) {
+            line(
+                x1: c + (r + 1.6 * k * sinDeg(i * 40.0)) * cosDeg(i * 5.0 - 90.0),
+                y1: c + (r + 1.6 * k * sinDeg(i * 40.0)) * sinDeg(i * 5.0 - 90.0),
+                x2: c + (r + 1.6 * k * sinDeg(i * 40.0 + 40.0)) * cosDeg(i * 5.0 - 85.0),
+                y2: c + (r + 1.6 * k * sinDeg(i * 40.0 + 40.0)) * sinDeg(i * 5.0 - 85.0),
+                stroke: t.primary,
+                stroke_width: 4,
+                cap: round,
+            )
+        }
+    }
+}

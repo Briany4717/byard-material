@@ -1,0 +1,44 @@
+# Scenarios for m.Snackbar and m.SnackbarHost, on the SnackbarScenarios view. The host's timeout
+# is a timer, and `byard test` does not run timers, so these drive it by its buttons.
+view = "SnackbarScenarios"
+size = "500x400"
+
+[[test]]
+name = "nothing is shown while the queue is empty"
+exact = [
+    'Button "Archive" [focusable]',
+    'Button "Two" [focusable]',
+    'Label "Undone 0, queued 0"',
+]
+
+[[test]]
+name = "a queued message appears as an alert with its action and close"
+steps = [{ tap = 'Button "Archive"' }]
+expect = [
+    'Alert "Archived"',
+    'Button "Undo" [focusable]',
+    'Button "Close" [focusable]',
+    'Label "Undone 0, queued 1"',
+]
+
+[[test]]
+name = "the action is reported"
+steps = [{ tap = 'Button "Archive"' }, { tap = 'Button "Undo"' }]
+expect = ['Label "Undone 1, queued 1"']
+
+[[test]]
+name = "two messages show one at a time"
+steps = [{ tap = 'Button "Two"' }]
+expect = ['Alert "One"', 'Label "Undone 0, queued 2"']
+not = ['Alert "Two"']
+
+[[test]]
+name = "Tab reaches the action and Space presses it"
+steps = [{ tap = 'Button "Archive"' }, { key = "Tab" }, { key = "Tab" }, { key = "Space" }]
+expect = ['Label "Undone 1, queued 1"']
+
+[[test]]
+name = "the same in the dark scheme"
+scheme = "dark"
+steps = [{ tap = 'Button "Archive"' }]
+expect = ['Alert "Archived"']

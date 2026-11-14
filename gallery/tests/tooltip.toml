@@ -1,0 +1,41 @@
+# Scenarios for m.Tooltip, on the TooltipScenarios view.
+view = "TooltipScenarios"
+size = "400x300"
+
+[[test]]
+name = "the targets keep their own names and roles, and a plain tooltip is not read"
+exact = [
+    'Button "Favourite" [focusable]',
+    'Button "Sync" [focusable]',
+    'Label "Learned 0"',
+]
+
+[[test]]
+name = "a tap on the target still reaches it"
+steps = [{ tap = 'Button "Favourite"' }]
+expect = ['Button "Favourite" [focusable focused]']
+
+[[test]]
+name = "a rich tooltip shows after the pointer rests on its target"
+steps = [{ hover = 'Button "Sync"' }]
+expect = ['Label "Sync keeps files current."', 'Button "Learn more"']
+
+[[test]]
+name = "its action can be tapped"
+steps = [{ hover = 'Button "Sync"' }, { tap = 'Button "Learn more"' }]
+expect = ['Label "Learned 1"']
+
+[[test]]
+name = "Tab reaches the target and Tab again the next"
+steps = [{ key = "Tab" }, { key = "Tab" }]
+expect = ['Button "Sync" [focusable focused]']
+
+[[test]]
+name = "nothing but the targets is in the tree while no tooltip is shown"
+not = ['Button "Learn more"', 'Label "Sync keeps files current."']
+
+[[test]]
+name = "the same in the dark scheme"
+scheme = "dark"
+steps = [{ hover = 'Button "Sync"' }]
+expect = ['Button "Learn more"']
