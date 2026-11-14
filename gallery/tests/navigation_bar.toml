@@ -1,0 +1,63 @@
+# Scenarios for m.NavigationBar, on the NavigationBarScenarios view. The bar is a Navigation
+# landmark around a tab list: one Tab stop, Tab enters at the selected item, the arrows move
+# focus without selecting, Enter or Space selects.
+view = "NavigationBarScenarios"
+size = "480x300"
+
+[[test]]
+name = "the bar and each item have their role, name and state"
+expect = [
+    'Navigation "Main"',
+    'TabList "Main"',
+    'Tab "Home" [focusable selected]',
+    'Tab "Search" [focusable]',
+    'Tab "Locked" [focusable disabled]',
+    'Tab "Library" [focusable]',
+    'Label "Screen is 0, picked 0"',
+]
+
+[[test]]
+name = "a tap selects the item and calls on_select"
+steps = [{ tap = 'Tab "Search"' }]
+expect = ['Tab "Search" [focusable focused selected]', 'Tab "Home" [focusable]', 'Label "Screen is 1, picked 1"']
+
+[[test]]
+name = "a disabled item cannot be tapped"
+steps = [{ tap = 'Tab "Locked"' }]
+expect = ['Label "Screen is 0, picked 0"']
+
+[[test]]
+name = "Tab enters the bar at the selected item"
+steps = [{ key = "Tab" }]
+expect = ['Tab "Home" [focusable focused selected]']
+
+[[test]]
+name = "the arrows move focus without selecting, skipping a disabled item"
+steps = [{ key = "Tab" }, { key = "Right" }, { key = "Right" }]
+expect = ['Tab "Library" [focusable focused]', 'Tab "Home" [focusable selected]', 'Label "Screen is 0, picked 0"']
+
+[[test]]
+name = "Enter selects the focused item"
+steps = [{ key = "Tab" }, { key = "Right" }, { key = "Enter" }]
+expect = ['Tab "Search" [focusable focused selected]', 'Label "Screen is 1, picked 1"']
+
+[[test]]
+name = "Space selects too, and End goes to the last"
+steps = [{ key = "Tab" }, { key = "End" }, { key = "Space" }]
+expect = ['Tab "Library" [focusable focused selected]', 'Label "Screen is 3, picked 0"']
+
+[[test]]
+name = "the arrows wrap"
+steps = [{ key = "Tab" }, { key = "Left" }]
+expect = ['Tab "Library" [focusable focused]']
+
+[[test]]
+name = "the next Tab leaves the bar"
+steps = [{ key = "Tab" }, { key = "Tab" }]
+expect = ['Tab "Home" [focusable selected]', 'Button "Done" [focusable focused]']
+
+[[test]]
+name = "the same in the dark scheme"
+scheme = "dark"
+steps = [{ key = "Tab" }, { key = "Right" }, { key = "Enter" }]
+expect = ['Label "Screen is 1, picked 1"']
