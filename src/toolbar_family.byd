@@ -1,0 +1,13 @@
+// What the docked and floating toolbars share. Private. Material 3 Expressive toolbars.
+
+// Standard sits on `surface_container`; vibrant on `primary_container`.
+enum ToolbarColor {
+    standard,
+    vibrant,
+}
+
+// Floating toolbars lie along either axis.
+enum ToolbarOrientation {
+    horizontal,
+    vertical,
+}

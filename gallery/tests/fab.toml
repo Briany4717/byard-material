@@ -18,8 +18,20 @@ expect = ['Label "Taps: 1"', 'Button "Compose" [focusable focused]']
 
 [[test]]
 name = "collapsing the extended fab shrinks it"
-steps = [{ tap = 'Button "Share"' }]
+steps = [{ tap = 'Button "Share"' }, { wait = 1500 }]
 expect = ['Button "Share" [focusable focused] @ 96,24 80x80']
+
+[[test]]
+name = "the extended fab slides closed and open, not in one step"
+steps = [
+    { tap = 'Button "Share"' },
+    { not = ['Button "Share" [focusable focused] @ 96,24 80x80'] },
+    { wait = 1500 },
+    { tap = 'Button "Share"' },
+    { not = ['Button "Share" [focusable focused] @ 96,24 80x80'] },
+    { wait = 1500 },
+]
+not = ['@ 96,24 80x80']
 
 [[test]]
 name = "the menu opens, listing its items, and the fab becomes a close button"

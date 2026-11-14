@@ -1,7 +1,7 @@
 use material as m
 
 // Every kind of m.Slider and m.RangeSlider: the five sizes, stops, centered, with an icon,
-// range, vertical and disabled. The value bubble shows while a slider has focus, so each is
+// range, vertical and disabled. The value bubble shows while a slider is pressed or has keyboard focus, so each is
 // given room above it.
 
 View SliderPage() {

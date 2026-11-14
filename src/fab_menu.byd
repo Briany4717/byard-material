@@ -14,7 +14,7 @@
 
 View FabMenu(items: List<Str>, bind open: Bool, icons: List<Str> = [], icon: Str = "add",
     label: Str = "Menu", color: FabColor = .primaryContainer, size: FabSize = .medium,
-    on_select: Fn(Int) = {|_| }) {
+    on_select: Fn(Int) = none) {
     inject Theme as t
 
     let d = fabSize(size)
@@ -44,7 +44,7 @@ View FabMenu(items: List<Str>, bind open: Bool, icons: List<Str> = [], icon: Str
     Box #[
         bg: container with t.springEffectsFast,
         radius: (open ? d / 2 : fabRadius(size)) with t.springSpatialFast,
-        shadow: "lg",
+        shadow: ("lg") with t.springEffectsFast,
         width: d,
         height: d,
         shrink: 0,
@@ -55,7 +55,10 @@ View FabMenu(items: List<Str>, bind open: Bool, icons: List<Str> = [], icon: Str
         a11y_expanded: open,
         tap => open = !open,
     ] as menuFab {
-        on hover { overlay: ink.alpha(stateHover) with t.springEffectsFast }
+        on hover {
+            overlay: ink.alpha(stateHover) with t.springEffectsFast
+            shadow: "xl"
+        }
         on focus_visible {
             overlay: ink.alpha(stateFocus) with t.springEffectsFast
             outline: t.secondary
@@ -64,7 +67,9 @@ View FabMenu(items: List<Str>, bind open: Bool, icons: List<Str> = [], icon: Str
         }
         on pressed { overlay: ink.alpha(statePress) with t.springEffectsFast }
 
-        Icon(open ? "close" : icon, size: fabIconSize(size), color: ink)
+        Box #[origin: center, rotate: (open ? 90deg : 0deg) with t.springSpatialFast] {
+            Icon(open ? "close" : icon, size: fabIconSize(size), color: ink)
+        }
     }
 
     when open {
@@ -80,7 +85,12 @@ View FabMenu(items: List<Str>, bind open: Bool, icons: List<Str> = [], icon: Str
                 dismiss => open = false,
             ] {
                 for i, item in items {
+                    // The items come in (a stagger takes numeric literals only, so these are
+                    // Material's spatial-fast spring and a short fade by value, not by token) one after another from the button upwards: the one
+                    // nearest it first.
                     Row #[
+                        opacity: 1.0 with anim.stagger(linear(100ms, from: 0.0), 40ms, items.len - 1 - i),
+                        translate: (0, 0) with anim.stagger(spring(stiffness: 1400, damping_ratio: 0.9, from: (0, 24)), 40ms, items.len - 1 - i),
                         bg: itemContainer,
                         radius: 28,
                         height: 56,
