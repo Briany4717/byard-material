@@ -1,0 +1,259 @@
+// Material 3 carousel: a row (or, full screen, a column) of items that scroll and snap, in four
+// layouts.
+//
+//     m.Carousel(items: photos, layout: .multiBrowse, on_pick: { |i| open(i) })
+//
+// - multi-browse: large items, then one medium and one small at the end, in a mask that
+//   changes as you scroll: an item grows from small to medium to large as it moves to the
+//   start, and the first one shrinks away.
+// - hero: one large item and one small.
+// - uncontained: every item keeps its size, and the edge cuts the last one.
+// - full screen: one item at a time, edge to edge, scrolling up and down.
+//
+// `items` are records `{ label, color, image }`; `color` is a colour (a theme role) and `image`
+// a path, either may be left out (an item with neither takes a container colour of the theme).
+// Items snap to their start. The carousel is one Tab stop; Left and Right (Up and Down full
+// screen) move from item to item and scroll it, Home and End go to the ends, Enter or Space
+// picks the current one, and a ring marks it. `item_width` is the preferred width of a large
+// item, `height` that of an item (full screen, the carousel's own height).
+
+enum CarouselLayout {
+    multiBrowse,
+    hero,
+    uncontained,
+    fullScreen,
+}
+
+type CarouselItem = { label: Str, color: Int?, image: Str? }
+
+// Where a keyline sits, in items: the width and the left edge an item has when it is `j` places
+// from the start (a negative `j` is one that has gone out at the start, a width of 0). The
+// arrangement is `nl` large items, then a medium (when `mid` is 0 the small one comes straight
+// after the large ones) and a small, as in Material's keyline states.
+private fn keySize(j: Int, nl: Int, big: Float, mid: Float, small: Float) -> Float =>
+    j < 0 ? 0.0
+    : j < nl ? big
+    : j == nl ? (mid > 0.0 ? mid : small)
+    : j == nl + 1 ? (mid > 0.0 ? small : 0.0)
+    : 0.0
+
+private fn keyLeft(j: Int, nl: Int, big: Float, mid: Float, small: Float, gap: Float) -> Float =>
+    j <= 0 ? 0.0
+    : j <= nl ? j * (big + gap)
+    : j == nl + 1 ? nl * (big + gap) + (mid > 0.0 ? mid : small) + gap
+    : nl * (big + gap) + (mid > 0.0 ? mid + gap + small : small) + gap
+
+// An item `d` places from the start (fractional while scrolling): its width and left edge are
+// the keylines on either side of it, blended.
+private fn maskWidth(d: Float, nl: Int, big: Float, mid: Float, small: Float) -> Float =>
+    keySize(d.floor(), nl, big, mid, small)
+    + (keySize(d.floor() + 1, nl, big, mid, small) - keySize(d.floor(), nl, big, mid, small)) * (d - d.floor())
+
+private fn maskLeft(d: Float, nl: Int, big: Float, mid: Float, small: Float, gap: Float) -> Float =>
+    keyLeft(d.floor(), nl, big, mid, small, gap)
+    + (keyLeft(d.floor() + 1, nl, big, mid, small, gap) - keyLeft(d.floor(), nl, big, mid, small, gap)) * (d - d.floor())
+
+View Carousel(items: List<CarouselItem>, layout: CarouselLayout = .multiBrowse, width: Int = 360,
+    height: Int = 200, item_width: Int = 186, label: Str = "Carousel", on_pick: Fn(Int) = {|_| }) {
+    inject Theme as t
+
+    var x = 0.0
+    var y = 0.0
+    var tabbed = false
+
+    let n = items.len
+    let gap = 8.0
+    let margin = 16.0
+    let ring = 6.0
+    let view = width - 2 * margin
+    let small = 56.0
+    let multi = layout == CarouselLayout.multiBrowse
+    let hero = layout == CarouselLayout.hero
+    let full = layout == CarouselLayout.fullScreen
+    let masked = multi || hero
+    let pref = item_width.toFloat()
+
+    // The arrangement at rest: how many large items fit beside a medium and a small one, and
+    // the large width that makes them fill the view exactly.
+    let mid = multi ? (pref + small) / 2.0 : 0.0
+    let nl = hero ? 1 : ((view - mid - small - gap) / (pref + gap)).round().max(1)
+    let big = hero ? view - small - gap : (view - mid - small - (nl + 1) * gap) / nl
+    let lo = multi ? mid : small
+    let stride = masked ? big + gap : pref + gap
+
+    // Items are laid out on a constant stride, so the scroll offset says where the carousel is
+    // (`pos`, in items); each masked item is then drawn at the width and place its keyline says.
+    let pos = x / stride
+    let spare = masked ? width - nl * stride : 0.0
+    let lastMasked = (n - nl).max(0) * stride
+    let lastFree = (n * stride - gap + margin - width).max(0.0)
+
+    // The item the keyboard is on: the first one at rest (the first large item), and where its
+    // card is, for the ring.
+    let current = full ? (y / height).round() : masked ? pos.round() : (x / stride).round()
+    let cd = current - pos
+    let ringW = full ? width : masked ? maskWidth(cd, nl, big, mid, small) : pref
+    let ringX = full ? 0.0 : masked ? margin + maskLeft(cd, nl, big, mid, small, gap) : margin + current * stride - x
+    let ringY = full ? current * height - y : ring
+    let step = (k: Int) => {
+        let to = (current + k).max(0).min(n - 1)
+        if full {
+            y = to * height
+        } else if masked {
+            x = (to * stride).min(lastMasked)
+        } else {
+            x = (to * stride).min(lastFree)
+        }
+    }
+    // One Tab stop for the whole carousel; Left and Right (Up and Down full screen) move from
+    // item to item, Home and End to the ends, Enter or Space picks the current one.
+    Box #[
+        focus => tabbed = true,
+        a11y_role: list,
+        a11y_label: label,
+        key_down(k) => {
+            if k == "ArrowRight" || k == "ArrowDown" {
+                step(1)
+            } else if k == "ArrowLeft" || k == "ArrowUp" {
+                step(-1)
+            } else if k == "Home" {
+                step(0 - n)
+            } else if k == "End" {
+                step(n)
+            } else if k == "Enter" || k == " " || k == "Space" {
+                on_pick(current)
+            }
+        },
+    ] as strip {
+        ZStack #[alignment: top_start] {
+            when full {
+                ScrollView #[
+                    axis: vertical,
+                    snap: item,
+                    offset: (0.0, y),
+                    width: width,
+                    height: height,
+                ] {
+                    Column {
+                        for i, item in items {
+                            CarouselCard(item: item, index: i, width: width, height: height,
+                                radius: 0, pad: 0, lift: 0.0, label_alpha: 1.0,
+                                current: current == i,
+                                on_pick: {|k| on_pick(k) })
+                        }
+                    }
+                }
+            } else when masked {
+                // Items sit on a constant stride, one slot each, so the scroll view can snap to
+                // them. Each card is moved inside its slot (by its margin) to where its keyline
+                // says, and made the width its keyline says.
+                ScrollView #[
+                    axis: horizontal,
+                    snap: item,
+                    offset: (x, 0.0),
+                    width: width,
+                    height: height + 2 * ring,
+                ] {
+                    Row {
+                        for i, item in items {
+                            let d = i - pos
+                            let w = maskWidth(d, nl, big, mid, small)
+                            Box #[width: stride, height: height + 2 * ring, shrink: 0] {
+                                CarouselCard(item: item, index: i, width: w, height: height,
+                                    radius: 28,
+                                    pad: w > 0.5 ? margin + maskLeft(d, nl, big, mid, small, gap) - d * stride : 0.0,
+                                    lift: ring,
+                                    label_alpha: ((w - lo) / (big - lo)).max(0.0).min(1.0),
+                                    current: current == i,
+                                    on_pick: {|k| on_pick(k) })
+                            }
+                        }
+                        Box #[width: spare, height: 1, shrink: 0] {}
+                    }
+                }
+            } else {
+                ScrollView #[
+                    axis: horizontal,
+                    snap: item,
+                    offset: (x, 0.0),
+                    width: width,
+                    height: height + 2 * ring,
+                ] {
+                    Row #[gap: gap] {
+                        for i, item in items {
+                            Box #[width: pref, height: height + 2 * ring, shrink: 0] {
+                                CarouselCard(item: item, index: i, width: pref, height: height,
+                                    radius: 28, pad: margin, lift: ring, label_alpha: 1.0,
+                                    current: current == i,
+                                    on_pick: {|k| on_pick(k) })
+                            }
+                        }
+                    }
+                }
+            }
+            // The keyboard ring, over the current card; drawn only while the keyboard has put
+            // focus on the carousel.
+            Box #[
+                width: ringW,
+                height: height,
+                radius: full ? 0 : 28,
+                ml: ringX,
+                mt: ringY,
+                outline_width: focusRingWidth,
+                outline_offset: full ? 0 - focusRingWidth : focusRingOffset,
+                opacity: ringW > 1.0 ? 1.0 : 0.0,
+            ] {
+                on strip.focus_visible {
+                    overlay: t.onSurface.alpha(stateFocus) with t.springEffectsFast
+                    outline: t.secondary
+                }
+            }
+        }
+    }
+}
+
+// One item: a rounded card of a colour or an image with its label at the foot. `pad` is how far
+// the card is moved from its slot (the mask's place), `label_alpha` how much of the label shows.
+// A tap picks it. (A pointer press on a card does not start a drag of the scroll view in the
+// engine today; the wheel, a trackpad and the keyboard scroll.)
+private View CarouselCard(item: CarouselItem, index: Int, width: Float, height: Int, radius: Int,
+    pad: Float, lift: Float, label_alpha: Float, current: Bool, on_pick: Fn(Int)) {
+    inject Theme as t
+
+    let base = (item.color ?? 0) != 0 ? (item.color ?? 0) : (index % 3 == 0 ? t.primaryContainer : index % 3 == 1 ? t.secondaryContainer : t.tertiaryContainer)
+    let ink = (item.color ?? 0) == 0 ? (index % 3 == 0 ? t.onPrimaryContainer : index % 3 == 1 ? t.onSecondaryContainer : t.onTertiaryContainer) : t.onSurface
+
+    Box #[
+        width: width,
+        height: height,
+        shrink: 0,
+        bg: base,
+        radius: radius,
+        opacity: width > 1.0 ? 1.0 : 0.0,
+        ml: pad,
+        mt: lift,
+        justify: end,
+        a11y_role: list_item,
+        a11y_label: item.label,
+        a11y_selected: current,
+        tap => on_pick(index),
+    ] {
+        on hover { overlay: ink.alpha(stateHover) with t.springEffectsFast }
+        on pressed { overlay: ink.alpha(statePress) with t.springEffectsFast }
+
+        when (item.image ?? "") != "" {
+            Image(item.image ?? "") #[width: width, height: height, fit: cover, radius: radius]
+        }
+        // The label sits 16 from the corner; a card narrower than its label cuts it (a Clip,
+        // so the card can shrink to nothing).
+        Clip #[width: (width - 16.0).max(0.0), height: 24, mb: 16] {
+            Text(item.label) #[
+                typo: t.titleMedium,
+                ml: 16,
+                color: ink.alpha(label_alpha),
+                wrap: false,
+                a11y_hidden: true,
+            ]
+        }
+    }
+}

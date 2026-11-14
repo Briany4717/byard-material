@@ -1,0 +1,134 @@
+use material as m
+
+// The search bar, and the search view that opens from it, docked and full screen.
+
+View SearchPage() {
+    inject Theme as t
+    var q1 = ""
+    var q2 = "Jazz piano"
+    Column #[p: 24, gap: 32, bg: t.surface, grow: 1] {
+        Section("SearchBar") {
+            m.SearchBar(bind: q1, placeholder: "Search songs")
+            m.SearchBar(bind: q2, placeholder: "Search songs", trailing: {
+                m.IconButton("mic", label: "Voice search")
+                Box #[
+                    width: 30,
+                    height: 30,
+                    radius: 15,
+                    bg: t.tertiaryContainer,
+                    align: center,
+                    justify: center,
+                ] {
+                    Text("B") #[typo: t.labelLarge, color: t.onTertiaryContainer]
+                }
+            })
+            m.SearchBar(bind: q1, placeholder: "Search songs", disabled: true)
+        }
+        Section("SearchView, docked: collapsed, then open") {
+            Row #[gap: 24, align: start] {
+                DockedDemo(open: false)
+                DockedDemo(open: true)
+            }
+        }
+    }
+}
+
+View DockedDemo(open: Bool) {
+    var q = ""
+    var o = open
+    var picked = ""
+    Column #[gap: 12, height: 400] {
+        m.SearchView(bind query: q, bind expanded: o, placeholder: "Search songs", width: 300,
+            suggestions: SongHits(q), on_pick: {|s| picked = s })
+        Text("Picked: {picked}")
+    }
+}
+
+// The full-screen view, on a page of its own so it can cover the window.
+View SearchFullPage() {
+    inject Theme as t
+    var q = ""
+    var o = true
+    Column #[p: 24, gap: 16, bg: t.surface, grow: 1] {
+        m.SearchView(bind query: q, bind expanded: o, variant: .fullScreen,
+            placeholder: "Search songs", suggestions: SongHits(q))
+        Text("Page under the view") #[typo: t.bodyLarge, color: t.onSurface]
+    }
+}
+
+View SearchScenarios() {
+    inject Theme as t
+    var q = ""
+    var o = false
+    var picked = ""
+    var sent = 0
+    Column #[p: 24, gap: 16, bg: t.surface, grow: 1] {
+        m.SearchView(bind query: q, bind expanded: o, placeholder: "Search songs", width: 300,
+            suggestions: SongHits(q), on_pick: {|s| picked = s }, on_submit: { sent += 1 })
+        Text("Open: {o}")
+        Text("Picked: {picked}")
+        Text("Query: {q}")
+        Text("Sent: {sent}")
+        m.Button("Elsewhere")
+    }
+}
+
+fn SongHits(q: Str) -> List<m.SearchSuggestion> => [
+    { text: "Jazz piano", icon: "history" },
+    { text: "Jazz standards", icon: "search" },
+    { text: "Lo-fi beats" },
+].filter(s => s.text.toLower().contains(q.toLower()))
+
+View CarouselPage() {
+    inject Theme as t
+    Column #[p: 24, gap: 24, bg: t.surface, grow: 1] {
+        Section("Multi-browse") { m.Carousel(items: Photos(), width: 400) }
+        Section("Hero") { m.Carousel(items: Photos(), layout: .hero, width: 400) }
+        Section("Uncontained") { m.Carousel(items: Photos(), layout: .uncontained, width: 400) }
+    }
+}
+
+fn Photos() -> List<m.CarouselItem> => [
+    { label: "Dunes" },
+    { label: "Harbour" },
+    { label: "Forest" },
+    { label: "Glacier" },
+    { label: "Market" },
+    { label: "Canyon" },
+    { label: "Lagoon" },
+    { label: "Summit" },
+]
+
+// The full-screen layout on a page of its own: one item at a time, scrolling up and down.
+View CarouselFullPage() {
+    inject Theme as t
+    Column #[bg: t.surface, grow: 1] {
+        m.Carousel(items: Photos(), layout: .fullScreen, width: 360, height: 420)
+    }
+}
+
+View CarouselScenarios() {
+    inject Theme as t
+    var picked = -1
+    Column #[p: 24, gap: 16, bg: t.surface, grow: 1] {
+        m.Carousel(items: Photos(), width: 400, label: "Places", on_pick: {|i| picked = i })
+        Text("Picked: {picked}") #[color: t.onSurface]
+        m.Button("After")
+    }
+}
+
+View SearchBarScenarios() {
+    inject Theme as t
+    var q = ""
+    var sent = 0
+    var voice = 0
+    Column #[p: 24, gap: 16, bg: t.surface, grow: 1] {
+        m.SearchBar(bind: q, placeholder: "Search songs", on_submit: { sent += 1 }, trailing: {
+            m.IconButton("mic", label: "Voice search", on_tap: { voice += 1 })
+        })
+        m.SearchBar(bind: q, label: "Locked", placeholder: "Locked", disabled: true)
+        Text("Query: {q}") #[color: t.onSurface]
+        Text("Sent: {sent}") #[color: t.onSurface]
+        Text("Voice: {voice}") #[color: t.onSurface]
+    }
+}
