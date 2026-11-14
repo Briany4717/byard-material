@@ -5,16 +5,18 @@
 //     var screen = 0
 //     var open = false
 //
-//     m.NavigationRail(label: "Main", expanded: open,
+//     m.NavigationRail(bind: screen, label: "Main", expanded: open,
 //         header: { m.IconButton("menu", label: "Menu", on_tap: { open = !open }) }) {
-//         m.NavigationRailItem(0, bind: screen, label: "Home", icon: "home", expanded: open)
-//         m.NavigationRailItem(1, bind: screen, label: "Search", icon: "search", expanded: open)
-//         m.NavigationRailItem(2, bind: screen, label: "Library", icon: "library_music",
-//             expanded: open, badge: { Badge() })
+//         m.NavigationRailItem(0, label: "Home", icon: "home")
+//         m.NavigationRailItem(1, label: "Search", icon: "search")
+//         m.NavigationRailItem(2, label: "Library", icon: "library_music", badge: { Badge() })
 //     }
 //
-// The rail does not decide when it is expanded: you do, with a var, and it springs between the
-// two widths. Write `expanded` on every item too (an item cannot see its rail). The expanded rail
+// The rail owns the selection (`bind: screen` is the caller's var; leave it out and the rail keeps
+// its own). It does not decide when it is expanded: you do, with a var, and it springs between the
+// two widths. What the rail decides (expanded or not, the selected index, how to select) it hands
+// down in a context, so an item is written with only what is its own; an item outside a rail is
+// collapsed with nothing selected. The expanded rail
 // is what Expressive uses in place of a standard navigation drawer; a modal one (over a scrim,
 // closing on a tap outside) is not made here, see the notes.
 //
@@ -43,9 +45,19 @@ private let railLabelGap = 4
 private let railWideGap = 8
 private let railWidePadding = 16
 
-View NavigationRail(content, header: Slot = none, expanded: Bool = false,
+// What the rail decides for its items. Private: only `NavigationRailItem` reads it.
+private context NavigationRailStyle {
+    current: Int = -1
+    expanded: Bool = false
+    select: Fn(Int) = none
+}
+
+View NavigationRail(content, bind current: Int = 0, header: Slot = none, expanded: Bool = false,
     label: Str = "Navigation") {
     inject Theme as t
+
+    provide NavigationRailStyle(expanded: expanded, current: current,
+        select: {|i| current = i })
 
     Column #[
         bg: t.surface,
@@ -72,12 +84,13 @@ View NavigationRail(content, header: Slot = none, expanded: Bool = false,
     }
 }
 
-View NavigationRailItem(index: Int, bind current: Int, label: Str, icon: Str,
-    badge: Slot = none, expanded: Bool = false, disabled: Bool = false,
-    on_select: Fn() = {}) {
+View NavigationRailItem(index: Int, label: Str, icon: Str, badge: Slot = none,
+    disabled: Bool = false, on_select: Fn() = {}) {
     inject Theme as t
+    inject NavigationRailStyle as s
 
-    let on = current == index
+    let on = s.current == index
+    let expanded = s.expanded
 
     let iconInk = disabled ? t.onSurface.alpha(disabledContent)
         : on ? t.onSecondaryContainer : t.onSurfaceVariant
@@ -97,7 +110,7 @@ View NavigationRailItem(index: Int, bind current: Int, label: Str, icon: Str,
         a11y_label: label,
         disabled: disabled,
         tap => {
-            current = index
+            s.select(index)
             on_select()
         },
     ] as item {

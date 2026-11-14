@@ -33,3 +33,9 @@ expect = ['Label "Taps: 2"']
 name = "Tab reaches the first item and Space selects the next"
 steps = [{ key = "Tab" }, { expect = ['ToggleButton "Day" [focusable focused checked]'] }, { key = "Tab" }, { key = "Space" }]
 expect = ['Label "Range: 1"']
+
+[[test]]
+name = "a group with no binding keeps its own selection"
+steps = [{ expect = ['ToggleButton "Left" [focusable checked]'] }, { tap = 'ToggleButton "Right"' }]
+expect = ['ToggleButton "Right" [focusable focused checked]']
+not = ['ToggleButton "Left" [focusable checked]']

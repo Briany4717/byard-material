@@ -3,18 +3,20 @@
 //
 //     var screen = 0
 //
-//     m.NavigationBar(label: "Main") {
-//         m.NavigationBarItem(0, bind: screen, label: "Home", icon: "home")
-//         m.NavigationBarItem(1, bind: screen, label: "Search", icon: "search",
-//             badge: { Badge() })
-//         m.NavigationBarItem(2, bind: screen, label: "Library", icon: "library_music",
+//     m.NavigationBar(bind: screen, label: "Main") {
+//         m.NavigationBarItem(0, label: "Home", icon: "home")
+//         m.NavigationBarItem(1, label: "Search", icon: "search", badge: { Badge() })
+//         m.NavigationBarItem(2, label: "Library", icon: "library_music",
 //             on_select: { refresh() })
 //     }
 //
-// An item is selected when the var it binds equals its `index`; a tap, or Enter or Space, writes the
-// index and then calls `on_select`. On a wide window write `horizontal: true` on every item: the
-// icon and the label sit side by side in the pill, which is the Expressive bar for medium and
-// wider windows. (An item cannot see its bar, nor the window, so you decide.)
+// The bar owns the selection: `bind: screen` makes it the caller's var, and leaving it out makes
+// the bar keep its own (the first item). What the bar decides for all its items (the selected
+// index, how to select, `horizontal`) it hands down in a context, so an item is written with only
+// what is its own. An item outside a bar has the defaults (vertical, nothing selected). A tap, or
+// Enter or Space, selects the item and then calls `on_select`. On a wide window write
+// `horizontal: true` on the bar: the icon and the label sit side by side in the pill, which is the
+// Expressive bar for medium and wider windows. (The bar cannot see the window, so you decide.)
 //
 // Role: the bar is a `navigation` landmark around a `tab_list`, and each item is a `tab`. That
 // is the one combination that gives a screen reader "navigation" and gives the keyboard what a
@@ -25,8 +27,6 @@
 // To show a screen for the selected item, put a `NavHost` above the bar, in a `Column`; the bar
 // writes a number and the host wants a name, so `let name = screen == 0 ? "home" : "search"` and
 // `NavHost(active: name)`. See the gallery.
-//
-// Why `bind` on each item: see `Radio`; the bar's slot is the caller's own code.
 //
 //   bar         64 high, `surface_container`, items share the width
 //   indicator   56 x 32 (a vertical item) or 40 high (horizontal), fully round, `secondary_container`;
@@ -45,8 +45,19 @@ private let barLabelGap = 4
 private let barWideGap = 8
 private let barWidePadding = 16
 
-View NavigationBar(content, label: Str = "Navigation") {
+// What the bar decides for its items. Private: only `NavigationBarItem` reads it.
+private context NavigationBarStyle {
+    current: Int = -1
+    horizontal: Bool = false
+    select: Fn(Int) = none
+}
+
+View NavigationBar(content, bind current: Int = 0, horizontal: Bool = false,
+    label: Str = "Navigation") {
     inject Theme as t
+
+    provide NavigationBarStyle(horizontal: horizontal, current: current,
+        select: {|i| current = i })
 
     Box #[
         bg: t.surfaceContainer,
@@ -61,12 +72,13 @@ View NavigationBar(content, label: Str = "Navigation") {
     }
 }
 
-View NavigationBarItem(index: Int, bind current: Int, label: Str, icon: Str,
-    badge: Slot = none, horizontal: Bool = false, disabled: Bool = false,
-    on_select: Fn() = {}) {
+View NavigationBarItem(index: Int, label: Str, icon: Str, badge: Slot = none,
+    disabled: Bool = false, on_select: Fn() = {}) {
     inject Theme as t
+    inject NavigationBarStyle as s
 
-    let on = current == index
+    let on = s.current == index
+    let horizontal = s.horizontal
 
     let iconInk = disabled ? t.onSurface.alpha(disabledContent)
         : on ? t.onSecondaryContainer : t.onSurfaceVariant
@@ -88,7 +100,7 @@ View NavigationBarItem(index: Int, bind current: Int, label: Str, icon: Str,
         a11y_label: label,
         disabled: disabled,
         tap => {
-            current = index
+            s.select(index)
             on_select()
         },
     ] as item {
