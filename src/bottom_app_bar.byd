@@ -1,0 +1,29 @@
+// Material 3 bottom app bar: a row of actions (IconButtons) at the start and a FAB at the end.
+//
+//     m.BottomAppBar(fab: { m.Fab("add", label: "New", lowered: true) }) {
+//         m.IconButton("check_box", label: "Checklist")
+//         m.IconButton("brush", label: "Draw")
+//     }
+//
+// The actions are the trailing block, the FAB is the `fab` slot. Material draws the FAB at
+// elevation 0 here; `lowered: true` is the lowest the Fab view offers (level 1).
+
+View BottomAppBar(label: Str = "Bottom app bar", fab: Slot = none, content) {
+    inject Theme as t
+
+    Row #[
+        bg: t.surfaceContainer,
+        height: 80,
+        p: (0, 16),
+        gap: 8,
+        align: center,
+        a11y_role: toolbar,
+        a11y_label: label,
+    ] {
+        content
+        when fab != none {
+            Spacer()
+            fab
+        }
+    }
+}
