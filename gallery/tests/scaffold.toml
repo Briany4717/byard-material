@@ -1,0 +1,68 @@
+# Scenarios for m.Scaffold, on ScaffoldScenarios (compact: top bar, bottom bar, FAB, snackbars),
+# ScaffoldRailScenarios (a rail) and ScaffoldPlainScenarios (a body and a FAB).
+view = "ScaffoldScenarios"
+size = "400x640"
+
+[[test]]
+name = "every slot is there: the bar, the body, the navigation, the FAB"
+expect = ['Toolbar', 'Heading "Inbox"', 'Button "Search" [focusable]', 'Label "Composed 0, screen 0"', 'Navigation "Main"', 'Tab "Mail" [focusable selected]', 'Button "Compose" [focusable]']
+
+[[test]]
+name = "the bar is the first thing in the body and the navigation bar sits under it, not over it"
+expect = ['Toolbar @ 0,0 400x120', 'Navigation "Main" @ 0,576 400x64']
+
+[[test]]
+name = "scrolling the body collapses the large bar to 64 without the caller writing anything"
+steps = [{ tap = 'Button "Scroll"' }]
+expect = ['Toolbar @ 0,0 400x64', 'Heading "Inbox"']
+
+[[test]]
+name = "scrolling back expands it"
+steps = [{ tap = 'Button "Scroll"' }, { tap = 'Button "Compose"' }, { wait = 400 }]
+expect = ['Toolbar @ 0,0 400x120']
+
+[[test]]
+name = "the navigation selects"
+steps = [{ tap = 'Tab "Chat"' }]
+expect = ['Tab "Chat" [focusable focused selected]', 'Label "Composed 0, screen 1"']
+
+[[test]]
+name = "the FAB acts and a snackbar appears above the navigation bar"
+steps = [{ tap = 'Button "Compose"' }, { wait = 400 }]
+expect = ['Label "Composed 1, screen 0"', 'Label "Draft saved"', 'Button "Undo"']
+
+[[test]]
+name = "a snackbar goes away by itself"
+steps = [{ tap = 'Button "Compose"' }, { wait = 5000 }]
+not = ['Draft saved']
+
+[[test]]
+name = "Tab order: Scroll, Top, the bar's Search, the FAB, then the navigation"
+steps = [{ key = "Tab" }, { key = "Tab" }, { key = "Tab" }, { key = "Tab" }, { expect = ['Button "Compose" [focusable focused]'] }, { key = "Tab" }, { expect = ['Tab "Mail" [focusable focused selected]'] }, { key = "shift+Tab" }, { key = "Space" }]
+expect = ['Label "Composed 1, screen 0"']
+
+[[test]]
+name = "the same in the dark scheme"
+scheme = "dark"
+steps = [{ tap = 'Button "Scroll"' }]
+expect = ['Toolbar @ 0,0 400x64', 'Button "Compose"']
+
+[[test]]
+name = "a rail goes before the body, and the body is beside it"
+view = "ScaffoldRailScenarios"
+size = "640x400"
+expect = ['Navigation "Main" @ 0,0 96x400', 'Toolbar @ 96,0 544x64']
+
+[[test]]
+name = "a rail selects"
+view = "ScaffoldRailScenarios"
+size = "640x400"
+steps = [{ tap = 'Tab "Chat"' }]
+expect = ['Label "Screen 1"']
+
+[[test]]
+name = "with no top bar and no navigation, a body and a FAB"
+view = "ScaffoldPlainScenarios"
+size = "400x400"
+expect = ['Label "Plain body"', 'Button "Add" [focusable]']
+not = ['Toolbar', 'Navigation']

@@ -43,6 +43,7 @@ View ListPage() {
             m.List(label: "States") {
                 m.ListItem("Clickable", supporting: "Hover, press, focus", leading: { m.ListItemIcon("star") }, on_tap: {})
                 m.ListItem("Selected", supporting: "Secondary container", leading: { m.ListItemIcon("check") }, selected: true, on_tap: {})
+                m.ListItem("Dragged", supporting: "State layer 16%, level 3", leading: { m.ListItemIcon("drag_indicator") }, dragged: true, on_tap: {})
                 m.ListItem("Disabled", supporting: "Dimmed to 38%", leading: { m.ListItemIcon("block") }, trailing: { m.ListItemText("Off") }, disabled: true, on_tap: {})
             }
         }
@@ -76,6 +77,7 @@ View ListScenarios() {
             m.ListItem("Locked", disabled: true, on_tap: { picked += 100 }, trailing: { m.ListItemText("Off") })
             m.ListItem("Mute", leading: { m.ListItemIcon("notifications") }, trailing: { m.Switch(bind: muted, label: "Mute") })
             m.ListItem("Pinned", on_tap: { picked += 10 }, trailing: { m.IconButton("more_vert", label: "More", on_tap: { picked += 1000 }) })
+            m.ListItem("Held", dragged: true, on_tap: { picked += 5 })
         }
         m.Divider()
         Text("Picked: {picked}")

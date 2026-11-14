@@ -39,3 +39,15 @@ name = "a group with no binding keeps its own selection"
 steps = [{ expect = ['ToggleButton "Left" [focusable checked]'] }, { tap = 'ToggleButton "Right"' }]
 expect = ['ToggleButton "Right" [focusable focused checked]']
 not = ['ToggleButton "Left" [focusable checked]']
+
+[[test]]
+name = "the same in the dark scheme"
+scheme = "dark"
+expect = [
+    'Group',
+    'ToggleButton "Day" [focusable checked]',
+    'ToggleButton "Week" [focusable]',
+    'ToggleButton "Bold" [focusable]',
+    'Button "Cut" [focusable]',
+    'Label "Range: 0"',
+]
