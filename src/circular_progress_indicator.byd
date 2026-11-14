@@ -9,8 +9,9 @@
 // A flat one is 40 dp across and a wavy one 48 dp, the stroke 4 dp. A determinate value has a
 // track; an indeterminate one is an arc that grows and shrinks while it turns, with none. An
 // indeterminate indicator loops only while it is in the tree. The wave of a wavy one runs round
-// the ring while it is shown (`animated: false` holds it). The active arc of a wavy ring is
-// cut off square at its ends, and a wavy indeterminate one keeps a fixed length: see the notes.
+// the ring while it is shown (`animated: false` holds it). The active arc of a wavy ring is one
+// stroked path whose radius follows a sine (`sin`, `cos`), round-capped; a wavy indeterminate
+// one keeps a fixed length of 250 degrees: see the notes.
 
 View CircularProgressIndicator(label: Str, value: Float = 0.0, indeterminate: Bool = false,
     wavy: Bool = false, animated: Bool = true) {
@@ -33,7 +34,9 @@ View CircularProgressIndicator(label: Str, value: Float = 0.0, indeterminate: Bo
         shrink: 0,
         a11y_role: progress_bar,
         a11y_label: label,
-        a11y_value: indeterminate ? "" : "{(v * 100.0).round()} percent",
+        a11y_value: indeterminate ? "" : "{(v * 100.0).round()}",
+        a11y_value_min: indeterminate ? none : 0,
+        a11y_value_max: indeterminate ? none : 100,
     ] {
         when indeterminate {
             Box #[
@@ -43,7 +46,7 @@ View CircularProgressIndicator(label: Str, value: Float = 0.0, indeterminate: Bo
                 rotate: 360deg with anim.linear(6s, from: 0deg, repeat: infinite),
             ] {
                 when wavy {
-                    WavyArc(d: d, r: r, from: 0.0, to: 250.0, spin: true, ring: -1.0)
+                    WaveArc(d: d, r: r, from: 0.0, span: 250.0, amp: 1.6, animated: true)
                 } else {
                     Box #[
                         width: d,
@@ -99,65 +102,45 @@ View CircularProgressIndicator(label: Str, value: Float = 0.0, indeterminate: Bo
                     }
                 }
                 when wavy && v > 0.0 {
-                    WavyArc(d: d, r: r, from: v >= 1.0 ? 0.0 : cap, to: v >= 1.0 ? 360.0 : sweep - cap, spin: animated, ring: waveRamp(v))
+                    WaveArc(d: d, r: r, from: v >= 1.0 ? 0.0 : cap, span: v >= 1.0 ? 360.0 : sweep - 2.0 * cap, amp: 1.6 * waveRamp(v), animated: animated)
                 }
             }
         }
     }
 }
 
-// A wavy ring (eight waves, 1.6 dp high) seen through a wedge: `from` to `to` degrees clockwise
-// from the top. The ring turns a wave's width at a time, so the waves run round while the wedge
-// stands still. `ring` scales the amplitude (-1 means a full one, for the indeterminate arc).
-private View WavyArc(d: Float, r: Float, from: Float, to: Float, spin: Bool, ring: Float) {
+// The point at `t` degrees clockwise from the top, on a ring of radius `r` whose radius follows a
+// sine of eight waves; `p` is how far through the one-second cycle (see `wsin`).
+private fn wax(c: Float, r: Float, amp: Float, t: Float, p: Float) -> Float =>
+    c + (r + amp * wsin(t / 45.0, p)) * ((t - 90.0) * 0.0174533).cos()
+private fn way(c: Float, r: Float, amp: Float, t: Float, p: Float) -> Float =>
+    c + (r + amp * wsin(t / 45.0, p)) * ((t - 90.0) * 0.0174533).sin()
+// The i-th point's angle: every 3 degrees from `from`, the last one exactly at the end.
+private fn at(from: Float, span: Float, i: Int) -> Float => i * 3.0 > span ? from + span : from + i * 3.0
+
+// A wavy arc: `span` degrees from `from`, clockwise from the top, as one stroked path of straight
+// pieces every 3 degrees, round caps and joins. The waves run along it while `animated`.
+private View WaveArc(d: Float, r: Float, from: Float, span: Float, amp: Float, animated: Bool) {
     inject Theme as t
 
     let c = d / 2.0
-    let k = ring < 0.0 ? 1.0 : ring
-    let span = to - from
+    let n = (span / 3.0).ceil() + 1
 
-    Clip #[width: d, height: d] {
-        path {
-            move(c, c)
-            for i in idx.slice(0, 13) {
-                line(
-                    c + c * 1.5 * cosDeg(-90.0 + from + i * span / 12.0),
-                    c + c * 1.5 * sinDeg(-90.0 + from + i * span / 12.0),
-                )
-            }
-            close()
-        }
-        when spin {
-            Box #[
-                width: d,
-                height: d,
-                origin: center,
-                rotate: 45deg with anim.linear(1s, from: 0deg, repeat: infinite),
-            ] {
-                WavyRing(d: d, r: r, k: k)
+    Canvas #[width: d, height: d] {
+        when animated {
+            path(stroke: t.primary, stroke_width: 4, cap: round, join: round) {
+                move(anim.keyframes(0%: wax(c, r, amp, from, 0.0), 14%: wax(c, r, amp, from, 14.0), 29%: wax(c, r, amp, from, 29.0), 43%: wax(c, r, amp, from, 43.0), 57%: wax(c, r, amp, from, 57.0), 71%: wax(c, r, amp, from, 71.0), 86%: wax(c, r, amp, from, 86.0), 100%: wax(c, r, amp, from, 100.0), duration: 1s, loop: true), anim.keyframes(0%: way(c, r, amp, from, 0.0), 14%: way(c, r, amp, from, 14.0), 29%: way(c, r, amp, from, 29.0), 43%: way(c, r, amp, from, 43.0), 57%: way(c, r, amp, from, 57.0), 71%: way(c, r, amp, from, 71.0), 86%: way(c, r, amp, from, 86.0), 100%: way(c, r, amp, from, 100.0), duration: 1s, loop: true))
+                for i in idx.slice(1, n.min(299)) {
+                    line(anim.keyframes(0%: wax(c, r, amp, at(from, span, i), 0.0), 14%: wax(c, r, amp, at(from, span, i), 14.0), 29%: wax(c, r, amp, at(from, span, i), 29.0), 43%: wax(c, r, amp, at(from, span, i), 43.0), 57%: wax(c, r, amp, at(from, span, i), 57.0), 71%: wax(c, r, amp, at(from, span, i), 71.0), 86%: wax(c, r, amp, at(from, span, i), 86.0), 100%: wax(c, r, amp, at(from, span, i), 100.0), duration: 1s, loop: true), anim.keyframes(0%: way(c, r, amp, at(from, span, i), 0.0), 14%: way(c, r, amp, at(from, span, i), 14.0), 29%: way(c, r, amp, at(from, span, i), 29.0), 43%: way(c, r, amp, at(from, span, i), 43.0), 57%: way(c, r, amp, at(from, span, i), 57.0), 71%: way(c, r, amp, at(from, span, i), 71.0), 86%: way(c, r, amp, at(from, span, i), 86.0), 100%: way(c, r, amp, at(from, span, i), 100.0), duration: 1s, loop: true))
+                }
             }
         } else {
-            WavyRing(d: d, r: r, k: k)
-        }
-    }
-}
-
-// The full ring: 72 straight pieces whose radius follows a sine of eight waves.
-private View WavyRing(d: Float, r: Float, k: Float) {
-    inject Theme as t
-
-    let c = d / 2.0
-    Canvas #[width: d, height: d] {
-        for i in idx.slice(0, 72) {
-            line(
-                x1: c + (r + 1.6 * k * sinDeg(i * 40.0)) * cosDeg(i * 5.0 - 90.0),
-                y1: c + (r + 1.6 * k * sinDeg(i * 40.0)) * sinDeg(i * 5.0 - 90.0),
-                x2: c + (r + 1.6 * k * sinDeg(i * 40.0 + 40.0)) * cosDeg(i * 5.0 - 85.0),
-                y2: c + (r + 1.6 * k * sinDeg(i * 40.0 + 40.0)) * sinDeg(i * 5.0 - 85.0),
-                stroke: t.primary,
-                stroke_width: 4,
-                cap: round,
-            )
+            path(stroke: t.primary, stroke_width: 4, cap: round, join: round) {
+                move(wax(c, r, amp, from, 0.0), way(c, r, amp, from, 0.0))
+                for i in idx.slice(1, n.min(299)) {
+                    line(wax(c, r, amp, at(from, span, i), 0.0), way(c, r, amp, at(from, span, i), 0.0))
+                }
+            }
         }
     }
 }

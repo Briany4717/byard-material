@@ -6,13 +6,13 @@ View TooltipPage() {
     inject Theme as t
     Column #[p: 24, gap: 32, bg: t.surface, grow: 1] {
         Section("Plain") {
-            Row #[gap: 24, p: (64, 24, 0, 24)] {
+            Row #[gap: 24, p: (64, 24, 0, 100)] {
                 m.Tooltip("Add to favourites") { m.IconButton("favorite", label: "Favourite") }
                 m.Tooltip("Share") { m.IconButton("share", label: "Share") }
             }
         }
         Section("Rich") {
-            Row #[gap: 24, p: (128, 24, 0, 24)] {
+            Row #[gap: 24, p: (120, 24, 0, 160)] {
                 m.Tooltip("Sync keeps your files up to date on every device you sign in on.",
                     variant: .rich, title: "Sync",
                     actions: { m.Button("Learn more", variant: .text, size: .xs) }) {

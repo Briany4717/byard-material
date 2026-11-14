@@ -5,11 +5,12 @@
 //     m.LinearProgressIndicator(value: 0.4, label: "Upload")
 //     m.LinearProgressIndicator(indeterminate: true, wavy: true, label: "Loading")
 //
-// `length` is how long the bar is, fixed like Slider's (a canvas has no size of its own); a
-// wavy one is at most 1000 long. The wave of a determinate wavy bar travels while it is shown;
-// `animated: false` holds it still. An indeterminate one loops only while the view is in the
-// tree (put it in a `when`). A screen reader hears a progress bar, and for a determinate one
-// its value as a percentage.
+// `length` is how long the bar is, fixed like Slider's (a canvas has no size of its own). A
+// wavy determinate bar is one stroked path along a sine (`sin`), round-capped, whose points
+// travel while it is shown (`animated: false` holds it still). A wavy indeterminate bar is two
+// windows onto a travelling wave, cut square at the ends of the window. An indeterminate one
+// loops only while the view is in the tree (put it in a `when`). A screen reader hears a progress
+// bar with its range (0 to 100) and, for a determinate one, its value as a percentage.
 
 View LinearProgressIndicator(label: Str, value: Float = 0.0, indeterminate: Bool = false,
     wavy: Bool = false, length: Int = 240, animated: Bool = true) {
@@ -24,10 +25,6 @@ View LinearProgressIndicator(label: Str, value: Float = 0.0, indeterminate: Bool
     // Wave: 3 dp amplitude, 40 dp long (20 dp while indeterminate).
     let lambda = indeterminate ? 20.0 : 40.0
     let amp = 3.0 * waveRamp(v)
-    let half = lambda / 2.0
-    let clipW = a - 4.0
-    let halves = ((clipW + lambda) / half).ceil()
-    let phase = 360.0 * clipW / lambda
 
     // Track: from just after the active part (a gap) to the end; all of it when empty.
     let trackFrom = v <= 0.0 ? 0.0 : a + progressGap
@@ -40,7 +37,9 @@ View LinearProgressIndicator(label: Str, value: Float = 0.0, indeterminate: Bool
         shrink: 0,
         a11y_role: progress_bar,
         a11y_label: label,
-        a11y_value: indeterminate ? "" : "{(v * 100.0).round()} percent",
+        a11y_value: indeterminate ? "" : "{(v * 100.0).round()}",
+        a11y_value_min: indeterminate ? none : 0,
+        a11y_value_max: indeterminate ? none : 100,
     ] {
         when indeterminate {
             ZStack #[width: w, height: h, alignment: top_start] {
@@ -66,32 +65,42 @@ View LinearProgressIndicator(label: Str, value: Float = 0.0, indeterminate: Bool
                             stroke: t.primary, stroke_width: 4, cap: round)
                     }
                 }
-                when wavy && clipW > 0.0 {
-                    Clip #[width: clipW, height: h, ml: 2] {
-                        when animated {
-                            Box #[
-                                ml: 0.0 - lambda,
-                                translate: (lambda, 0) with anim.linear(1s, from: (0.0, 0.0), repeat: infinite),
-                            ] {
-                                WaveStrip(w: clipW + lambda * 2.0, h: h, amp: amp, half: half, halves: halves)
-                            }
-                        } else {
-                            Box #[ml: 0.0 - lambda] {
-                                WaveStrip(w: clipW + lambda * 2.0, h: h, amp: amp, half: half, halves: halves)
-                            }
-                        }
-                    }
-                }
                 when wavy && v > 0.0 {
-                    Canvas #[width: w, height: h] {
-                        when animated {
-                            circle(cx: 2, cy: anim.keyframes(0%: mid - amp * sinDeg(0.0), 14%: mid + amp * sinDeg(51.4), 29%: mid + amp * sinDeg(102.9), 43%: mid + amp * sinDeg(154.3), 57%: mid + amp * sinDeg(205.7), 71%: mid + amp * sinDeg(257.1), 86%: mid + amp * sinDeg(308.6), 100%: mid, duration: 1s, loop: true), r: 2, fill: t.primary)
-                            circle(cx: a < 4.0 ? 2.0 : a - 2.0, cy: anim.keyframes(0%: mid - amp * sinDeg(phase), 14%: mid - amp * sinDeg(phase - 51.4), 29%: mid - amp * sinDeg(phase - 102.9), 43%: mid - amp * sinDeg(phase - 154.3), 57%: mid - amp * sinDeg(phase - 205.7), 71%: mid - amp * sinDeg(phase - 257.1), 86%: mid - amp * sinDeg(phase - 308.6), 100%: mid - amp * sinDeg(phase - 360.0), duration: 1s, loop: true), r: 2, fill: t.primary)
-                        } else {
-                            circle(cx: 2, cy: mid, r: 2, fill: t.primary)
-                            circle(cx: a < 4.0 ? 2.0 : a - 2.0, cy: mid - amp * sinDeg(phase), r: 2, fill: t.primary)
-                        }
-                    }
+                    WavePath(h: h, x0: 2.0, span: a < 4.0 ? 0.0 : a - 4.0, amp: amp, lambda: lambda,
+                        animated: animated)
+                }
+            }
+        }
+    }
+}
+
+// x of the i-th point of a wave path that starts at `from` and is `span` long, every 4 dp and
+// ending exactly at the end.
+private fn wx(x0: Float, span: Float, i: Int) -> Float => i * 4.0 > span ? x0 + span : x0 + i * 4.0
+private fn wy(mid: Float, amp: Float, lambda: Float, x: Float, p: Float) -> Float =>
+    mid + amp * wsin(x / lambda, p)
+
+// A wave drawn as a stroked path of straight pieces every 4 dp (a sine moves less than 0.1 dp off
+// its chord at that step), round caps and joins.
+private View WavePath(h: Float, x0: Float, span: Float, amp: Float, lambda: Float, animated: Bool) {
+    inject Theme as t
+
+    let mid = h / 2.0
+    let n = (span / 4.0).ceil() + 1
+
+    Canvas #[width: x0 * 2.0 + span, height: h] {
+        when animated {
+            path(stroke: t.primary, stroke_width: 4, cap: round, join: round) {
+                move(x0, anim.keyframes(0%: wy(mid, amp, lambda, x0, 0.0), 14%: wy(mid, amp, lambda, x0, 14.0), 29%: wy(mid, amp, lambda, x0, 29.0), 43%: wy(mid, amp, lambda, x0, 43.0), 57%: wy(mid, amp, lambda, x0, 57.0), 71%: wy(mid, amp, lambda, x0, 71.0), 86%: wy(mid, amp, lambda, x0, 86.0), 100%: wy(mid, amp, lambda, x0, 100.0), duration: 1s, loop: true))
+                for i in idx.slice(1, n.min(299)) {
+                    line(wx(x0, span, i), anim.keyframes(0%: wy(mid, amp, lambda, wx(x0, span, i), 0.0), 14%: wy(mid, amp, lambda, wx(x0, span, i), 14.0), 29%: wy(mid, amp, lambda, wx(x0, span, i), 29.0), 43%: wy(mid, amp, lambda, wx(x0, span, i), 43.0), 57%: wy(mid, amp, lambda, wx(x0, span, i), 57.0), 71%: wy(mid, amp, lambda, wx(x0, span, i), 71.0), 86%: wy(mid, amp, lambda, wx(x0, span, i), 86.0), 100%: wy(mid, amp, lambda, wx(x0, span, i), 100.0), duration: 1s, loop: true))
+                }
+            }
+        } else {
+            path(stroke: t.primary, stroke_width: 4, cap: round, join: round) {
+                move(x0, wy(mid, amp, lambda, x0, 0.0))
+                for i in idx.slice(1, n.min(299)) {
+                    line(wx(x0, span, i), wy(mid, amp, lambda, wx(x0, span, i), 0.0))
                 }
             }
         }
@@ -100,23 +109,15 @@ View LinearProgressIndicator(label: Str, value: Float = 0.0, indeterminate: Bool
 
 // The two bars of the indeterminate indicator: the left edge and width of each are keyframed, so
 // it grows out of the left, runs along and shrinks into the right, the second one half a cycle
-// behind. A wavy bar is a window onto a travelling wave (the content moves back as the window
-// moves on).
+// behind. A flat bar is a box. A wavy bar is a stroked path along a sine whose points are keyframed
+// with the bar (each point sits `i` steps of 4 dp from the bar's left edge, held at its far end
+// while the bar is shorter), so the wave moves with the bar and does not travel through it; a
+// bar of no width has no stroke (its round cap would show as a dot).
 private View BarOne(w: Float, h: Float, wavy: Bool, lambda: Float) {
     inject Theme as t
 
     when wavy {
-        Clip #[
-            width: anim.keyframes(0%: 0, 15%: w * 0.333, 30%: w * 0.238, 45%: w * 0.143, 50%: 0, 100%: 0, duration: 2s, loop: true),
-            height: h,
-            translate: anim.keyframes(0%: (0, 0), 15%: (0, 0), 30%: (w * 0.4286, 0), 45%: (w * 0.857, 0), 50%: (w, 0), 100%: (w, 0), duration: 2s, loop: true),
-        ] {
-            Box #[
-                translate: anim.keyframes(0%: (0, 0), 15%: (0, 0), 30%: (0.0 - w * 0.4286, 0), 45%: (0.0 - w * 0.857, 0), 50%: (0.0 - w, 0), 100%: (0.0 - w, 0), duration: 2s, loop: true),
-            ] {
-                WaveCanvas(w: w, h: h, lambda: lambda)
-            }
-        }
+        WaveBar(w: w, h: h, lambda: lambda, one: true)
     } else {
         Box #[
             width: anim.keyframes(0%: 0, 15%: w * 0.333, 30%: w * 0.238, 45%: w * 0.143, 50%: 0, 100%: 0, duration: 2s, loop: true),
@@ -132,17 +133,7 @@ private View BarTwo(w: Float, h: Float, wavy: Bool, lambda: Float) {
     inject Theme as t
 
     when wavy {
-        Clip #[
-            width: anim.keyframes(0%: 0, 40%: 0, 55%: w * 0.3, 70%: w * 0.267, 90%: w * 0.222, 100%: 0, duration: 2s, loop: true),
-            height: h,
-            translate: anim.keyframes(0%: (0, 0), 55%: (0, 0), 70%: (w * 0.333, 0), 90%: (w * 0.778, 0), 100%: (w, 0), duration: 2s, loop: true),
-        ] {
-            Box #[
-                translate: anim.keyframes(0%: (0, 0), 55%: (0, 0), 70%: (0.0 - w * 0.333, 0), 90%: (0.0 - w * 0.778, 0), 100%: (0.0 - w, 0), duration: 2s, loop: true),
-            ] {
-                WaveCanvas(w: w, h: h, lambda: lambda)
-            }
-        }
+        WaveBar(w: w, h: h, lambda: lambda, one: false)
     } else {
         Box #[
             width: anim.keyframes(0%: 0, 40%: 0, 55%: w * 0.3, 70%: w * 0.267, 90%: w * 0.222, 100%: 0, duration: 2s, loop: true),
@@ -154,56 +145,33 @@ private View BarTwo(w: Float, h: Float, wavy: Bool, lambda: Float) {
     }
 }
 
-// A full-length wave that slides one wavelength a second.
-private View WaveCanvas(w: Float, h: Float, lambda: Float) {
+// x and y of the i-th point of a wavy bar `wd` wide whose left edge is at `l`.
+private fn wrel(wd: Float, i: Int) -> Float => wd <= 4.0 ? 0.0 : i * 4.0 > wd - 4.0 ? wd - 4.0 : i * 4.0
+private fn wbx(l: Float, wd: Float, i: Int) -> Float => l + 2.0 + wrel(wd, i)
+private fn wby(mid: Float, lambda: Float, wd: Float, i: Int) -> Float =>
+    mid + 3.0 * wsin(wrel(wd, i) / lambda, 0.0)
+
+private View WaveBar(w: Float, h: Float, lambda: Float, one: Bool) {
     inject Theme as t
 
     let mid = h / 2.0
-    let half = lambda / 2.0
-    let halves = ((w + lambda * 2.0) / half).ceil()
+    let n = (w / 4.0).ceil() + 1
 
-    Box #[
-        ml: 0.0 - lambda,
-        translate: (lambda, 0) with anim.linear(1s, from: (0.0, 0.0), repeat: infinite),
-    ] {
-        Canvas #[width: w + lambda * 2.0, height: h] {
-            for i in idx.slice(0, halves.min(79)) {
-                bezier(
-                    x1: i * half,
-                    y1: mid,
-                    cx1: i * half + half * 0.38,
-                    cy1: i % 2 == 0 ? mid - 4.0 : mid + 4.0,
-                    cx2: i * half + half * 0.62,
-                    cy2: i % 2 == 0 ? mid - 4.0 : mid + 4.0,
-                    x2: i * half + half,
-                    y2: mid,
-                    stroke: t.primary,
-                    stroke_width: 4,
-                )
-            }
-        }
-    }
-}
-
-// The wave of a determinate bar: half-wavelength beziers, up then down.
-private View WaveStrip(w: Float, h: Float, amp: Float, half: Float, halves: Int) {
-    inject Theme as t
-
-    let mid = h / 2.0
     Canvas #[width: w, height: h] {
-        for i in idx.slice(0, halves.min(79)) {
-            bezier(
-                x1: i * half,
-                y1: mid,
-                cx1: i * half + half * 0.38,
-                cy1: i % 2 == 0 ? mid - amp * 1.3333 : mid + amp * 1.3333,
-                cx2: i * half + half * 0.62,
-                cy2: i % 2 == 0 ? mid - amp * 1.3333 : mid + amp * 1.3333,
-                x2: i * half + half,
-                y2: mid,
-                stroke: t.primary,
-                stroke_width: 4,
-            )
+        when one {
+            path(stroke: t.primary, stroke_width: anim.keyframes(0%: 0.0, 15%: 4.0, 45%: 4.0, 50%: 0.0, 100%: 0.0, duration: 2s, loop: true), cap: round, join: round) {
+                move(anim.keyframes(0%: 0.0 + 2.0, 15%: 0.0 + 2.0, 30%: w * 0.4286 + 2.0, 45%: w * 0.857 + 2.0, 50%: w + 2.0, 100%: w + 2.0, duration: 2s, loop: true), anim.keyframes(0%: mid, 15%: mid, 30%: mid, 45%: mid, 50%: mid, 100%: mid, duration: 2s, loop: true))
+                for i in idx.slice(1, n.min(299)) {
+                    line(anim.keyframes(0%: wbx(0.0, 0.0, i), 15%: wbx(0.0, w * 0.333, i), 30%: wbx(w * 0.4286, w * 0.238, i), 45%: wbx(w * 0.857, w * 0.143, i), 50%: wbx(w, 0.0, i), 100%: wbx(w, 0.0, i), duration: 2s, loop: true), anim.keyframes(0%: wby(mid, lambda, 0.0, i), 15%: wby(mid, lambda, w * 0.333, i), 30%: wby(mid, lambda, w * 0.238, i), 45%: wby(mid, lambda, w * 0.143, i), 50%: wby(mid, lambda, 0.0, i), 100%: wby(mid, lambda, 0.0, i), duration: 2s, loop: true))
+                }
+            }
+        } else {
+            path(stroke: t.primary, stroke_width: anim.keyframes(0%: 0.0, 40%: 0.0, 55%: 4.0, 90%: 4.0, 100%: 0.0, duration: 2s, loop: true), cap: round, join: round) {
+                move(anim.keyframes(0%: 0.0 + 2.0, 40%: 0.0 + 2.0, 55%: 0.0 + 2.0, 70%: w * 0.333 + 2.0, 90%: w * 0.778 + 2.0, 100%: w + 2.0, duration: 2s, loop: true), anim.keyframes(0%: mid, 40%: mid, 55%: mid, 70%: mid, 90%: mid, 100%: mid, duration: 2s, loop: true))
+                for i in idx.slice(1, n.min(299)) {
+                    line(anim.keyframes(0%: wbx(0.0, 0.0, i), 40%: wbx(0.0, 0.0, i), 55%: wbx(0.0, w * 0.3, i), 70%: wbx(w * 0.333, w * 0.267, i), 90%: wbx(w * 0.778, w * 0.222, i), 100%: wbx(w, 0.0, i), duration: 2s, loop: true), anim.keyframes(0%: wby(mid, lambda, 0.0, i), 40%: wby(mid, lambda, 0.0, i), 55%: wby(mid, lambda, w * 0.3, i), 70%: wby(mid, lambda, w * 0.267, i), 90%: wby(mid, lambda, w * 0.222, i), 100%: wby(mid, lambda, 0.0, i), duration: 2s, loop: true))
+                }
+            }
         }
     }
 }

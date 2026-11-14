@@ -1,13 +1,14 @@
-# Scenarios for m.LinearProgressIndicator and m.CircularProgressIndicator.
+# Scenarios for m.LinearProgressIndicator and m.CircularProgressIndicator. Every one is a
+# progress_bar; a determinate one says its value (a percentage) and its range 0 to 100.
 view = "ProgressScenarios"
 size = "400x400"
 
 [[test]]
 name = "a determinate indicator is a progress bar with its value"
 expect = [
-    'ProgressBar "Upload" = "40 percent"',
-    'ProgressBar "Wavy upload" = "40 percent"',
-    'ProgressBar "Download" = "25 percent"',
+    'ProgressBar "Upload" = 40 in 0..100',
+    'ProgressBar "Wavy upload" = 40 in 0..100',
+    'ProgressBar "Download" = 25 in 0..100',
 ]
 
 [[test]]
@@ -28,4 +29,4 @@ expect = ['ProgressBar "Working"']
 [[test]]
 name = "the same in the dark scheme"
 scheme = "dark"
-expect = ['ProgressBar "Upload" = "40 percent"']
+expect = ['ProgressBar "Upload" = 40 in 0..100']

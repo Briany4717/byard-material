@@ -70,13 +70,7 @@ View Tooltip(text: Str, content: Slot, variant: TooltipVariant = .plain, title: 
 
         // What the target is described by. A name declared inside the `when` below is not in
         // scope here, so the description lives in a node of no size that is always there.
-        Box #[
-            width: 0,
-            height: 0,
-            interactive: false,
-            a11y_role: group,
-            a11y_label: text,
-        ] as tip
+        Box #[width: 0, height: 0, interactive: false, a11y_role: group, a11y_label: text] as tip
 
         when open && !rich {
             Overlay #[modal: false] {
