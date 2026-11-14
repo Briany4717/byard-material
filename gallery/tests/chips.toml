@@ -9,6 +9,7 @@ exact = [
     'ToggleButton "Open now" [focusable]',
     'Button "Ana" [focusable]',
     'Button "Remove Ana" [focusable]',
+    'Button "Plain" [focusable]',
     'Button "Sounds good" [focusable]',
     'Button "Archive" [focusable disabled]',
     'Button "Ben" [focusable disabled]',
@@ -34,6 +35,25 @@ steps = [{ tap = 'Button "Ana"' }, { tap = 'Button "Remove Ana"' }, { tap = 'But
 expect = ['Label "Edits: 1"', 'Label "Removed: 2"']
 
 [[test]]
+name = "an input chip with no on_remove has no remove button"
+not = ['Button "Remove Plain"']
+
+[[test]]
+name = "Backspace on a focused input chip removes it"
+steps = [{ key = "Tab" }, { key = "Tab" }, { key = "Tab" }, { key = "Backspace" }]
+expect = ['Button "Ana" [focusable focused]', 'Label "Removed: 1"']
+
+[[test]]
+name = "Delete removes it too, and other keys do not"
+steps = [{ key = "Tab" }, { key = "Tab" }, { key = "Tab" }, { key = "x" }, { key = "Delete" }]
+expect = ['Label "Removed: 1"']
+
+[[test]]
+name = "a chip set wraps onto a second line"
+steps = [{ tap = 'Button "Alpha"' }]
+expect = ['Button "Alpha" [focusable focused] @ 24,', 'Button "Delta"']
+
+[[test]]
 name = "disabled chips do nothing"
 steps = [{ tap = 'Button "Archive"' }, { tap = 'Button "Remove Ben"' }]
 expect = ['Label "Taps: 0"', 'Label "Removed: 0"']
@@ -55,7 +75,7 @@ expect = ['Button "Remove Ana" [focusable focused]', 'Label "Removed: 1"']
 
 [[test]]
 name = "Tab skips disabled chips and wraps"
-steps = [{ key = "Tab" }, { key = "Tab" }, { key = "Tab" }, { key = "Tab" }, { key = "Tab" }, { key = "Tab" }]
+steps = [{ key = "Tab" }, { key = "Tab" }, { key = "Tab" }, { key = "Tab" }, { key = "Tab" }, { key = "Tab" }, { key = "Tab" }, { key = "Tab" }, { key = "Tab" }, { key = "Tab" }, { key = "Tab" }]
 expect = ['Button "Directions" [focusable focused]']
 
 [[test]]
@@ -63,3 +83,8 @@ name = "the same in the dark scheme"
 scheme = "dark"
 steps = [{ key = "Tab" }, { key = "Space" }]
 expect = ['Label "Taps: 1"']
+
+[[test]]
+name = "the filter chip grows by the check icon and its gap when selected"
+steps = [{ expect = ['ToggleButton "Open now" [focusable] @ 24,72 96x32'] }, { tap = 'ToggleButton "Open now"' }, { not = ['ToggleButton "Open now" [focusable focused checked] @ 24,72 114x32'] }, { wait = 1500 }]
+expect = ['ToggleButton "Open now" [focusable focused checked] @ 24,72 114x32']

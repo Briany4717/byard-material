@@ -1,0 +1,44 @@
+use material as m
+
+// Every form of m.Badge, and a badge on an icon.
+
+View BadgePage() {
+    inject Theme as t
+    Column #[p: 24, gap: 32, bg: t.surface, grow: 1] {
+        Section("Small and large") {
+            Line("small") { m.Badge(label: "New activity") }
+            Line("number") {
+                m.Badge(count: 1, label: "unread")
+                m.Badge(count: 8, label: "unread")
+                m.Badge(count: 42, label: "unread")
+                m.Badge(count: 999, label: "unread")
+                m.Badge(count: 1000, label: "unread")
+            }
+            Line("text") {
+                m.Badge(text: "New")
+                m.Badge(text: "Beta")
+            }
+            Line("max 99") { m.Badge(count: 100, max: 99, label: "unread") }
+        }
+        Section("On an icon") {
+            Line("none") { m.BadgedIcon("mail", label: "Mail") }
+            Line("dot") { m.BadgedIcon("notifications", label: "Alerts", dot: true, badge_label: "New alerts") }
+            Line("count") {
+                m.BadgedIcon("mail", label: "Mail", count: 3, badge_label: "unread messages")
+                m.BadgedIcon("mail", label: "Mail", count: 128, badge_label: "unread messages")
+                m.BadgedIcon("mail", label: "Mail", count: 1200, badge_label: "unread messages")
+                m.BadgedIcon("star", label: "Starred", text: "New")
+            }
+        }
+    }
+}
+
+View BadgeScenarios() {
+    inject Theme as t
+    Column #[p: 24, gap: 16, align: start, bg: t.surface, grow: 1] {
+        m.Badge(label: "New alerts")
+        m.Badge(count: 7, label: "unread messages")
+        m.Badge(count: 1200, label: "unread messages")
+        m.BadgedIcon("mail", label: "Mail", count: 3, badge_label: "unread messages")
+    }
+}
