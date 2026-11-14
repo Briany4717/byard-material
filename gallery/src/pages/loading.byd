@@ -1,0 +1,25 @@
+use material as m
+
+// m.LoadingIndicator, plain and contained.
+
+View LoadingPage() {
+    inject Theme as t
+    Column #[p: 24, gap: 32, bg: t.surface, grow: 1] {
+        Section("Loading indicator") {
+            Line("plain") { m.LoadingIndicator(label: "Plain loading") }
+            Line("contained") { m.LoadingIndicator(contained: true, label: "Contained loading") }
+        }
+    }
+}
+
+View LoadingScenarios() {
+    inject Theme as t
+    var on = true
+    Column #[p: 24, gap: 16, align: start, bg: t.surface, grow: 1] {
+        when on {
+            m.LoadingIndicator(label: "Loading")
+        }
+        m.LoadingIndicator(contained: true, label: "Saving")
+        m.Button(on ? "Done" : "Again", on_tap: { on = !on })
+    }
+}

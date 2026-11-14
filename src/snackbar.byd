@@ -1,0 +1,90 @@
+// Material 3 snackbar: a short message at the bottom of the screen, with an optional action and
+// close button, in the inverse colours. It grows to two lines when the message needs them.
+//
+//     m.Snackbar("Message archived", action: "Undo", closable: true, on_action: { undo() })
+//
+// Use it through `SnackbarHost`, which shows one at a time and takes it away after a timeout;
+// a `Snackbar` on its own is just the surface. A screen reader says the message when it appears,
+// politely (`a11y_live: polite`, so it waits for what it is saying and focus stays where it is),
+// and the action and close are buttons.
+
+View Snackbar(message: Str, action: Str = "", closable: Bool = false, on_action: Fn() = {},
+    on_close: Fn() = {}) {
+    inject Theme as t
+
+    Row #[
+        bg: t.inverseSurface,
+        radius: t.cornerXs,
+        shadow: "lg",
+        min_width: 344,
+        max_width: 672,
+        min_height: 48,
+        pl: 16,
+        pr: (action != "" || closable) ? 8 : 16,
+        gap: 8,
+        align: center,
+    ] {
+        Text(message) #[
+            typo: t.bodyMedium,
+            color: t.inverseOnSurface,
+            grow: 1,
+            shrink: 1,
+            max_lines: 2,
+            my: 14,
+            a11y_live: polite,
+        ]
+        when action != "" {
+            Box #[
+                radius: 20,
+                height: 40,
+                p: (0, 12),
+                shrink: 0,
+                align: center,
+                justify: center,
+                a11y_role: button,
+                a11y_label: action,
+                tap => on_action(),
+            ] {
+                on hover { overlay: t.inversePrimary.alpha(stateHover) with t.springEffectsFast }
+                on focus_visible {
+                    overlay: t.inversePrimary.alpha(stateFocus) with t.springEffectsFast
+                    outline: t.inversePrimary
+                    outline_width: focusRingWidth
+                    outline_offset: focusRingOffset
+                }
+                on pressed { overlay: t.inversePrimary.alpha(statePress) with t.springEffectsFast }
+
+                Text(action) #[
+                    typo: t.labelLarge,
+                    color: t.inversePrimary,
+                    wrap: false,
+                    a11y_hidden: true,
+                ]
+            }
+        }
+        when closable {
+            Box #[
+                radius: 20,
+                width: 40,
+                height: 40,
+                shrink: 0,
+                align: center,
+                justify: center,
+                a11y_role: button,
+                a11y_label: "Close",
+                tap => on_close(),
+            ] {
+                on hover { overlay: t.inverseOnSurface.alpha(stateHover) with t.springEffectsFast }
+                on focus_visible {
+                    overlay: t.inverseOnSurface.alpha(stateFocus) with t.springEffectsFast
+                    outline: t.inversePrimary
+                    outline_width: focusRingWidth
+                    outline_offset: focusRingOffset
+                }
+                on pressed { overlay: t.inverseOnSurface.alpha(statePress) with t.springEffectsFast }
+
+                Icon("close", size: 24, color: t.inverseOnSurface)
+            }
+        }
+    }
+}

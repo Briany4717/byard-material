@@ -1,0 +1,32 @@
+# Scenarios for m.LinearProgressIndicator and m.CircularProgressIndicator. Every one is a
+# progress_bar; a determinate one says its value (a percentage) and its range 0 to 100.
+view = "ProgressScenarios"
+size = "400x400"
+
+[[test]]
+name = "a determinate indicator is a progress bar with its value"
+expect = [
+    'ProgressBar "Upload" = 40 in 0..100',
+    'ProgressBar "Wavy upload" = 40 in 0..100',
+    'ProgressBar "Download" = 25 in 0..100',
+]
+
+[[test]]
+name = "an indeterminate one is a progress bar with no value"
+expect = ['ProgressBar "Spinner" = ""', 'ProgressBar "Working" = ""']
+
+[[test]]
+name = "an indeterminate indicator is gone with its when"
+steps = [{ tap = 'Button "Stop"' }]
+expect = ['Button "Start"']
+not = ['ProgressBar "Working"']
+
+[[test]]
+name = "and back again"
+steps = [{ tap = 'Button "Stop"' }, { tap = 'Button "Start"' }]
+expect = ['ProgressBar "Working"']
+
+[[test]]
+name = "the same in the dark scheme"
+scheme = "dark"
+expect = ['ProgressBar "Upload" = 40 in 0..100']

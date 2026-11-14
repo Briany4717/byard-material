@@ -16,6 +16,10 @@ enum Page {
     fab,
     textField,
     chips,
+    progress,
+    loading,
+    snackbar,
+    tooltip,
     search,
     carousel,
     dialog,
@@ -67,6 +71,14 @@ View Main() {
                 TextFieldPage()
             } else when page == Page.chips {
                 ChipsPage()
+            } else when page == Page.progress {
+                ProgressPage()
+            } else when page == Page.loading {
+                LoadingPage()
+            } else when page == Page.snackbar {
+                SnackbarPage()
+            } else when page == Page.tooltip {
+                TooltipPage()
             } else when page == Page.search {
                 SearchPage()
             } else when page == Page.carousel {
@@ -109,6 +121,10 @@ View Main() {
                     m.Button("Fab", variant: .tonal, on_tap: { page = Page.fab })
                     m.Button("TextField", variant: .tonal, on_tap: { page = Page.textField })
                     m.Button("Chips", variant: .tonal, on_tap: { page = Page.chips })
+                    m.Button("Progress", variant: .tonal, on_tap: { page = Page.progress })
+                    m.Button("LoadingIndicator", variant: .tonal, on_tap: { page = Page.loading })
+                    m.Button("Snackbar", variant: .tonal, on_tap: { page = Page.snackbar })
+                    m.Button("Tooltip", variant: .tonal, on_tap: { page = Page.tooltip })
                     m.Button("Search", variant: .tonal, on_tap: { page = Page.search })
                     m.Button("Carousel", variant: .tonal, on_tap: { page = Page.carousel })
                     m.Button("Dialog", variant: .tonal, on_tap: { page = Page.dialog })

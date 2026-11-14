@@ -1,0 +1,67 @@
+# Scenarios for m.Snackbar and m.SnackbarHost, on the SnackbarScenarios view. The host's timeout is
+# a timer, and `byard test` (byard-cli) does not arm timers (see the notes), so these end a message
+# by its buttons.
+view = "SnackbarScenarios"
+size = "500x400"
+
+[[test]]
+name = "nothing is shown while the queue is empty"
+exact = [
+    'Button "Archive" [focusable]',
+    'Button "Two" [focusable]',
+    'Label "Undone 0, queued 0"',
+]
+
+[[test]]
+name = "a queued message appears as an alert with its action and close"
+steps = [{ tap = 'Button "Archive"' }]
+expect = [
+    'Label "Archived" live polite',
+    'Button "Undo" [focusable]',
+    'Button "Close" [focusable]',
+    'Label "Undone 0, queued 1"',
+]
+
+[[test]]
+name = "the action is reported"
+steps = [{ tap = 'Button "Archive"' }, { tap = 'Button "Undo"' }]
+expect = ['Label "Undone 1, queued 0"']
+
+[[test]]
+name = "two messages show one at a time"
+steps = [{ tap = 'Button "Two"' }]
+expect = ['Label "One" live polite', 'Label "Undone 0, queued 2"']
+not = ['Label "Two"']
+
+[[test]]
+name = "Tab reaches the action and Space presses it"
+steps = [{ tap = 'Button "Archive"' }, { key = "Tab" }, { key = "Tab" }, { key = "Space" }]
+expect = ['Label "Undone 1, queued 0"']
+
+[[test]]
+name = "the same in the dark scheme"
+scheme = "dark"
+steps = [{ tap = 'Button "Archive"' }]
+expect = ['Label "Archived" live polite']
+
+[[test]]
+name = "the message is a polite live region and focus stays where it was"
+steps = [{ tap = 'Button "Archive"' }]
+expect = ['Label "Archived" live polite', 'Button "Archive" [focusable focused]']
+
+[[test]]
+name = "closing it leaves, and the next one comes in"
+steps = [{ tap = 'Button "Two"' }, { tap = 'Button "Close"' }, { wait = 500 }]
+expect = ['Label "Two" live polite', 'Label "Undone 0, queued 1"']
+not = ['Label "One"']
+
+[[test]]
+name = "the one that is leaving is out of the tree before its motion ends"
+steps = [{ tap = 'Button "Archive"' }, { tap = 'Button "Close"' }]
+not = ['Button "Close"', 'Button "Undo"']
+
+[[test]]
+name = "and gone when the queue is empty and its motion has ended"
+steps = [{ tap = 'Button "Archive"' }, { tap = 'Button "Close"' }, { wait = 600 }]
+expect = ['Label "Undone 0, queued 0"']
+not = ['Label "Archived"']

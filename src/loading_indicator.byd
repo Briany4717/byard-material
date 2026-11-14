@@ -1,0 +1,62 @@
+// Material 3 Expressive loading indicator: a shape that morphs through seven others while it
+// turns, for a wait of unknown length. Plain (the indicator in `primary`) or contained (in
+// `on_primary_container`, on a round `primary_container`).
+//
+//     m.LoadingIndicator(label: "Loading")
+//     m.LoadingIndicator(contained: true, label: "Loading")
+//
+// The indicator is 38 dp in a 48 dp box. The shapes are soft burst, nine-sided cookie,
+// pentagon, pill, sunny, four-sided cookie and oval, drawn with `ngon` and `rect` on a canvas
+// whose `morph` runs round them, 650 ms a shape; it loops only while the view is in the tree.
+// Material's own outlines are not all regular polygons, so these are the closest the shape
+// system gives: see the notes.
+
+View LoadingIndicator(label: Str, contained: Bool = false) {
+    inject Theme as t
+
+    let ink = contained ? t.onPrimaryContainer : t.primary
+
+    Box #[
+        width: 48,
+        height: 48,
+        shrink: 0,
+        radius: 24,
+        bg: contained ? t.primaryContainer : t.surface.alpha(0.0),
+        align: center,
+        justify: center,
+        a11y_role: progress_bar,
+        a11y_label: label,
+    ] {
+        Box #[
+            width: 38,
+            height: 38,
+            origin: center,
+            rotate: 360deg with anim.linear(4550ms, from: 0deg, repeat: infinite),
+        ] {
+            Canvas #[
+                width: 38,
+                height: 38,
+                morph: anim.keyframes(
+                    0%: 0.0,
+                    14%: 1.0 easeInOut,
+                    29%: 2.0 easeInOut,
+                    43%: 3.0 easeInOut,
+                    57%: 4.0 easeInOut,
+                    71%: 5.0 easeInOut,
+                    86%: 6.0 easeInOut,
+                    100%: 7.0 easeInOut,
+                    duration: 4550ms,
+                    loop: true,
+                ),
+            ] {
+                ngon(cx: 19, cy: 19, r: 18, n: 10, corner: 6, inner: 0.82, fill: ink)
+                ngon(cx: 19, cy: 19, r: 18, n: 9, corner: 6, inner: 0.9, fill: ink)
+                ngon(cx: 19, cy: 19, r: 18, n: 5, corner: 6, fill: ink)
+                rect(x: 4, y: 9.5, w: 30, h: 19, radius: 9.5, fill: ink)
+                ngon(cx: 19, cy: 19, r: 18, n: 8, corner: 5, inner: 0.84, fill: ink)
+                ngon(cx: 19, cy: 19, r: 18, n: 4, corner: 6, inner: 0.82, fill: ink)
+                rect(x: 3, y: 7, w: 32, h: 24, radius: 12, fill: ink)
+            }
+        }
+    }
+}
