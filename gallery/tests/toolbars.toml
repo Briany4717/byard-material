@@ -1,0 +1,46 @@
+# Scenarios for m.DockedToolbar and m.FloatingToolbar, on the ToolbarScenarios view.
+view = "ToolbarScenarios"
+size = "400x520"
+
+[[test]]
+name = "each toolbar is named, and holds its actions"
+expect = ['Toolbar "Formatting"', 'ToggleButton "Bold" [focusable]', 'Toolbar "History"', 'Button "Undo" [focusable]', 'Button "Redo" [focusable disabled]', 'Button "Edit" [focusable]', 'Toolbar "Tools"', 'Button "Share" [focusable]']
+
+[[test]]
+name = "the floating toolbar is 64 tall and the vertical one 64 wide"
+expect = ['Toolbar "History" @ 16,194 112x64', 'Toolbar "Tools" @ 168,274 64x112']
+
+[[test]]
+name = "the FAB sits beside the horizontal toolbar"
+expect = ['Button "Edit" [focusable] @ 136,198 56x56']
+
+[[test]]
+name = "a toggle in the docked toolbar flips"
+steps = [{ tap = 'ToggleButton "Bold"' }]
+expect = ['Label "Bold: on"', 'ToggleButton "Bold" [focusable focused checked]']
+
+[[test]]
+name = "the toolbar's action and its FAB act"
+steps = [{ tap = 'Button "Undo"' }, { tap = 'Button "Edit"' }]
+expect = ['Label "Undos: 1"', 'Label "Edits: 1"']
+
+[[test]]
+name = "a disabled action does not act"
+steps = [{ tap = 'Button "Redo"' }]
+expect = ['Label "Undos: 0"']
+
+[[test]]
+name = "Tab order follows reading order and Space presses"
+steps = [{ key = "Tab" }, { key = "Tab" }, { key = "Tab" }, { key = "Space" }]
+expect = ['Label "Undos: 1"', 'Button "Undo" [focusable focused]']
+
+[[test]]
+name = "Tab skips the disabled action and reaches the FAB"
+steps = [{ key = "Tab" }, { key = "Tab" }, { key = "Tab" }, { key = "Tab" }, { key = "Space" }]
+expect = ['Label "Edits: 1"']
+
+[[test]]
+name = "the same in the dark scheme"
+scheme = "dark"
+steps = [{ tap = 'ToggleButton "Bold"' }]
+expect = ['Label "Bold: on"']

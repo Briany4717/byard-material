@@ -20,7 +20,8 @@ View ChipsPage() {
             Line("flat") { SuggestionRow(look: m.ChipLook.flat) }
             Line("elevated") { SuggestionRow(look: m.ChipLook.elevated) }
         }
-        Section("A chip set") { ChipSet() }
+        Section("A chip set wraps, here in 420 wide") { ChipSetDemo() }
+        Section("Input chips in a set: Backspace or Delete on a focused chip removes it") { PeopleDemo() }
     }
 }
 
@@ -46,19 +47,22 @@ View FilterRow(look: m.ChipLook) {
 }
 
 View InputRow() {
+    inject Theme as t
     var s = false
     Column #[gap: 12] {
-        Row #[gap: 12, align: center] {
-            m.InputChip("Ana")
-            m.InputChip("Ana", icon: "person")
-            m.InputChip("Ana", avatar: "A")
-            m.InputChip("Ana", selected: s, on_tap: { s = !s })
-            m.InputChip("Ana", selected: true, avatar: "A")
+        Row #[gap: 12, align: center, wrap: true, width: 700] {
+            m.InputChip("Ana", on_remove: {})
+            m.InputChip("Ana", icon: "person", on_remove: {})
+            m.InputChip("Ana", avatar: "A", on_remove: {})
+            m.InputChip("Ana", selected: s, on_tap: { s = !s }, on_remove: {})
+            m.InputChip("Ana", selected: true, avatar: "A", on_remove: {})
+            m.InputChip("Ana", leading: { Box #[bg: t.tertiaryContainer, width: 24, height: 24] {} }, on_remove: {})
+            m.InputChip("No remove")
         }
         Row #[gap: 12, align: center] {
-            m.InputChip("Ana", disabled: true)
-            m.InputChip("Ana", selected: true, disabled: true)
-            m.InputChip("Ana", icon: "person", disabled: true)
+            m.InputChip("Ana", disabled: true, on_remove: {})
+            m.InputChip("Ana", selected: true, disabled: true, on_remove: {})
+            m.InputChip("Ana", icon: "person", disabled: true, on_remove: {})
         }
     }
 }
@@ -71,22 +75,30 @@ View SuggestionRow(look: m.ChipLook) {
     }
 }
 
-// Several chips together, as a set. A Row does not wrap, so it is two rows.
-View ChipSet() {
+// Several chips together, as a set: it wraps when the width runs out.
+View ChipSetDemo() {
     inject Theme as t
-    Column #[gap: 8] {
-        Row #[gap: 8, align: center] {
-            m.FilterChip("Vegetarian", selected: true)
+    var veg = true
+    Column #[gap: 8, width: 420] {
+        m.ChipSet(label: "Filters") {
+            m.FilterChip("Vegetarian", selected: veg, on_tap: { veg = !veg })
             m.FilterChip("Gluten free")
             m.FilterChip("Open now", look: m.ChipLook.elevated)
             m.AssistChip("Directions", icon: "directions")
             m.SuggestionChip("Cheap eats")
+            m.SuggestionChip("Late night")
+            m.SuggestionChip("Outdoor seating")
         }
-        Row #[gap: 8, align: center] {
-            m.InputChip("Ana", avatar: "A")
-            m.InputChip("Ben", icon: "person")
-            m.InputChip("Chloe", selected: true)
-            Text("3 people") #[typo: t.labelMedium, color: t.onSurfaceVariant]
+        Text("3 places") #[typo: t.labelMedium, color: t.onSurfaceVariant]
+    }
+}
+
+// Input chips that remove themselves from a list.
+View PeopleDemo() {
+    var people = ["Ana", "Ben", "Chloe", "Dmitri", "Esi", "Farid", "Gwen"]
+    m.ChipSet(label: "People") #[width: 420] {
+        for i, name in people {
+            m.InputChip(name, icon: "person", on_remove: { people = people.filter(n => n != name) })
         }
     }
 }
@@ -102,11 +114,18 @@ View ChipsScenarios() {
         m.AssistChip("Directions", icon: "directions", on_tap: { taps += 1 })
         m.FilterChip("Open now", selected: open, on_tap: { open = !open })
         m.InputChip("Ana", icon: "person", on_tap: { tapped += 1 }, on_remove: { removed += 1 })
+        m.InputChip("Plain")
         m.SuggestionChip("Sounds good", on_tap: { taps += 10 })
         m.AssistChip("Archive", disabled: true, on_tap: { taps += 1000 })
         m.InputChip("Ben", disabled: true, on_remove: { removed += 1000 })
         Text("Taps: {taps}")
         Text("Edits: {tapped}")
         Text("Removed: {removed}")
+        m.ChipSet(label: "Set") #[width: 200] {
+            m.SuggestionChip("Alpha")
+            m.SuggestionChip("Beta")
+            m.SuggestionChip("Gamma")
+            m.SuggestionChip("Delta")
+        }
     }
 }

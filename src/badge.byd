@@ -1,0 +1,77 @@
+// Material 3 badge: a small dot, or a large pill with a number or short text. A number above
+// `max` shows as "max+" ("999+"). `BadgedIcon` puts a badge at the top end of an icon.
+//
+//     m.Badge()                                     // a dot
+//     m.Badge(count: 3, label: "unread messages")
+//     m.BadgedIcon("mail", label: "Mail", count: 1200, badge_label: "unread messages")
+//
+// A screen reader says the count and `label` ("3 unread messages"; "more than 999 unread
+// messages" past `max`); a dot says `label` alone.
+
+private let smallBadge = 6
+private let largeBadge = 16
+
+private fn badgeText(count: Int, text: Str, max: Int) -> Str =>
+    text != "" ? text : count > max ? "{max}+" : "{count}"
+
+private fn badgeSpoken(count: Int, text: Str, max: Int, label: Str) -> Str =>
+    text != "" ? "{text} {label}" : count > max ? "more than {max} {label}" : "{count} {label}"
+
+View Badge(count: Int = -1, text: Str = "", max: Int = 999, label: Str = "") {
+    inject Theme as t
+
+    when count < 0 && text == "" {
+        Box #[
+            bg: t.error,
+            width: smallBadge,
+            height: smallBadge,
+            radius: smallBadge / 2,
+            shrink: 0,
+            a11y_role: image,
+            a11y_label: label,
+            a11y_hidden: label == "",
+        ] {}
+    } else {
+        Row #[
+            bg: t.error,
+            height: largeBadge,
+            min_width: largeBadge,
+            radius: largeBadge / 2,
+            p: (0, 4),
+            align: center,
+            justify: center,
+            shrink: 0,
+            a11y_role: image,
+            a11y_label: badgeSpoken(count, text, max, label),
+        ] {
+            Text(badgeText(count, text, max)) #[
+                typo: t.labelSmall,
+                color: t.onError,
+                max_lines: 1,
+                a11y_hidden: true,
+            ]
+        }
+    }
+}
+
+// An icon with a badge at its top end. The badge shows when `dot` is set, or there is a
+// `count` above 0 or a `text`.
+View BadgedIcon(name: Str, label: Str = "", count: Int = 0, text: Str = "", dot: Bool = false,
+    max: Int = 999, badge_label: Str = "", size: Int = 24, color: Int = 0) {
+    inject Theme as t
+
+    let large = count > 0 || text != ""
+
+    // A large badge starts 12 dp before the icon's end and grows away from it, so a long
+    // count never covers the icon; a dot sits on the corner.
+    ZStack #[alignment: top_start, shrink: 0] {
+        Icon(name, size: size, color: color, label: label)
+        when large {
+            Box #[mt: -4, ml: size - 12] {
+                Badge(count: large && text == "" ? count : -1, text: text, max: max, label: badge_label)
+            }
+        } else when dot {
+            Box #[mt: 1, ml: size - 5] { Badge(label: badge_label) }
+        }
+    }
+}

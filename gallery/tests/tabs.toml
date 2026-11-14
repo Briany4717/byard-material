@@ -1,0 +1,61 @@
+# Scenarios for m.Tabs and m.Tab, on the TabsScenarios view. A tab list is one Tab stop: Tab
+# enters at the selected tab, the arrows move focus without selecting, Enter or Space selects.
+view = "TabsScenarios"
+size = "480x300"
+
+[[test]]
+name = "the tab list and each tab have their role, name and state"
+expect = [
+    'TabList "Sections"',
+    'Tab "Flights" [focusable]',
+    'Tab "Trips" [focusable selected]',
+    'Tab "Hold" [focusable disabled]',
+    'Tab "Explore" [focusable]',
+    'Label "Tab is 1, picked 0"',
+]
+
+[[test]]
+name = "a tap selects the tab and calls on_select"
+steps = [{ tap = 'Tab "Flights"' }]
+expect = ['Tab "Flights" [focusable focused selected]', 'Tab "Trips" [focusable]', 'Label "Tab is 0, picked 1"']
+
+[[test]]
+name = "a disabled tab cannot be tapped"
+steps = [{ tap = 'Tab "Hold"' }]
+expect = ['Label "Tab is 1, picked 0"']
+
+[[test]]
+name = "Tab enters the list at the selected tab"
+steps = [{ key = "Tab" }]
+expect = ['Tab "Trips" [focusable focused selected]']
+
+[[test]]
+name = "the arrows move focus without selecting, skipping a disabled tab"
+steps = [{ key = "Tab" }, { key = "Right" }]
+expect = ['Tab "Explore" [focusable focused]', 'Tab "Trips" [focusable selected]', 'Label "Tab is 1, picked 0"']
+
+[[test]]
+name = "Enter selects the focused tab"
+steps = [{ key = "Tab" }, { key = "Right" }, { key = "Enter" }]
+expect = ['Tab "Explore" [focusable focused selected]', 'Label "Tab is 3, picked 0"']
+
+[[test]]
+name = "Home and End jump to the ends"
+steps = [{ key = "Tab" }, { key = "Home" }, { key = "Space" }]
+expect = ['Tab "Flights" [focusable focused selected]', 'Label "Tab is 0, picked 1"']
+
+[[test]]
+name = "the arrows wrap"
+steps = [{ key = "Tab" }, { key = "Left" }, { key = "Left" }]
+expect = ['Tab "Explore" [focusable focused]']
+
+[[test]]
+name = "the next Tab leaves the list"
+steps = [{ key = "Tab" }, { key = "Tab" }]
+expect = ['Tab "Trips" [focusable selected]', 'Button "Done" [focusable focused]']
+
+[[test]]
+name = "the same in the dark scheme"
+scheme = "dark"
+steps = [{ key = "Tab" }, { key = "Right" }, { key = "Enter" }]
+expect = ['Label "Tab is 3, picked 0"']

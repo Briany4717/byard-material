@@ -9,7 +9,7 @@ enum ChipLook {
 }
 
 View AssistChip(label: Str, look: ChipLook = .flat, icon: Str = "", disabled: Bool = false,
-    on_tap: Fn() = {}) {
+    on_tap: Fn() = none) {
     inject Theme as t
 
     let elevated = look == ChipLook.elevated

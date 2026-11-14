@@ -1,0 +1,155 @@
+// Material 3 list item: one, two or three lines (headline, supporting text, overline) with a
+// leading and a trailing slot for an icon, avatar, image, checkbox, switch, radio or text.
+//
+//     m.ListItem("Photos", supporting: "Jan 9, 2026", leading: { m.ListItemIcon("image") })
+//     m.ListItem("Brunch", overline: "Saturday", supporting: "Bring the good coffee",
+//         leading: { m.ListItemAvatar("B") }, trailing: { m.ListItemText("10:00") },
+//         on_tap: { open() })
+//     m.ListItem("Wi-Fi", trailing: { m.Switch(bind: on, name: "Wi-Fi") })
+//
+// The lines follow the text you give: a headline alone is one line (at least 56 dp), with
+// supporting text two (72), with an overline as well three (at least 88, growing with the
+// text). `lines: 3` makes it three where the supporting text wraps. One and two lines cut
+// long text with an ellipsis. In a three-line item the slots sit at the top.
+//
+// An item given `on_tap` is one element with the role of a list item, the tap, a state layer
+// on hover, focus and press and a keyboard ring; any other is inert, still announced as a list
+// item named by its headline. Controls in a slot keep their own taps. `selected` takes the
+// secondary container colour. A disabled item dims its text and its slots to 38%.
+//
+// The helpers below give the leading kinds Material's sizes and colours: an icon of 24, an
+// avatar of 40, an image of 56 square, and trailing supporting text. Anything else goes in the
+// slot as it is.
+
+private fn listLines(supporting: Str, overline: Str, lines: Int) -> Int =>
+    lines > 0 ? lines : supporting == "" ? 1 : overline == "" ? 2 : 3
+
+View ListItem(headline: Str, supporting: Str = "", overline: Str = "", lines: Int = 0,
+    selected: Bool = false, disabled: Bool = false, on_tap: Fn() = none, leading: Slot = none,
+    trailing: Slot = none) {
+    inject Theme as t
+
+    let n = listLines(supporting, overline, lines)
+    let top = n >= 3
+
+    // Material: 56 dp for one line, 72 for two, 88 for three at least; 16 dp before the
+    // leading part and 24 after the trailing one, 16 between parts, 8 above and below (12 for
+    // three lines).
+    let container = selected && !disabled ? t.secondaryContainer : t.surface
+    let ink = disabled ? t.onSurface.alpha(disabledContent) : selected ? t.onSecondaryContainer : t.onSurface
+    let quiet = disabled ? t.onSurface.alpha(disabledContent) : selected ? t.onSecondaryContainer : t.onSurfaceVariant
+
+    when on_tap != none {
+        Row #[
+            bg: container with t.springEffectsFast,
+            min_height: n == 1 ? 56 : n == 2 ? 72 : 88,
+            p: (top ? 12 : 8, 24, top ? 12 : 8, 16),
+            gap: 16,
+            align: top ? start : center,
+            a11y_role: list_item,
+            a11y_label: headline,
+            a11y_selected: selected,
+            disabled: disabled,
+            tap => on_tap(),
+            focus => {},
+        ] {
+            on hover { overlay: t.onSurface.alpha(stateHover) with t.springEffectsFast }
+            on focus_visible {
+                overlay: t.onSurface.alpha(stateFocus) with t.springEffectsFast
+                outline: t.secondary
+                outline_width: focusRingWidth
+                outline_offset: focusRingOffset
+            }
+            on pressed { overlay: t.onSurface.alpha(statePress) with t.springEffectsFast }
+
+            ListItemBody(headline, supporting, overline, n, ink, quiet, disabled, leading: leading, trailing: trailing)
+        }
+    } else {
+        Row #[
+            bg: container with t.springEffectsFast,
+            min_height: n == 1 ? 56 : n == 2 ? 72 : 88,
+            p: (top ? 12 : 8, 24, top ? 12 : 8, 16),
+            gap: 16,
+            align: top ? start : center,
+            a11y_role: list_item,
+            a11y_label: headline,
+            a11y_selected: selected,
+            a11y_disabled: disabled,
+        ] {
+            ListItemBody(headline, supporting, overline, n, ink, quiet, disabled, leading: leading, trailing: trailing)
+        }
+    }
+}
+
+// The parts of an item, shared by its clickable and inert forms.
+private View ListItemBody(headline: Str, supporting: Str, overline: Str, n: Int, ink: Int,
+    quiet: Int, disabled: Bool, leading: Slot = none, trailing: Slot = none) {
+    inject Theme as t
+
+    when leading != none {
+        Box #[shrink: 0, opacity: disabled ? disabledContent : 1.0 with t.springEffectsFast] { leading }
+    }
+    Column #[grow: 1, shrink: 1] {
+        when overline != "" {
+            Text(overline) #[typo: t.labelSmall, color: quiet, max_lines: 1]
+        }
+        Text(headline) #[typo: t.bodyLarge, color: ink, max_lines: n >= 3 ? 2 : 1]
+        when supporting != "" {
+            Text(supporting) #[typo: t.bodyMedium, color: quiet, max_lines: n >= 3 ? () : 1]
+        }
+    }
+    when trailing != none {
+        Box #[shrink: 0, opacity: disabled ? disabledContent : 1.0 with t.springEffectsFast] { trailing }
+    }
+}
+
+// A leading or trailing icon, 24 dp in on_surface_variant.
+View ListItemIcon(name: Str) {
+    inject Theme as t
+    Icon(name, color: t.onSurfaceVariant)
+}
+
+// A leading avatar: 40 dp, primary container, one or two letters. Hidden from screen readers.
+View ListItemAvatar(text: Str) {
+    inject Theme as t
+    Box #[
+        width: 40,
+        height: 40,
+        radius: 20,
+        shrink: 0,
+        bg: t.primaryContainer,
+        align: center,
+        justify: center,
+        a11y_hidden: true,
+    ] {
+        Text(text) #[typo: t.titleMedium, color: t.onPrimaryContainer, wrap: false]
+    }
+}
+
+// A leading image: 56 dp square with a 4 dp corner. `description` is read by screen readers;
+// leave it empty for a picture that only decorates.
+View ListItemImage(path: Str, description: Str = "") {
+    inject Theme as t
+    Clip #[rrect: t.cornerXs, width: 56, height: 56, shrink: 0] {
+        Image(path) #[
+            width: 56,
+            height: 56,
+            a11y_hidden: description == "",
+            a11y_label: description,
+        ]
+    }
+}
+
+// Trailing supporting text, label_small in on_surface_variant.
+View ListItemText(text: Str) {
+    inject Theme as t
+    Text(text) #[typo: t.labelSmall, color: t.onSurfaceVariant, wrap: false]
+}
+
+// A list: its items in a column, announced as a list. Put a `Divider` between items where
+// you want one.
+View List(label: Str = "", content) {
+    Column #[a11y_role: list, a11y_label: label] {
+        content
+    }
+}
