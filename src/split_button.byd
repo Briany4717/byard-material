@@ -32,7 +32,7 @@ private fn splitInnerRadius(size: ButtonSize) -> Int =>
 
 View SplitButton(label: Str, variant: SplitButtonVariant = .filled, size: ButtonSize = .s,
     icon: Str = "", open: Bool = false, disabled: Bool = false, menu_label: Str = "More options",
-    on_tap: Fn() = {}, on_menu: Fn() = {}) {
+    on_tap: Fn() = none, on_menu: Fn() = none) {
     inject Theme as t
 
     let h = buttonHeight(size)
@@ -62,7 +62,7 @@ View SplitButton(label: Str, variant: SplitButtonVariant = .filled, size: Button
     Row #[gap: 2, align: center, shrink: 0] {
         Row #[
             bg: container with t.springEffectsFast,
-            radius: (full, inner, inner, full),
+            radius: (full, inner, inner, full) with t.springSpatialFast,
             border: line,
             border_width: outlined ? lineWidth : 0,
             shadow: restShadow,
@@ -84,7 +84,7 @@ View SplitButton(label: Str, variant: SplitButtonVariant = .filled, size: Button
             }
             on pressed {
                 overlay: ink.alpha(statePress) with t.springEffectsFast
-                radius: (inner, inner, inner, inner)
+                radius: (inner, inner, inner, inner) with t.springSpatialFast
             }
 
             when icon != "" {
@@ -98,7 +98,7 @@ View SplitButton(label: Str, variant: SplitButtonVariant = .filled, size: Button
         }
         Box #[
             bg: container with t.springEffectsFast,
-            radius: (trailInner, full, full, trailInner),
+            radius: (trailInner, full, full, trailInner) with t.springSpatialFast,
             border: line,
             border_width: outlined ? lineWidth : 0,
             shadow: restShadow,
@@ -122,7 +122,7 @@ View SplitButton(label: Str, variant: SplitButtonVariant = .filled, size: Button
             }
             on pressed {
                 overlay: ink.alpha(statePress) with t.springEffectsFast
-                radius: (trailInner, trailInner, trailInner, trailInner)
+                radius: (trailInner, trailInner, trailInner, trailInner) with t.springSpatialFast
             }
 
             Box #[

@@ -13,6 +13,10 @@
 // `selection: .none` still takes a binding (give it a spare `var`) and reports taps through
 // `on_tap(index)`. `icon_only` hides the labels but keeps them for a screen reader.
 //
+// A standard group's pressed item widens by `groupWiden` on each side and the ones beside it
+// narrow by `groupNarrow`, on a spatial spring (padding with motion). In a connected group the
+// corners between items, and those of a selected item, move on the same spring.
+//
 // The items are toggle buttons in a `group`. Material says nothing I could find about arrow
 // keys in a button group, so Tab walks the items and Space or Enter presses one.
 
@@ -68,7 +72,7 @@ private fn groupIconPad(size: ButtonSize) -> Int =>
 View ButtonGroup(items: List<Str>, bind selected: List<Int>, icons: List<Str> = [],
     type: ButtonGroupType = .standard, variant: ButtonVariant = .tonal, size: ButtonSize = .s,
     shape: ButtonShape = .round, selection: ButtonGroupSelection = .single,
-    icon_only: Bool = false, disabled: Bool = false, on_tap: Fn(Int) = {|_| }) {
+    icon_only: Bool = false, disabled: Bool = false, on_tap: Fn(Int) = none) {
     inject Theme as t
 
     // The item the pointer is down on, or -1: a standard group reads it to widen that item.
@@ -96,12 +100,11 @@ View ButtonGroup(items: List<Str>, bind selected: List<Int>, icons: List<Str> = 
     }
 }
 
-// One item. A view because a `let` inside a `for` cannot feed a length (see the notes). The
-// connected and standard branches differ only in the radius: a connected item's corners are a
-// tuple, which cannot spring, and a standard item's one radius can.
+// One item. A view so that its `let`s and the pointer var it shares with its neighbours stay
+// out of the `for`.
 private View GroupItem(label: Str, icon: Str, index: Int, count: Int, bind down: Int,
     type: ButtonGroupType, variant: ButtonVariant, size: ButtonSize, shape: ButtonShape,
-    toggle: Bool, on: Bool, icon_only: Bool, disabled: Bool, on_tap: Fn() = {}) {
+    toggle: Bool, on: Bool, icon_only: Bool, disabled: Bool, on_tap: Fn() = none) {
     inject Theme as t
 
     let h = buttonHeight(size)
@@ -132,105 +135,62 @@ private View GroupItem(label: Str, icon: Str, index: Int, count: Int, bind down:
     let inner = groupInnerRadius(size)
     let cornerL = (on || index == 0) ? h / 2 : inner
     let cornerR = (on || index == count - 1) ? h / 2 : inner
+    let pr = buttonPressedRadius(size)
+    let pressedCorners = connected ? (inner, inner, inner, inner) : (pr, pr, pr, pr)
+    let corners = connected ? (cornerL, cornerR, cornerR, cornerL) : (single, single, single, single)
 
-    // Standard group: widen the pressed item, narrow the ones beside it.
-    let beside = down >= 0 && (down == index - 1 || down == index + 1)
-    let side = connected ? buttonPadding(size)
-        : down == index ? buttonPadding(size) + groupWiden(size)
-        : beside ? buttonPadding(size) - groupNarrow(size)
-        : buttonPadding(size)
+    // Standard group: the pressed item widens (its own `on pressed`, so a key press does too) and
+    // the ones beside it, which read `down`, narrow.
+    let beside = !connected && down >= 0 && (down == index - 1 || down == index + 1)
+    let side = beside ? buttonPadding(size) - groupNarrow(size) : buttonPadding(size)
     let padX = icon_only ? groupIconPad(size) : side
+    let widen = (connected || icon_only) ? 0 : groupWiden(size)
 
     let restShadow = !disabled && variant == ButtonVariant.elevated ? "sm" : ()
     let hoverShadow = flat ? () : variant == ButtonVariant.elevated ? "md" : "sm"
 
-    when connected {
-        Row #[
-            bg: container with t.springEffectsFast,
-            radius: (cornerL, cornerR, cornerR, cornerL),
-            border: line,
-            border_width: outlined ? lineWidth : 0,
-            shadow: restShadow,
-            height: h,
-            p: (0, padX),
-            gap: buttonGap(size),
-            align: center,
-            justify: center,
-            shrink: 0,
-            a11y_role: toggle ? toggle_button : button,
-            a11y_checked: on,
-            a11y_label: label,
-            disabled: disabled,
-            pointer_down => down = index,
-            pointer_up => down = -1,
-            tap => on_tap(),
-        ] {
-            on hover { overlay: ink.alpha(stateHover) with t.springEffectsFast, shadow: hoverShadow }
-            on focus_visible {
-                overlay: ink.alpha(stateFocus) with t.springEffectsFast
-                outline: t.secondary
-                outline_width: focusRingWidth
-                outline_offset: focusRingOffset
-            }
-            on pressed {
-                overlay: ink.alpha(statePress) with t.springEffectsFast
-                radius: (inner, inner, inner, inner)
-            }
-
-            when icon != "" {
-                Icon(icon, fill: on ? 1.0 : 0.0, size: buttonIconSize(size), color: ink)
-            }
-            when !icon_only {
-                Text(label) #[
-                    typo: (size == ButtonSize.xs || size == ButtonSize.s) ? t.labelLarge : size == ButtonSize.m ? t.titleMedium : size == ButtonSize.l ? t.headlineSmall : t.headlineLarge,
-                    color: ink with t.springEffectsFast,
-                    wrap: false,
-                ]
-            }
+    Row #[
+        bg: container with t.springEffectsFast,
+        radius: corners with t.springSpatialFast,
+        border: line,
+        border_width: outlined ? lineWidth : 0,
+        shadow: restShadow,
+        height: h,
+        p: (0, padX) with t.springSpatialFast,
+        gap: buttonGap(size),
+        align: center,
+        justify: center,
+        shrink: 0,
+        a11y_role: toggle ? toggle_button : button,
+        a11y_checked: on,
+        a11y_label: label,
+        disabled: disabled,
+        pointer_down => down = index,
+        pointer_up => down = -1,
+        tap => on_tap(),
+    ] {
+        on hover { overlay: ink.alpha(stateHover) with t.springEffectsFast, shadow: hoverShadow }
+        on focus_visible {
+            overlay: ink.alpha(stateFocus) with t.springEffectsFast
+            outline: t.secondary
+            outline_width: focusRingWidth
+            outline_offset: focusRingOffset
         }
-    } else {
-        Row #[
-            bg: container with t.springEffectsFast,
-            radius: single with t.springSpatialFast,
-            border: line,
-            border_width: outlined ? lineWidth : 0,
-            shadow: restShadow,
-            height: h,
-            p: (0, padX),
-            gap: buttonGap(size),
-            align: center,
-            justify: center,
-            shrink: 0,
-            a11y_role: toggle ? toggle_button : button,
-            a11y_checked: on,
-            a11y_label: label,
-            disabled: disabled,
-            pointer_down => down = index,
-            pointer_up => down = -1,
-            tap => on_tap(),
-        ] {
-            on hover { overlay: ink.alpha(stateHover) with t.springEffectsFast, shadow: hoverShadow }
-            on focus_visible {
-                overlay: ink.alpha(stateFocus) with t.springEffectsFast
-                outline: t.secondary
-                outline_width: focusRingWidth
-                outline_offset: focusRingOffset
-            }
-            on pressed {
-                overlay: ink.alpha(statePress) with t.springEffectsFast
-                radius: buttonPressedRadius(size) with t.springSpatialFast
-            }
+        on pressed {
+            overlay: ink.alpha(statePress) with t.springEffectsFast
+            p: (0, padX + widen) with t.springSpatialFast
+            radius: pressedCorners with t.springSpatialFast
+        }
 
-            when icon != "" {
-                Icon(icon, fill: on ? 1.0 : 0.0, size: buttonIconSize(size), color: ink)
-            }
-            when !icon_only {
-                Text(label) #[
-                    typo: (size == ButtonSize.xs || size == ButtonSize.s) ? t.labelLarge : size == ButtonSize.m ? t.titleMedium : size == ButtonSize.l ? t.headlineSmall : t.headlineLarge,
-                    color: ink with t.springEffectsFast,
-                    wrap: false,
-                ]
-            }
+        when icon != "" {
+            Icon(icon, fill: on ? 1.0 : 0.0, size: buttonIconSize(size), color: ink)
+        }
+        when !icon_only {
+            Text(label) #[
+                typo: (size == ButtonSize.xs || size == ButtonSize.s) ? t.labelLarge : size == ButtonSize.m ? t.titleMedium : size == ButtonSize.l ? t.headlineSmall : t.headlineLarge,
+                color: ink with t.springEffectsFast,
+                wrap: false,
+            ]
         }
     }
 }

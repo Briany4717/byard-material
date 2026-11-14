@@ -1,0 +1,15 @@
+// A set of chips: they sit in a row and wrap onto the next line when the width runs out, with
+// Material's 8 between chips and between lines.
+//
+//     m.ChipSet(label: "Filters") {
+//         m.FilterChip("Vegetarian", selected: veg, on_tap: { veg = !veg })
+//         m.FilterChip("Open now")
+//     }
+//
+// `label` names the group for a screen reader.
+
+View ChipSet(label: Str = "", content) {
+    Row #[wrap: true, gap: 8, row_gap: 8, align: center, a11y_role: group, a11y_label: label] {
+        content
+    }
+}

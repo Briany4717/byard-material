@@ -1,17 +1,18 @@
 // Material 3 input chip: a piece of information the user entered, such as a recipient or a tag.
 // Flat (outlined) only; Material has no elevated input chip. An optional avatar (an image or
-// initials, drawn by the caller as `avatar`) or leading icon, and a trailing remove button of
-// its own that calls `on_remove`. Tapping the chip itself calls `on_tap` (edit, usually);
-// The remove button is focusable and takes Space and Enter;
-// Backspace and Delete on the chip itself are not wired (a Row has no `key_down`, see notes).
+// initials as `avatar`, or any element as the `leading` slot, such as an image) or leading icon,
+// and a trailing remove button that calls `on_remove`; a chip with no `on_remove` has no remove
+// button. Backspace or Delete on the focused chip removes it too. Tapping the chip itself calls
+// `on_tap` (edit, usually). The remove button is its own Tab stop, Space and Enter press it.
 //
 //     m.InputChip("Ana", icon: "person", on_remove: { people.remove(0) })
+//     m.InputChip("Ana", leading: { Image("ana.png") })
 
 View InputChip(label: Str, selected: Bool = false, icon: Str = "", avatar: Str = "",
-    disabled: Bool = false, on_tap: Fn() = {}, on_remove: Fn() = {}) {
+    disabled: Bool = false, leading: Slot = none, on_tap: Fn() = none, on_remove: Fn() = none) {
     inject Theme as t
 
-    let hasAvatar = avatar != ""
+    let hasAvatar = avatar != "" || leading != none
     let lead = hasAvatar || icon != ""
 
     let container = disabled ? (selected ? t.onSurface.alpha(disabledContainer) : t.surface.alpha(0.0))
@@ -29,7 +30,7 @@ View InputChip(label: Str, selected: Bool = false, icon: Str = "", avatar: Str =
         border_width: selected ? 0 : chipLineWidth,
         height: chipHeight,
         pl: hasAvatar ? 4 : lead ? 8 : 16,
-        pr: 8,
+        pr: on_remove != none ? 8 : 16,
         gap: chipGap,
         shrink: 0,
         align: center,
@@ -37,6 +38,11 @@ View InputChip(label: Str, selected: Bool = false, icon: Str = "", avatar: Str =
         a11y_selected: selected,
         disabled: disabled,
         tap => on_tap(),
+        key_down(k) => {
+            if k == "Backspace" || k == "Delete" {
+                on_remove()
+            }
+        },
     ] {
         on hover { overlay: ink.alpha(stateHover) with t.springEffectsFast }
         on focus_visible {
@@ -47,7 +53,16 @@ View InputChip(label: Str, selected: Bool = false, icon: Str = "", avatar: Str =
         }
         on pressed { overlay: ink.alpha(statePress) with t.springEffectsFast }
 
-        when hasAvatar {
+        when leading != none {
+            Clip #[
+                width: chipAvatarSize,
+                height: chipAvatarSize,
+                rrect: chipAvatarSize / 2,
+                shrink: 0,
+            ] {
+                leading
+            }
+        } else when hasAvatar {
             Row #[
                 width: chipAvatarSize,
                 height: chipAvatarSize,
@@ -67,27 +82,29 @@ View InputChip(label: Str, selected: Bool = false, icon: Str = "", avatar: Str =
             Icon(icon, size: chipIconSize, color: iconInk)
         }
         Text(label) #[typo: t.labelLarge, color: ink with t.springEffectsFast, wrap: false]
-        Box #[
-            width: 24,
-            height: 24,
-            radius: 12,
-            shrink: 0,
-            align: center,
-            justify: center,
-            a11y_role: button,
-            a11y_label: "Remove {label}",
-            disabled: disabled,
-            tap => on_remove(),
-        ] {
-            on hover { overlay: ink.alpha(stateHover) with t.springEffectsFast }
-            on focus_visible {
-                overlay: ink.alpha(stateFocus) with t.springEffectsFast
-                outline: t.secondary
-                outline_width: focusRingWidth
-                outline_offset: focusRingOffset
+        when on_remove != none {
+            Box #[
+                width: 24,
+                height: 24,
+                radius: 12,
+                shrink: 0,
+                align: center,
+                justify: center,
+                a11y_role: button,
+                a11y_label: "Remove {label}",
+                disabled: disabled,
+                tap => on_remove(),
+            ] {
+                on hover { overlay: ink.alpha(stateHover) with t.springEffectsFast }
+                on focus_visible {
+                    overlay: ink.alpha(stateFocus) with t.springEffectsFast
+                    outline: t.secondary
+                    outline_width: focusRingWidth
+                    outline_offset: focusRingOffset
+                }
+                on pressed { overlay: ink.alpha(statePress) with t.springEffectsFast }
+                Icon("close", size: chipIconSize, color: ink)
             }
-            on pressed { overlay: ink.alpha(statePress) with t.springEffectsFast }
-            Icon("close", size: chipIconSize, color: ink)
         }
     }
 }
