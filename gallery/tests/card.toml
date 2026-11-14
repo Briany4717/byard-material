@@ -36,3 +36,18 @@ name = "the same in the dark scheme"
 scheme = "dark"
 steps = [{ key = "Tab" }, { key = "Space" }]
 expect = ['Label "Opened: 1"']
+
+[[test]]
+name = "a button inside a clickable card is its own tap, and the card's is not fired"
+steps = [{ tap = 'Button "Confirm"' }]
+expect = ['Label "Booked: 1"', 'Label "Opened: 0"']
+
+[[test]]
+name = "tapping the card around the button opens the card"
+steps = [{ tap = [30, 296] }]
+expect = ['Label "Opened: 10"', 'Label "Booked: 0"']
+
+[[test]]
+name = "Tab goes to the card, then to the button inside it"
+steps = [{ key = "Tab" }, { key = "Tab" }, { key = "Tab" }]
+expect = ['Button "Confirm" [focusable focused]']

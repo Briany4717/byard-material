@@ -11,3 +11,7 @@ exact = [
     'Label "Mail"',
     'Image "3 unread messages"',
 ]
+
+[[test]]
+name = "a single digit is a 16 by 16 circle and a longer count is wider"
+expect = ['Image "7 unread messages" @ 24,46 16x16', 'Image "more than 999 unread messages" @ 24,78 33x16']

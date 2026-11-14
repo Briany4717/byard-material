@@ -35,6 +35,7 @@ View Badge(count: Int = -1, text: Str = "", max: Int = 999, label: Str = "") {
         Row #[
             bg: t.error,
             height: largeBadge,
+            min_width: largeBadge,
             radius: largeBadge / 2,
             p: (0, 4),
             align: center,
@@ -46,7 +47,7 @@ View Badge(count: Int = -1, text: Str = "", max: Int = 999, label: Str = "") {
             Text(badgeText(count, text, max)) #[
                 typo: t.labelSmall,
                 color: t.onError,
-                wrap: false,
+                max_lines: 1,
                 a11y_hidden: true,
             ]
         }

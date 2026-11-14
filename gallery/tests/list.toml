@@ -34,7 +34,26 @@ steps = [{ key = "Tab" }, { key = "Space" }]
 expect = ['ListItem "Open" [focusable focused selected]', 'Label "Picked: 1"']
 
 [[test]]
-name = "Tab skips the disabled item and wraps to the first"
+name = "Tab skips the disabled item and goes on to the switch in the next one"
 steps = [{ key = "Tab" }, { key = "Tab" }]
-expect = ['ListItem "Open" [focusable focused']
+expect = ['Switch "Mute" = off [focusable focused]']
 not = ['"Locked" [focusable disabled focused']
+
+[[test]]
+name = "a switch in a trailing slot flips on its own tap"
+steps = [{ tap = 'Switch "Mute"' }]
+expect = ['Label "Muted: true"', 'Label "Picked: 0"']
+
+[[test]]
+name = "an icon button in a trailing slot is its own tap"
+steps = [{ tap = 'Button "More"' }]
+expect = ['Label "Picked: 1000"']
+
+[[test]]
+name = "Tab walks the list item by item and into its slot"
+steps = [{ key = "Tab" }, { key = "Tab" }, { key = "Tab" }, { key = "Tab" }]
+expect = ['Button "More" [focusable focused']
+
+[[test]]
+name = "a disabled item is dimmed and has no focus"
+expect = ['ListItem "Locked" [focusable disabled]']
