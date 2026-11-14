@@ -10,7 +10,7 @@ View TimePickerPage() {
     var start_minute = 30
     var last = "nothing yet"
     var minutes = m.TimePickerPart.minute
-    var typing = false
+    var typing = true
     var typed = true
     var h1 = 10
     var m1 = 15
