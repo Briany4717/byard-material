@@ -8,6 +8,10 @@
 // empty). A card without it is inert: no state layer, no role, not focusable. Controls inside a
 // clickable card keep their own taps.
 //
+// `dragged: true` is the card while an app is moving it (a reorder): a 16% state layer and level 3,
+// whatever else it is doing.
+//
+// `dragged: true` is the card while an app is moving it (a reorder): a 16% state layer and level 3.
 // A disabled card dims its container and outline, and its content (the slot) to 38%.
 
 enum CardVariant {
@@ -16,8 +20,8 @@ enum CardVariant {
     outlined,
 }
 
-View Card(variant: CardVariant = .elevated, disabled: Bool = false, label: Str = "",
-    padding: Int = 16, on_tap: Fn() = none, content) {
+View Card(variant: CardVariant = .elevated, disabled: Bool = false, dragged: Bool = false,
+    label: Str = "", padding: Int = 16, on_tap: Fn() = none, content) {
     inject Theme as t
 
     let elevated = variant == CardVariant.elevated
@@ -41,7 +45,8 @@ View Card(variant: CardVariant = .elevated, disabled: Bool = false, label: Str =
             radius: t.cornerMd,
             border: line,
             border_width: outlined ? 1 : 0,
-            shadow: restShadow,
+            shadow: dragged ? "lg" : restShadow,
+            overlay: t.onSurface.alpha(dragged ? stateDragged : 0.0) with t.springEffectsFast,
             p: padding,
             a11y_role: button,
             a11y_label: label,
@@ -68,7 +73,8 @@ View Card(variant: CardVariant = .elevated, disabled: Bool = false, label: Str =
             radius: t.cornerMd,
             border: line,
             border_width: outlined ? 1 : 0,
-            shadow: restShadow,
+            shadow: dragged ? "lg" : restShadow,
+            overlay: t.onSurface.alpha(dragged ? stateDragged : 0.0) with t.springEffectsFast,
             p: padding,
         ] {
             Column #[opacity: disabled ? disabledContent : 1.0 with t.springEffectsFast] { content }

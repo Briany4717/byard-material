@@ -6,6 +6,9 @@
 //     m.Button("Star", variant: .tonal, toggle: true, selected: starred,
 //         on_tap: { starred = !starred })
 //
+// `autofocus: true` makes it the button a dialog or menu it sits in focuses when it opens (Dialog
+// otherwise focuses its first action), so a destructive dialog can put focus on the safe one.
+//
 // A view takes its action by name (`on_tap`), not as a trailing `=> action`. The text variant
 // has no selected look in Material; `toggle` on it only changes what a screen reader says.
 
@@ -19,7 +22,7 @@ enum ButtonVariant {
 
 View Button(label: Str, variant: ButtonVariant = .filled, size: ButtonSize = .s,
     shape: ButtonShape = .round, icon: Str = "", toggle: Bool = false, selected: Bool = false,
-    disabled: Bool = false, on_tap: Fn() = {}) {
+    disabled: Bool = false, autofocus: Bool = false, on_tap: Fn() = {}) {
     inject Theme as t
 
     // A toggle that is on takes the opposite of its resting shape.
@@ -69,6 +72,7 @@ View Button(label: Str, variant: ButtonVariant = .filled, size: ButtonSize = .s,
         a11y_role: toggle ? toggle_button : button,
         a11y_checked: selected,
         disabled: disabled,
+        autofocus: autofocus,
         tap => on_tap(),
     ] {
         on hover { overlay: ink.alpha(stateHover) with t.springEffectsFast, shadow: hoverShadow }

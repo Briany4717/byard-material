@@ -33,6 +33,11 @@ View CardPage() {
                 }
             }
         }
+        Section("Dragged (while an app moves it)") {
+            Line("elevated") { m.Card(variant: .elevated, dragged: true, on_tap: {}, label: "Elevated lifted") { Sample("Elevated", "Dragged") } }
+            Line("filled") { m.Card(variant: .filled, dragged: true, on_tap: {}, label: "Filled lifted") { Sample("Filled", "Dragged") } }
+            Line("outlined") { m.Card(variant: .outlined, dragged: true, on_tap: {}, label: "Outlined lifted") { Sample("Outlined", "Dragged") } }
+        }
         Section("Disabled") {
             Line("elevated") { m.Card(variant: .elevated, disabled: true, on_tap: {}, label: "Elevated off") { Sample("Elevated", "Disabled") } }
             Line("filled") { m.Card(variant: .filled, disabled: true, on_tap: {}, label: "Filled off") { Sample("Filled", "Disabled") } }
@@ -66,6 +71,9 @@ View CardScenarios() {
                 Sample("Booking", "Card with a button")
                 m.Button("Confirm", on_tap: { booked += 1 })
             }
+        }
+        m.Card(variant: .outlined, dragged: true, label: "Lifted", on_tap: { opened += 5 }) {
+            Sample("Lifted", "Being dragged")
         }
         Text("Opened: {opened}")
         Text("Booked: {booked}")

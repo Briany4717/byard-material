@@ -29,7 +29,7 @@ View DialogPage() {
     m.Dialog(bind: withIcon, headline: "Delete this photo?", icon: "delete",
         supporting_text: "It will be removed from every album and from your devices.",
         actions: {
-            m.Button("Keep", variant: .text, on_tap: { withIcon = false
+            m.Button("Keep", variant: .text, autofocus: true, on_tap: { withIcon = false
                 last = "kept" })
             m.Button("Delete", variant: .text, on_tap: { withIcon = false
                 last = "deleted" })
@@ -49,11 +49,13 @@ View DialogScenarios() {
     inject Theme as t
     var open = false
     var fullOpen = false
+    var destructive = false
     var result = "none"
     Column #[p: 24, gap: 16, align: start, bg: t.surface, grow: 1] {
         Row #[gap: 16, align: center] {
             m.Button("Open dialog", on_tap: { open = true })
             m.Button("Open full", variant: .tonal, on_tap: { fullOpen = true })
+            m.Button("Delete photo", variant: .tonal, on_tap: { destructive = true })
         }
         Text("Result: {result}")
         Text("Open: {open ? "yes" : "no"}")
@@ -70,4 +72,11 @@ View DialogScenarios() {
             result = "saved" }) }) {
         Text("Event details")
     }
+    m.Dialog(bind: destructive, headline: "Delete this photo?", supporting_text: "It cannot be undone.",
+        actions: {
+            m.Button("Delete", variant: .text, on_tap: { destructive = false
+                result = "deleted" })
+            m.Button("Keep", variant: .text, autofocus: true, on_tap: { destructive = false
+                result = "kept" })
+        })
 }

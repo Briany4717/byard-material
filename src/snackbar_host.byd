@@ -25,7 +25,8 @@ enum SnackbarDuration {
 private fn timeoutMs(d: SnackbarDuration) -> Int =>
     d == SnackbarDuration.short ? 4000 : d == SnackbarDuration.long ? 10000 : 0
 
-View SnackbarHost(bind queue: List, duration: SnackbarDuration = .short, on_action: Fn(Str) = {|_| }) {
+View SnackbarHost(bind queue: List, duration: SnackbarDuration = .short,
+    on_action: Fn(Str) = {|_| }, bottom_inset: Int = 0) {
     var turn = 0
 
     when queue.len > 0 && turn % 2 == 0 {
@@ -35,6 +36,7 @@ View SnackbarHost(bind queue: List, duration: SnackbarDuration = .short, on_acti
             closable: queue[0].closable ?? false,
             timeout: timeoutMs(duration),
             on_action: on_action,
+            inset: bottom_inset,
             on_done: {
                 queue = queue.removeAt(0)
                 turn = turn + 1
@@ -48,6 +50,7 @@ View SnackbarHost(bind queue: List, duration: SnackbarDuration = .short, on_acti
             closable: queue[0].closable ?? false,
             timeout: timeoutMs(duration),
             on_action: on_action,
+            inset: bottom_inset,
             on_done: {
                 queue = queue.removeAt(0)
                 turn = turn + 1
@@ -58,7 +61,7 @@ View SnackbarHost(bind queue: List, duration: SnackbarDuration = .short, on_acti
 
 // One snackbar on screen: its timer, which starts when it appears, and its motion.
 private View Shown(text: Str, action: Str, closable: Bool, timeout: Int, on_action: Fn(Str),
-    on_done: Fn()) {
+    inset: Int, on_done: Fn()) {
     inject Theme as t
 
     when timeout > 0 {
@@ -68,7 +71,7 @@ private View Shown(text: Str, action: Str, closable: Bool, timeout: Int, on_acti
     Overlay #[modal: false] {
         Box #[
             anchor: bottom,
-            mb: 16,
+            mb: 16 + inset,
             opacity: 1.0 with t.springEffectsFast,
             translate: (0, 0) with t.springSpatialFast,
         ] {
