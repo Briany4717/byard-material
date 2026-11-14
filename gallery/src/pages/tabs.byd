@@ -1,0 +1,153 @@
+use material as m
+
+// m.Tabs and m.Tab: primary and secondary, fixed and scrollable; with icons, a badge, a
+// disabled tab, and under a NavHost.
+
+View TabsPage() {
+    inject Theme as t
+    Column #[p: 24, gap: 32, bg: t.surface, grow: 1] {
+        Section("Primary, fixed") {
+            Column #[gap: 16, width: 480] {
+                PrimaryFixed()
+                PrimaryIcons()
+            }
+        }
+        Section("Secondary, fixed") {
+            Column #[width: 480] { SecondaryFixed() }
+        }
+        Section("Scrollable") {
+            Column #[gap: 16, width: 480] {
+                ScrollablePrimary()
+                ScrollableSecondary()
+            }
+        }
+        Section("With a badge and a disabled tab") {
+            Column #[width: 480] { BadgedTabs() }
+        }
+        Section("Under a NavHost") {
+            Column #[width: 480] { HostedTabs() }
+        }
+    }
+}
+
+// Any small view will do for a badge slot: a stand-in until Badge lands.
+View NavDemoBadge(text: Str = "") {
+    inject Theme as t
+    Box #[
+        bg: t.error,
+        radius: 8,
+        height: text == "" ? 6 : 16,
+        min_width: text == "" ? 6 : 16,
+        p: (0, text == "" ? 0 : 4),
+        align: center,
+        justify: center,
+    ] {
+        when text != "" {
+            Text(text) #[typo: t.labelSmall, color: t.onError, wrap: false]
+        }
+    }
+}
+
+View PrimaryFixed() {
+    var tab = 0
+    m.Tabs(label: "Sections") {
+        m.Tab(0, bind: tab, label: "Flights")
+        m.Tab(1, bind: tab, label: "Trips")
+        m.Tab(2, bind: tab, label: "Explore")
+    }
+}
+
+View PrimaryIcons() {
+    var tab = 1
+    m.Tabs(label: "Modes") {
+        m.Tab(0, bind: tab, label: "Flights", icon: "flight")
+        m.Tab(1, bind: tab, label: "Trips", icon: "luggage")
+        m.Tab(2, bind: tab, label: "Explore", icon: "explore")
+    }
+}
+
+View SecondaryFixed() {
+    var tab = 0
+    m.Tabs(label: "Filters") {
+        m.Tab(0, bind: tab, label: "Flights", variant: .secondary)
+        m.Tab(1, bind: tab, label: "Trips", variant: .secondary)
+        m.Tab(2, bind: tab, label: "Explore", variant: .secondary)
+    }
+}
+
+View ScrollablePrimary() {
+    var tab = 0
+    m.Tabs(label: "Categories", scrollable: true) {
+        m.Tab(0, bind: tab, label: "Flights", scrollable: true)
+        m.Tab(1, bind: tab, label: "Hotels and lodging", scrollable: true)
+        m.Tab(2, bind: tab, label: "Cars", scrollable: true)
+        m.Tab(3, bind: tab, label: "Experiences", scrollable: true)
+        m.Tab(4, bind: tab, label: "Cruises", scrollable: true)
+        m.Tab(5, bind: tab, label: "Trains", scrollable: true)
+    }
+}
+
+View ScrollableSecondary() {
+    var tab = 1
+    m.Tabs(label: "More categories", scrollable: true) {
+        m.Tab(0, bind: tab, label: "Flights", variant: .secondary, scrollable: true)
+        m.Tab(1, bind: tab, label: "Hotels and lodging", variant: .secondary, scrollable: true)
+        m.Tab(2, bind: tab, label: "Cars", variant: .secondary, scrollable: true)
+        m.Tab(3, bind: tab, label: "Experiences", variant: .secondary, scrollable: true)
+        m.Tab(4, bind: tab, label: "Cruises", variant: .secondary, scrollable: true)
+        m.Tab(5, bind: tab, label: "Trains", variant: .secondary, scrollable: true)
+    }
+}
+
+View BadgedTabs() {
+    var tab = 0
+    m.Tabs(label: "Inbox") {
+        m.Tab(0, bind: tab, label: "Primary", icon: "inbox", badge: { NavDemoBadge("3") })
+        m.Tab(1, bind: tab, label: "Social", icon: "group", badge: { NavDemoBadge() })
+        m.Tab(2, bind: tab, label: "Promos", icon: "sell", disabled: true)
+    }
+}
+
+View HostedTabs() {
+    inject Theme as t
+    var tab = 0
+    var homePath = "/"
+    let name = tab == 0 ? "flights" : tab == 1 ? "trips" : "explore"
+    Column #[bg: t.surface] {
+        m.Tabs(label: "Travel") {
+            m.Tab(0, bind: tab, label: "Flights")
+            m.Tab(1, bind: tab, label: "Trips")
+            m.Tab(2, bind: tab, label: "Explore")
+        }
+        NavHost(active: name) #[height: 96, transition: fade] {
+            tab "flights" {
+                Column #[p: 16] { Text("Flights screen") #[typo: t.bodyLarge, color: t.onSurface] }
+            }
+            tab "trips" {
+                Column #[p: 16] { Text("Trips screen") #[typo: t.bodyLarge, color: t.onSurface] }
+            }
+            tab "explore" {
+                Column #[p: 16] { Text("Explore screen") #[typo: t.bodyLarge, color: t.onSurface] }
+            }
+        }
+    }
+}
+
+// Tabs with names of their own, for `tests/tabs.toml`.
+View TabsScenarios() {
+    inject Theme as t
+    var tab = 1
+    var picked = 0
+    Column #[p: 24, gap: 8, align: start, bg: t.surface, grow: 1] {
+        Column #[width: 400] {
+            m.Tabs(label: "Sections") {
+                m.Tab(0, bind: tab, label: "Flights", on_select: { picked++ })
+                m.Tab(1, bind: tab, label: "Trips", icon: "luggage")
+                m.Tab(2, bind: tab, label: "Hold", disabled: true)
+                m.Tab(3, bind: tab, label: "Explore")
+            }
+        }
+        Text("Tab is {tab}, picked {picked}")
+        m.Button("Done", variant: .text)
+    }
+}

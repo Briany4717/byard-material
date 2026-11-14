@@ -1,0 +1,94 @@
+use material as m
+
+// m.NavigationBar: three and five items, horizontal items, a badge, a disabled item, and a bar
+// that drives a NavHost.
+
+View NavigationBarPage() {
+    inject Theme as t
+    Column #[p: 24, gap: 32, bg: t.surface, grow: 1] {
+        Section("Three items") {
+            Column #[width: 420] { BarThree() }
+        }
+        Section("Five items, with a badge and a disabled item") {
+            Column #[width: 420] { BarFive() }
+        }
+        Section("Horizontal items (wide windows)") {
+            Column #[width: 640] { BarWide() }
+        }
+        Section("Driving a NavHost") {
+            Column #[width: 420] { BarHosted() }
+        }
+    }
+}
+
+View BarThree() {
+    var screen = 0
+    m.NavigationBar(label: "Three") {
+        m.NavigationBarItem(0, bind: screen, label: "Home", icon: "home")
+        m.NavigationBarItem(1, bind: screen, label: "Search", icon: "search")
+        m.NavigationBarItem(2, bind: screen, label: "Library", icon: "library_music")
+    }
+}
+
+View BarFive() {
+    var screen = 1
+    m.NavigationBar(label: "Five") {
+        m.NavigationBarItem(0, bind: screen, label: "Home", icon: "home")
+        m.NavigationBarItem(1, bind: screen, label: "Chat", icon: "chat", badge: { NavDemoBadge("3") })
+        m.NavigationBarItem(2, bind: screen, label: "Alerts", icon: "notifications", badge: { NavDemoBadge() })
+        m.NavigationBarItem(3, bind: screen, label: "Files", icon: "folder", disabled: true)
+        m.NavigationBarItem(4, bind: screen, label: "Settings", icon: "settings")
+    }
+}
+
+View BarWide() {
+    var screen = 0
+    m.NavigationBar(label: "Wide") {
+        m.NavigationBarItem(0, bind: screen, label: "Home", icon: "home", horizontal: true)
+        m.NavigationBarItem(1, bind: screen, label: "Search", icon: "search", horizontal: true, badge: { NavDemoBadge("9") })
+        m.NavigationBarItem(2, bind: screen, label: "Library", icon: "library_music", horizontal: true)
+    }
+}
+
+View BarHosted() {
+    inject Theme as t
+    var screen = 0
+    let name = screen == 0 ? "home" : screen == 1 ? "search" : "library"
+    Column #[bg: t.surface] {
+        NavHost(active: name) #[height: 96, transition: fade] {
+            tab "home" {
+                Column #[p: 16] { Text("Home screen") #[typo: t.bodyLarge, color: t.onSurface] }
+            }
+            tab "search" {
+                Column #[p: 16] { Text("Search screen") #[typo: t.bodyLarge, color: t.onSurface] }
+            }
+            tab "library" {
+                Column #[p: 16] { Text("Library screen") #[typo: t.bodyLarge, color: t.onSurface] }
+            }
+        }
+        m.NavigationBar(label: "App") {
+            m.NavigationBarItem(0, bind: screen, label: "Home", icon: "home")
+            m.NavigationBarItem(1, bind: screen, label: "Search", icon: "search")
+            m.NavigationBarItem(2, bind: screen, label: "Library", icon: "library_music")
+        }
+    }
+}
+
+// A bar with names of its own, for `tests/navigation_bar.toml`.
+View NavigationBarScenarios() {
+    inject Theme as t
+    var screen = 0
+    var picked = 0
+    Column #[p: 24, gap: 8, align: start, bg: t.surface, grow: 1] {
+        Column #[width: 400] {
+            m.NavigationBar(label: "Main") {
+                m.NavigationBarItem(0, bind: screen, label: "Home", icon: "home")
+                m.NavigationBarItem(1, bind: screen, label: "Search", icon: "search", on_select: { picked++ })
+                m.NavigationBarItem(2, bind: screen, label: "Locked", icon: "lock", disabled: true)
+                m.NavigationBarItem(3, bind: screen, label: "Library", icon: "library_music")
+            }
+        }
+        Text("Screen is {screen}, picked {picked}")
+        m.Button("Done", variant: .text)
+    }
+}

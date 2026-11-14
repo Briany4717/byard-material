@@ -1,0 +1,58 @@
+# Scenarios for m.NavigationRail, on the NavigationRailScenarios view. Same keys as the bar,
+# plus the menu button in the header, which is its own Tab stop before the items.
+view = "NavigationRailScenarios"
+size = "480x400"
+
+[[test]]
+name = "the rail and each item have their role, name and state"
+expect = [
+    'Navigation "Main"',
+    'Button "Menu" [focusable]',
+    'TabList "Main"',
+    'Tab "Home" [focusable selected]',
+    'Tab "Search" [focusable]',
+    'Tab "Locked" [focusable disabled]',
+    'Tab "Library" [focusable]',
+    'Label "Screen is 0, rail closed"',
+]
+
+[[test]]
+name = "a tap selects an item"
+steps = [{ tap = 'Tab "Library"' }]
+expect = ['Tab "Library" [focusable focused selected]', 'Label "Screen is 3, rail closed"']
+
+[[test]]
+name = "a disabled item cannot be tapped"
+steps = [{ tap = 'Tab "Locked"' }]
+expect = ['Label "Screen is 0, rail closed"']
+
+[[test]]
+name = "the menu button expands the rail, and the items keep their names"
+steps = [{ tap = 'Button "Menu"' }]
+expect = ['Label "Screen is 0, rail open"', 'Tab "Home" [focusable selected]', 'Tab "Library" [focusable]']
+
+[[test]]
+name = "Tab reaches the menu button, then the items as one stop"
+steps = [{ key = "Tab" }, { key = "Tab" }]
+expect = ['Tab "Home" [focusable focused selected]']
+
+[[test]]
+name = "Down moves through the items, skipping a disabled one, Enter selects"
+steps = [{ key = "Tab" }, { key = "Tab" }, { key = "Down" }, { key = "Down" }, { key = "Enter" }]
+expect = ['Tab "Library" [focusable focused selected]', 'Label "Screen is 3, rail closed"']
+
+[[test]]
+name = "Up wraps to the last"
+steps = [{ key = "Tab" }, { key = "Tab" }, { key = "Up" }]
+expect = ['Tab "Library" [focusable focused]']
+
+[[test]]
+name = "the next Tab leaves the rail"
+steps = [{ key = "Tab" }, { key = "Tab" }, { key = "Tab" }]
+expect = ['Button "Done" [focusable focused]']
+
+[[test]]
+name = "the same in the dark scheme"
+scheme = "dark"
+steps = [{ key = "Tab" }, { key = "Tab" }, { key = "Down" }, { key = "Enter" }]
+expect = ['Label "Screen is 1, rail closed"']

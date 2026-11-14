@@ -1,0 +1,158 @@
+// Material 3 Expressive navigation rail: a column of destinations at the start edge of a window,
+// collapsed (an icon over a label, 96 wide) or expanded (icon and label side by side, a pill
+// that spans the item, 220 wide), with a slot above the items for a menu button or a FAB.
+//
+//     var screen = 0
+//     var open = false
+//
+//     m.NavigationRail(label: "Main", expanded: open,
+//         header: { m.IconButton("menu", label: "Menu", on_tap: { open = !open }) }) {
+//         m.NavigationRailItem(0, bind: screen, label: "Home", icon: "home", expanded: open)
+//         m.NavigationRailItem(1, bind: screen, label: "Search", icon: "search", expanded: open)
+//         m.NavigationRailItem(2, bind: screen, label: "Library", icon: "library_music",
+//             expanded: open, badge: { Badge() })
+//     }
+//
+// The rail does not decide when it is expanded: you do, with a var, and it springs between the
+// two widths. Write `expanded` on every item too (an item cannot see its rail). The expanded rail
+// is what Expressive uses in place of a standard navigation drawer; a modal one (over a scrim,
+// closing on a tap outside) is not made here, see the notes.
+//
+// Roles and keys are the navigation bar's: a `navigation` landmark around a `tab_list`, one Tab
+// stop, the arrows move (Up and Down here, Left and Right too), Enter or Space selects. The
+// header slot is outside the `tab_list`, so Tab reaches it on its own, before the items.
+//
+//   rail        96 wide collapsed, 220 expanded, `surface`, 44 above the first thing, 4 between items
+//   header      40 below it before the first item
+//   collapsed   as a bar item: pill 56 x 32, icon 24, 4 to the label, `label_medium`
+//   expanded    56 high, the pill is the whole item (fully round), 16 before the icon, 8 between
+//               icon and label, `label_large`
+//   colours     as the bar's
+
+private let railCollapsedWidth = 96
+private let railExpandedWidth = 220
+private let railTop = 44
+private let railItemGap = 4
+private let railHeaderGap = 40
+private let railItemHeight = 64
+private let railExpandedItemHeight = 56
+private let railPillWidth = 56
+private let railPillHeight = 32
+private let railIconSize = 24
+private let railLabelGap = 4
+private let railWideGap = 8
+private let railWidePadding = 16
+
+View NavigationRail(content, header: Slot = none, expanded: Bool = false,
+    label: Str = "Navigation") {
+    inject Theme as t
+
+    Column #[
+        bg: t.surface,
+        width: (expanded ? railExpandedWidth : railCollapsedWidth) with t.springSpatialDefault,
+        shrink: 0,
+        p: (railTop, expanded ? 20 : 0, 16, expanded ? 20 : 0),
+        align: expanded ? stretch : center,
+        a11y_role: navigation,
+        a11y_label: label,
+    ] {
+        when header != none {
+            Box #[mb: railHeaderGap - railItemGap, align_self: expanded ? start : center] {
+                header
+            }
+        }
+        Column #[
+            a11y_role: tab_list,
+            a11y_label: label,
+            gap: railItemGap,
+            align: expanded ? stretch : center,
+        ] {
+            content
+        }
+    }
+}
+
+View NavigationRailItem(index: Int, bind current: Int, label: Str, icon: Str,
+    badge: Slot = none, expanded: Bool = false, disabled: Bool = false,
+    on_select: Fn() = {}) {
+    inject Theme as t
+
+    let on = current == index
+
+    let iconInk = disabled ? t.onSurface.alpha(disabledContent)
+        : on ? t.onSecondaryContainer : t.onSurfaceVariant
+    let labelInk = disabled ? t.onSurface.alpha(disabledContent)
+        : on ? t.secondary : t.onSurfaceVariant
+    let layer = on ? t.onSecondaryContainer : t.onSurface
+
+    let pillHeight = expanded ? railExpandedItemHeight : railPillHeight
+
+    Column #[
+        height: expanded ? railExpandedItemHeight : railItemHeight,
+        align: expanded ? stretch : center,
+        justify: center,
+        gap: railLabelGap,
+        a11y_role: tab,
+        a11y_selected: on,
+        a11y_label: label,
+        disabled: disabled,
+        tap => {
+            current = index
+            on_select()
+        },
+    ] as item {
+        ZStack #[
+            width: expanded ? () : railPillWidth,
+            height: pillHeight,
+            radius: pillHeight / 2,
+            shrink: 0,
+            alignment: center,
+        ] {
+            on item.hover { overlay: layer.alpha(stateHover) with t.springEffectsFast }
+            on item.focus_visible {
+                overlay: layer.alpha(stateFocus) with t.springEffectsFast
+                outline: t.secondary
+                outline_width: focusRingWidth
+                outline_offset: focusRingOffset
+            }
+            on item.pressed { overlay: layer.alpha(statePress) with t.springEffectsFast }
+
+            Box #[
+                bg: t.secondaryContainer,
+                radius: pillHeight / 2,
+                align_self: stretch,
+                grow: 1,
+                scale.x: on ? 1.0 : 0.0 with t.springSpatialFast,
+                origin: center,
+            ] {}
+            Row #[
+                p: (0, expanded ? railWidePadding : 0),
+                gap: railWideGap,
+                align: center,
+                justify: expanded ? start : center,
+                align_self: stretch,
+            ] {
+                ZStack #[alignment: top_start] {
+                    Icon(icon, fill: on ? 1.0 : 0.0, size: railIconSize, color: iconInk)
+                    when badge != none {
+                        Box #[ml: 14, mt: -2] { badge }
+                    }
+                }
+                when expanded {
+                    Text(label) #[
+                        typo: on ? t.labelLargeEmphasized : t.labelLarge,
+                        color: labelInk with t.springEffectsFast,
+                        wrap: false,
+                    ]
+                }
+            }
+        }
+        when !expanded {
+            Text(label) #[
+                typo: on ? t.labelMediumEmphasized : t.labelMedium,
+                color: labelInk with t.springEffectsFast,
+                wrap: false,
+            ]
+        }
+    }
+}

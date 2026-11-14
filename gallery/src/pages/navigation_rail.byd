@@ -1,0 +1,71 @@
+use material as m
+
+// m.NavigationRail: collapsed and expanded, with a menu button or a FAB in the header slot, a
+// badge and a disabled item.
+
+View NavigationRailPage() {
+    inject Theme as t
+    Row #[p: 24, gap: 48, bg: t.surface, grow: 1, align: start] {
+        Section("Collapsed, with a FAB") {
+            Row #[height: 440] { RailCollapsed() }
+        }
+        Section("Expanded, with a menu button") {
+            Row #[height: 440] { RailExpanded() }
+        }
+        Section("Toggling") {
+            Row #[height: 440] { RailToggle() }
+        }
+    }
+}
+
+View RailCollapsed() {
+    var screen = 0
+    m.NavigationRail(label: "Collapsed", header: { m.Fab("edit", label: "Compose", size: .small) }) {
+        m.NavigationRailItem(0, bind: screen, label: "Home", icon: "home")
+        m.NavigationRailItem(1, bind: screen, label: "Chat", icon: "chat", badge: { NavDemoBadge("3") })
+        m.NavigationRailItem(2, bind: screen, label: "Files", icon: "folder", disabled: true)
+        m.NavigationRailItem(3, bind: screen, label: "Settings", icon: "settings", badge: { NavDemoBadge() })
+    }
+}
+
+View RailExpanded() {
+    var screen = 1
+    m.NavigationRail(label: "Expanded", expanded: true,
+        header: { m.IconButton("menu", label: "Menu", variant: .standard) }) {
+        m.NavigationRailItem(0, bind: screen, label: "Home", icon: "home", expanded: true)
+        m.NavigationRailItem(1, bind: screen, label: "Chat", icon: "chat", expanded: true, badge: { NavDemoBadge("3") })
+        m.NavigationRailItem(2, bind: screen, label: "Files", icon: "folder", expanded: true, disabled: true)
+        m.NavigationRailItem(3, bind: screen, label: "Settings", icon: "settings", expanded: true)
+    }
+}
+
+View RailToggle() {
+    var screen = 0
+    var open = false
+    m.NavigationRail(label: "Toggling", expanded: open,
+        header: { m.IconButton("menu", label: "Toggle the rail", variant: .standard, on_tap: { open = !open }) }) {
+        m.NavigationRailItem(0, bind: screen, label: "Home", icon: "home", expanded: open)
+        m.NavigationRailItem(1, bind: screen, label: "Search", icon: "search", expanded: open)
+        m.NavigationRailItem(2, bind: screen, label: "Library", icon: "library_music", expanded: open)
+    }
+}
+
+// A rail with names of its own, for `tests/navigation_rail.toml`.
+View NavigationRailScenarios() {
+    inject Theme as t
+    var screen = 0
+    var open = false
+    Row #[p: 24, gap: 16, bg: t.surface, grow: 1, align: start] {
+        m.NavigationRail(label: "Main", expanded: open,
+            header: { m.IconButton("menu", label: "Menu", variant: .standard, on_tap: { open = !open }) }) {
+            m.NavigationRailItem(0, bind: screen, label: "Home", icon: "home", expanded: open)
+            m.NavigationRailItem(1, bind: screen, label: "Search", icon: "search", expanded: open)
+            m.NavigationRailItem(2, bind: screen, label: "Locked", icon: "lock", expanded: open, disabled: true)
+            m.NavigationRailItem(3, bind: screen, label: "Library", icon: "library_music", expanded: open)
+        }
+        Column #[gap: 8, align: start] {
+            Text("Screen is {screen}, rail {open ? "open" : "closed"}")
+            m.Button("Done", variant: .text)
+        }
+    }
+}
