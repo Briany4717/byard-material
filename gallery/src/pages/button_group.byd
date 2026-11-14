@@ -29,27 +29,32 @@ View ButtonGroupPage() {
             Line("square") { SquareGroupRow() }
             Line("disabled") { DisabledGroupRow() }
         }
+        Section("No binding: the group keeps its own selection") {
+            Line("standard") { m.ButtonGroup(["Day", "Week", "Month"]) }
+            Line("connected") { m.ButtonGroup(["Day", "Week", "Month"], type: .connected) }
+            Line("multi") { m.MultiButtonGroup(["Bold", "Italic"], type: .connected) }
+        }
     }
 }
 
 View GroupRow(size: m.ButtonSize, type: m.ButtonGroupType) {
-    var sel: List<Int> = [1]
+    var sel = 1
     m.ButtonGroup(["Day", "Week", "Month"], bind: sel, type: type, size: size)
 }
 
 View VariantRow(variant: m.ButtonVariant) {
-    var sel: List<Int> = [0]
+    var sel = 0
     m.ButtonGroup(["Day", "Week", "Month"], bind: sel, type: .connected, variant: variant)
 }
 
 View MultiRow() {
     var sel: List<Int> = [0, 2]
-    m.ButtonGroup(["Bold", "Italic", "Underline"], icons: ["format_bold", "format_italic", "format_underlined"],
-        bind: sel, type: .connected, selection: .multi)
+    m.MultiButtonGroup(["Bold", "Italic", "Underline"], icons: ["format_bold", "format_italic", "format_underlined"],
+        bind: sel, type: .connected)
 }
 
 View IconOnlyRow() {
-    var sel: List<Int> = [0]
+    var sel = 0
     Row #[gap: 24, align: center] {
         m.ButtonGroup(["Left", "Centre", "Right"], icons: ["format_align_left", "format_align_center", "format_align_right"],
             bind: sel, type: .connected, icon_only: true)
@@ -59,12 +64,12 @@ View IconOnlyRow() {
 }
 
 View SquareGroupRow() {
-    var sel: List<Int> = [1]
+    var sel = 1
     m.ButtonGroup(["Day", "Week", "Month"], bind: sel, shape: .square)
 }
 
 View DisabledGroupRow() {
-    var sel: List<Int> = [1]
+    var sel = 1
     Row #[gap: 24, align: center] {
         m.ButtonGroup(["Day", "Week", "Month"], bind: sel, disabled: true)
         m.ButtonGroup(["Day", "Week", "Month"], bind: sel, type: .connected, disabled: true)
@@ -74,14 +79,15 @@ View DisabledGroupRow() {
 // A few groups with names of their own, for `tests/button_group.toml`.
 View ButtonGroupScenarios() {
     inject Theme as t
-    var range: List<Int> = [0]
+    var range = 0
     var styles: List<Int> = []
     var taps = 0
     Column #[p: 24, gap: 16, align: start, bg: t.surface, grow: 1] {
         m.ButtonGroup(["Day", "Week", "Month"], bind: range, type: .connected)
-        m.ButtonGroup(["Bold", "Italic"], bind: styles, selection: .multi)
-        m.ButtonGroup(["Cut", "Copy"], bind: styles, selection: .none, on_tap: {|i| taps += 1 })
-        Text("Range: {range.len > 0 ? range[0] : -1}")
+        m.MultiButtonGroup(["Bold", "Italic"], bind: styles)
+        m.ButtonGroup(["Cut", "Copy"], selectable: false, on_tap: {|i| taps += 1 })
+        m.ButtonGroup(["Left", "Right"], type: .connected)
+        Text("Range: {range}")
         Text("Styles: {styles.len}")
         Text("Taps: {taps}")
     }
