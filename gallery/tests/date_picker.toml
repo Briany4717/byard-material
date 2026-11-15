@@ -188,3 +188,56 @@ expect = ['Dialog "Select date"', 'Button "Thursday, November 19, 2026" [focusab
 name = "opened for typing, focus is in the field"
 steps = [{ tap = 'Button "Open typed"' }]
 expect = ['TextInput "Date" description "mm/dd/yyyy" = "11/18/2026" [focusable focused]']
+
+# The full-screen range picker (the "Open full" button).
+[[test]]
+name = "full screen: a dialog with close, title, Save, the range as a headline and the months"
+steps = [{ tap = 'Button "Open full"' }]
+expect = ['Dialog "Select dates" [modal]', 'Button "Close"', 'Button "Save" [focusable disabled]', 'Label "Start date – End date"', 'Button "Switch to text input"', 'Group "Months"', 'Group "November 2026"', 'Group "Saturday, November 14, 2026, today"']
+not = ['(unnamed)']
+
+[[test]]
+name = "full screen: the first two taps are the start and the end, Save writes both"
+steps = [{ tap = 'Button "Open full"' }, { tap = 'Group "Monday, November 16, 2026"' }, { expect = ['Label "Nov 16 – End date"', 'Button "Save" [focusable disabled]'] }, { tap = 'Group "Friday, November 20, 2026"' }, { expect = ['Label "Nov 16 – Nov 20"', 'Button "Save" [focusable]'] }, { tap = 'Button "Save"' }, { wait = 600 }]
+expect = ['Label "Range: 2026-11-16 to 2026-11-20"']
+not = ['Dialog']
+
+[[test]]
+name = "full screen: the close button leaves the range alone"
+steps = [{ tap = 'Button "Open full"' }, { tap = 'Group "Monday, November 16, 2026"' }, { tap = 'Group "Friday, November 20, 2026"' }, { tap = 'Button "Close"' }, { wait = 600 }]
+expect = ['Label "Range:  to "', 'Button "Open full" [focusable focused]']
+not = ['Dialog']
+
+[[test]]
+name = "full screen: Escape closes it and focus goes back to the opener"
+steps = [{ key = "Tab" }, { key = "Tab" }, { key = "Tab" }, { key = "Tab" }, { key = "Tab" }, { key = "Tab" }, { key = "Enter" }, { wait = 600 }, { expect = ['Dialog "Select dates" [modal]'] }, { key = "Escape" }, { wait = 600 }]
+expect = ['Button "Open full" [focusable focused]']
+not = ['Dialog']
+
+[[test]]
+name = "full screen: the list opens on the month before the range's, which scrolls in view, with the next below"
+steps = [{ tap = 'Button "Open full"' }]
+expect = ['Group "November 2026"', 'Group "December 2026"', 'Group "Saturday, December 5, 2026"']
+not = ['Group "October 2026"']
+
+[[test]]
+name = "full screen: the pencil switches to two typed fields"
+steps = [{ tap = 'Button "Open full"' }, { tap = 'Button "Switch to text input"' }]
+expect = ['Button "Switch to calendar"', 'TextInput "Start date"']
+not = ['Group "Months"']
+
+[[test]]
+name = "full screen: the same in the dark scheme"
+scheme = "dark"
+steps = [{ tap = 'Button "Open full"' }, { tap = 'Group "Monday, November 16, 2026"' }, { tap = 'Group "Tuesday, November 17, 2026"' }]
+expect = ['Label "Nov 16 – Nov 17"', 'Button "Save" [focusable]']
+
+[[test]]
+name = "full screen: Tab reaches the months as one stop, arrows move the cursor, Enter chooses the start and the end"
+steps = [{ tap = 'Button "Open full"' }, { wait = 600 }, { key = "Tab" }, { key = "Tab" }, { key = "Tab" }, { expect = ['Button "Saturday, November 14, 2026, today" [focusable focused]'] }, { key = "ArrowRight" }, { key = "ArrowRight" }, { key = "Enter" }, { key = "ArrowDown" }, { key = "Enter" }, { expect = ['Label "Nov 16 – Nov 23"'] }, { key = "PageDown" }]
+expect = ['Button "Wednesday, December 23, 2026" [focusable focused', 'Group "December 2026"']
+
+[[test]]
+name = "full screen: a tap on a bare part of the page does not dismiss it"
+steps = [{ tap = 'Button "Open full"' }, { wait = 600 }, { tap = [150, 250] }, { wait = 600 }]
+expect = ['Dialog "Select dates" [modal]']

@@ -94,7 +94,10 @@ View RailModalDemo() {
         }
         Column #[p: 24, gap: 12, align: start, grow: 1] {
             Text("Screen is {screen}") #[typo: t.headlineSmall, color: t.onSurface]
-            Text("The menu button opens the modal rail.") #[typo: t.bodyMedium, color: t.onSurfaceVariant]
+            Text("The menu button opens the modal rail.") #[
+                typo: t.bodyMedium,
+                color: t.onSurfaceVariant,
+            ]
             m.Button("Done", variant: .text)
         }
     }
