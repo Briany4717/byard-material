@@ -15,12 +15,15 @@ View NavigationRailPage() {
         Section("Toggling") {
             Row #[height: 440] { RailToggle() }
         }
+        Section("Modal") {
+            Row #[height: 440, width: 300] { RailModalDemo() }
+        }
     }
 }
 
 View RailCollapsed() {
     var screen = 0
-    m.NavigationRail(bind: screen, label: "Collapsed", header: { m.Fab("edit", label: "Compose", size: .small) }) {
+    m.NavigationRail(bind current: screen, label: "Collapsed", header: { m.Fab("edit", label: "Compose", size: .small) }) {
         m.NavigationRailItem(0, label: "Home", icon: "home")
         m.NavigationRailItem(1, label: "Chat", icon: "chat", badge: { NavDemoBadge("3") })
         m.NavigationRailItem(2, label: "Files", icon: "folder", disabled: true)
@@ -30,7 +33,7 @@ View RailCollapsed() {
 
 View RailExpanded() {
     var screen = 1
-    m.NavigationRail(bind: screen, expanded: true, label: "Expanded",
+    m.NavigationRail(bind current: screen, expanded: true, label: "Expanded",
         header: { m.IconButton("menu", label: "Menu", variant: .standard) }) {
         m.NavigationRailItem(0, label: "Home", icon: "home")
         m.NavigationRailItem(1, label: "Chat", icon: "chat", badge: { NavDemoBadge("3") })
@@ -42,7 +45,7 @@ View RailExpanded() {
 View RailToggle() {
     var screen = 0
     var open = false
-    m.NavigationRail(bind: screen, expanded: open, label: "Toggling",
+    m.NavigationRail(bind current: screen, expanded: open, label: "Toggling",
         header: { m.IconButton("menu", label: "Toggle the rail", variant: .standard, on_tap: { open = !open }) }) {
         m.NavigationRailItem(0, label: "Home", icon: "home")
         m.NavigationRailItem(1, label: "Search", icon: "search")
@@ -56,7 +59,7 @@ View NavigationRailScenarios() {
     var screen = 0
     var open = false
     Row #[p: 24, gap: 16, bg: t.surface, grow: 1, align: start] {
-        m.NavigationRail(bind: screen, expanded: open, label: "Main",
+        m.NavigationRail(bind current: screen, expanded: open, label: "Main",
             header: { m.IconButton("menu", label: "Menu", variant: .standard, on_tap: { open = !open }) }) {
             m.NavigationRailItem(0, label: "Home", icon: "home")
             m.NavigationRailItem(1, label: "Search", icon: "search")
@@ -64,6 +67,53 @@ View NavigationRailScenarios() {
             m.NavigationRailItem(3, label: "Library", icon: "library_music")
         }
         Column #[gap: 8, align: start] {
+            Text("Screen is {screen}, rail {open ? "open" : "closed"}")
+            m.Button("Done", variant: .text)
+        }
+    }
+}
+
+// The modal expanded rail on a page of its own: the collapsed rail, with the page beside it,
+// and the menu button that opens the modal one over a scrim.
+View RailModalPage() {
+    inject Theme as t
+    Row #[bg: t.surface, grow: 1] { RailModalDemo() }
+}
+
+View RailModalDemo() {
+    inject Theme as t
+    var screen = 0
+    var open = false
+    Row #[grow: 1, align: start] {
+        m.NavigationRail(bind current: screen, modal: true, open: open, on_close: { open = false }, label: "Main",
+            header: { m.IconButton("menu", label: "Menu", variant: .standard, on_tap: { open = !open }) }) {
+            m.NavigationRailItem(0, label: "Home", icon: "home")
+            m.NavigationRailItem(1, label: "Search", icon: "search", badge: { NavDemoBadge("3") })
+            m.NavigationRailItem(2, label: "Library", icon: "library_music")
+            m.NavigationRailItem(3, label: "Settings", icon: "settings")
+        }
+        Column #[p: 24, gap: 12, align: start, grow: 1] {
+            Text("Screen is {screen}") #[typo: t.headlineSmall, color: t.onSurface]
+            Text("The menu button opens the modal rail.") #[typo: t.bodyMedium, color: t.onSurfaceVariant]
+            m.Button("Done", variant: .text)
+        }
+    }
+}
+
+// The same with names of its own, for the scenarios.
+View RailModalScenarios() {
+    inject Theme as t
+    var screen = 0
+    var open = false
+    Row #[bg: t.surface, grow: 1, align: start] {
+        m.NavigationRail(bind current: screen, modal: true, open: open, on_close: { open = false }, label: "Main",
+            header: { m.IconButton("menu", label: "Menu", variant: .standard, on_tap: { open = !open }) }) {
+            m.NavigationRailItem(0, label: "Home", icon: "home")
+            m.NavigationRailItem(1, label: "Search", icon: "search")
+            m.NavigationRailItem(2, label: "Locked", icon: "lock", disabled: true)
+            m.NavigationRailItem(3, label: "Library", icon: "library_music")
+        }
+        Column #[p: 24, gap: 8, align: start, grow: 1] {
             Text("Screen is {screen}, rail {open ? "open" : "closed"}")
             m.Button("Done", variant: .text)
         }
