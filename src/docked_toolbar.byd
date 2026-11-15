@@ -1,12 +1,18 @@
 // Material 3 Expressive docked toolbar: a full-width bar, 64 high, of IconButtons spread
 // across it. Standard colours sit on `surface_container`, vibrant on `primary_container`.
 //
+// Spacing follows Compose's two arrangements (DockedToolbarTokens: 16 at each end, at least 4
+// between items, at most 32): by default the items are spread edge to edge (space between, never
+// closer than 4); `fixed: true` keeps them 32 apart and centred, as a bar of a few actions on a
+// wide window wants.
+//
 //     m.DockedToolbar(label: "Formatting") {
 //         m.IconButton("format_bold", label: "Bold")
 //         m.IconButton("format_italic", label: "Italic")
 //     }
 
-View DockedToolbar(label: Str = "Toolbar", color: ToolbarColor = .standard, content) {
+View DockedToolbar(label: Str = "Toolbar", color: ToolbarColor = .standard, fixed: Bool = false,
+    content) {
     inject Theme as t
 
     provide ToolbarContent(tinted: color == ToolbarColor.vibrant, ink: t.onPrimaryContainer)
@@ -15,9 +21,9 @@ View DockedToolbar(label: Str = "Toolbar", color: ToolbarColor = .standard, cont
         bg: (color == ToolbarColor.vibrant ? t.primaryContainer : t.surfaceContainer) with t.springEffectsFast,
         height: 64,
         p: (0, 16),
-        gap: 8,
+        gap: fixed ? 32 : 4,
         align: center,
-        justify: around,
+        justify: fixed ? center : between,
         a11y_role: toolbar,
         a11y_label: label,
     ] {

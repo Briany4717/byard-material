@@ -28,7 +28,7 @@ View FilterChip(label: Str, look: ChipLook = .flat, selected: Bool = false, icon
     let line = disabled ? t.onSurface.alpha(disabledContainer) : t.outlineVariant
     let outlined = !elevated && !selected
     let restShadow = elevated && !disabled ? "sm" : ()
-    let hoverShadow = elevated ? "md" : ()
+    let hoverShadow = elevated ? "md" : selected && !disabled ? "sm" : ()
 
     Row #[
         bg: container with t.springEffectsFast,

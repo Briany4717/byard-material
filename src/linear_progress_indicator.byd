@@ -29,7 +29,9 @@ View LinearProgressIndicator(label: Str, value: Float = 0.0, indeterminate: Bool
     // Track: from just after the active part (a gap) to the end; all of it when empty.
     let trackFrom = v <= 0.0 ? 0.0 : a + progressGap
     let showTrack = !indeterminate && v < 1.0 && trackFrom + 4.0 <= w
-    let showStop = !indeterminate && v < 1.0 && trackFrom + 4.0 <= w - progressStopInset - 4.0
+    // The stop sits (height - 4) / 2 from the end: flush on a flat track, 3 on a wavy one.
+    let stopInset = (h - progressStopSize) / 2.0
+    let showStop = !indeterminate && v < 1.0 && trackFrom + 4.0 <= w - stopInset - 4.0
 
     Box #[
         width: w,
@@ -58,7 +60,7 @@ View LinearProgressIndicator(label: Str, value: Float = 0.0, indeterminate: Bool
                             stroke: t.secondaryContainer, stroke_width: 4, cap: round)
                     }
                     when showStop {
-                        circle(cx: w - progressStopInset - 2, cy: mid, r: 2, fill: t.primary)
+                        circle(cx: w - stopInset - 2, cy: mid, r: 2, fill: t.primary)
                     }
                     when !wavy && v > 0.0 {
                         line(x1: 2, y1: mid, x2: a < 4.0 ? 2.0 : a - 2.0, y2: mid,

@@ -85,17 +85,21 @@ View TopAppBar(title: Str, variant: TopAppBarVariant = .small, subtitle: Str = "
                 height: topBarHeight(variant, subtitle != "") - 64,
                 shrink: 0,
                 justify: end,
-                p: (0, 16, variant == TopAppBarVariant.large ? 20 : 16, 16),
+                p: (0, 16, variant == TopAppBarVariant.large ? 28 : 24, 16),
                 opacity: 1.0 - fold,
             ] {
                 Text(title) #[
-                    typo: variant == TopAppBarVariant.large ? t.headlineMedium : t.headlineSmall,
+                    typo: variant == TopAppBarVariant.large ? t.displaySmall : t.headlineMedium,
                     color: t.onSurface,
                     a11y_role: heading,
                     wrap: false,
                 ]
                 when subtitle != "" {
-                    Text(subtitle) #[typo: t.labelMedium, color: t.onSurfaceVariant, wrap: false]
+                    Text(subtitle) #[
+                        typo: variant == TopAppBarVariant.large ? t.titleMedium : t.labelLarge,
+                        color: t.onSurfaceVariant,
+                        wrap: false,
+                    ]
                 }
             }
         }

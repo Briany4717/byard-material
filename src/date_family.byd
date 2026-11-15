@@ -516,11 +516,11 @@ private View DateDialog(bind open: Bool, bind entering: Bool, title: Str, headli
             ] {
                 on enter { opacity: 0.0, scale: 0.8 }
                 on leave { opacity: 0.0, scale: 0.8 }
-                Row #[height: 120, p: (16, 12, 12, 24), align: end] {
-                    Column #[grow: 1, height: 92, justify: between] {
+                Row #[height: compact ? 128 : 120, p: (16, 12, 12, 24), align: end] {
+                    Column #[grow: 1, height: compact ? 100 : 92, justify: between] {
                         Text(title) #[typo: t.labelLarge, color: t.onSurfaceVariant, wrap: false]
                         Text(headline) #[
-                            typo: compact ? t.headlineMedium : t.headlineLarge,
+                            typo: compact ? t.titleLarge : t.headlineLarge,
                             color: t.onSurface,
                             wrap: false,
                         ]

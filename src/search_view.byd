@@ -153,9 +153,9 @@ private View SearchViewHeader(bind query: Str, bind active: Int, bind focused: B
         on focus_within { overlay: t.onSurface.alpha(expanded ? 0.0 : stateFocus) with t.springEffectsFast }
 
         when expanded {
-            IconButton("arrow_back", label: "Back", on_tap: { on_close() })
+            IconButton("arrow_back", label: "Back", color: t.onSurface, on_tap: { on_close() })
         } else {
-            Icon(leading_icon, size: searchIconSize, color: t.onSurfaceVariant)
+            Icon(leading_icon, size: searchIconSize, color: t.onSurface)
         }
         ZStack #[grow: 1, height: 24, alignment: start] {
             when query == "" {

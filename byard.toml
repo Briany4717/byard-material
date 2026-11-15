@@ -135,7 +135,7 @@ body_small = { size = 12, family = "text", weight = "regular", tracking = 0.4, l
 label_large = { size = 14, family = "text", weight = "medium", tracking = 0.1, line_height = 20 }
 label_medium = { size = 12, family = "text", weight = "medium", tracking = 0.5, line_height = 16 }
 label_small = { size = 11, family = "text", weight = "medium", tracking = 0.5, line_height = 16 }
-display_large_emphasized = { size = 57, family = "text", weight = "medium", tracking = -0.25, line_height = 64 }
+display_large_emphasized = { size = 57, family = "text", weight = "medium", line_height = 64 }
 display_medium_emphasized = { size = 45, family = "text", weight = "medium", line_height = 52 }
 display_small_emphasized = { size = 36, family = "text", weight = "medium", line_height = 44 }
 headline_large_emphasized = { size = 32, family = "text", weight = "medium", line_height = 40 }
@@ -144,7 +144,7 @@ headline_small_emphasized = { size = 24, family = "text", weight = "medium", lin
 title_large_emphasized = { size = 22, family = "text", weight = "medium", line_height = 28 }
 title_medium_emphasized = { size = 16, family = "text", weight = "bold", tracking = 0.15, line_height = 24 }
 title_small_emphasized = { size = 14, family = "text", weight = "bold", tracking = 0.1, line_height = 20 }
-body_large_emphasized = { size = 16, family = "text", weight = "medium", tracking = 0.5, line_height = 24 }
+body_large_emphasized = { size = 16, family = "text", weight = "medium", tracking = 0.15, line_height = 24 }
 body_medium_emphasized = { size = 14, family = "text", weight = "medium", tracking = 0.25, line_height = 20 }
 body_small_emphasized = { size = 12, family = "text", weight = "medium", tracking = 0.4, line_height = 16 }
 label_large_emphasized = { size = 14, family = "text", weight = "bold", tracking = 0.1, line_height = 20 }

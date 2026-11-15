@@ -34,7 +34,7 @@ View SearchBar(bind query: Str, placeholder: Str = "Search", label: Str = "Searc
         on hover { overlay: t.onSurface.alpha(stateHover) with t.springEffectsFast }
         on focus_within { overlay: t.onSurface.alpha(stateFocus) with t.springEffectsFast }
 
-        Icon(leading_icon, size: searchIconSize, color: ink)
+        Icon(leading_icon, size: searchIconSize, color: disabled ? ink : t.onSurface)
         ZStack #[grow: 1, height: 24, alignment: start] {
             when query == "" {
                 Text(placeholder) #[typo: t.bodyLarge, color: ink, wrap: false, a11y_hidden: true]

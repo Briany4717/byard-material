@@ -31,12 +31,13 @@
 //         m.MenuGroup { m.MenuItem("Email", on_tap: { open = false }) }
 //     })
 //
-// Measurements (starred: not sure of them)
-//   group    container surface_container_low*, corner large (16)*, padding 4*, level 2*, width 112 to 280
-//            2 dp between groups*; the label label_large* in on_surface_variant, 12 inside
-//   item     height 48*, padding 12 each side*, gap 12*, corner medium (12)*, icons 24
-//            label body_large on_surface; trailing text label_large on_surface_variant
-//            selected: tertiary_container with on_tertiary_container*
+// Measurements (Compose SegmentedMenuTokens and StandardMenuTokens; starred: not in a token file)
+//   group    container surface_container_low, corner large (16), padding 4, level 2, width 112 to 280
+//            2 dp between groups; the label label_large* in on_surface_variant, 12 inside*
+//   item     height 44, padding 16 each side, 8 above and below, gap 12, corner extra small (4),
+//            medium (12) when selected, or on the group-edge side of a `first` / `last` item, icons 20
+//            label body_large on_surface; trailing text label_small on_surface_variant
+//            selected: tertiary_container with on_tertiary_container
 //   states   on_surface at 8, 10 and 10 percent (on_tertiary_container for the selected one)
 //   divider  1 dp outline_variant, 8 above and below*
 
@@ -99,10 +100,18 @@ View MenuDivider() {
 }
 
 View MenuItem(label: Str, icon: Str = "", trailing_icon: Str = "", trailing_text: Str = "",
-    selected: Bool = false, disabled: Bool = false, submenu: Slot = none, on_tap: Fn() = {}) {
+    selected: Bool = false, disabled: Bool = false, first: Bool = false, last: Bool = false,
+    submenu: Slot = none, on_tap: Fn() = {}) {
     inject Theme as t
 
     var sub = false
+
+    // Segmented menu: the corners of an item are small (4) and those of the group's first and
+    // last item, on the side of the group's edge, medium (12, which is the group's 16 less its
+    // padding). A group cannot see which of its items come first and last, so the caller says.
+    let up = (first || selected) ? 12 : 4
+    let down = (last || selected) ? 12 : 4
+    let corners = (up, up, down, down)
 
     let container = selected ? t.tertiaryContainer : t.surfaceContainerLow.alpha(0.0)
     let ink = disabled ? t.onSurface.alpha(disabledContent)
@@ -112,9 +121,9 @@ View MenuItem(label: Str, icon: Str = "", trailing_icon: Str = "", trailing_text
 
     Row #[
         bg: container with t.springEffectsFast,
-        radius: t.cornerMd,
-        height: 48,
-        p: (0, 12),
+        radius: corners with t.springSpatialFast,
+        min_height: 44,
+        p: (8, 16),
         gap: 12,
         align: center,
         a11y_role: menu_item,
@@ -140,17 +149,17 @@ View MenuItem(label: Str, icon: Str = "", trailing_icon: Str = "", trailing_text
         on pressed { overlay: ink.alpha(statePress) with t.springEffectsFast }
 
         when icon != "" {
-            Icon(icon, size: 24, color: quiet, fill: selected ? 1.0 : 0.0)
+            Icon(icon, size: 20, color: quiet, fill: selected ? 1.0 : 0.0)
         }
         Text(label) #[typo: t.bodyLarge, color: ink, grow: 1, wrap: false]
         when trailing_text != "" {
-            Text(trailing_text) #[typo: t.labelLarge, color: quiet, wrap: false]
+            Text(trailing_text) #[typo: t.labelSmall, color: quiet, wrap: false]
         }
         when trailing_icon != "" {
-            Icon(trailing_icon, size: 24, color: quiet)
+            Icon(trailing_icon, size: 20, color: quiet)
         }
         when submenu != none {
-            Icon("chevron_right", size: 24, color: quiet)
+            Icon("chevron_right", size: 20, color: quiet)
         }
     }
 

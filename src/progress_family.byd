@@ -8,7 +8,6 @@ private let idx = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17,
 private let progressThickness = 4.0
 private let progressGap = 4.0
 private let progressStopSize = 4.0
-private let progressStopInset = 6.0
 
 // The wave: its amplitude eases in over the first 10% and out over the last 5% of a
 // determinate value, so a nearly empty or full bar is flat.

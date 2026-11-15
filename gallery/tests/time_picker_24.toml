@@ -1,0 +1,7 @@
+# The 24-hour vertical time picker, on the TimePickerPage.
+view = "TimePickerPage"
+size = "700x700"
+
+[[test]]
+name = "in 24-hour time under a vertical layout the boxes are 114 across, in 12-hour time 96"
+expect = ['Slider "Hour" = 17 in 0..23 step 1 [focusable] @ 62,659 114x80', 'Slider "Minute" = 5 in 0..59 step 1 [focusable] @ 200,659 114x80', 'Slider "Hour" = 10 in 1..12 step 1 [focusable] @ 48,117 96x80']

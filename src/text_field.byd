@@ -62,11 +62,16 @@ View TextField(bind value: Str, label: Str, variant: TextFieldVariant = .filled,
     let lineInk = disabled ? (filled ? t.onSurface.alpha(disabledContent) : t.onSurface.alpha(disabledContainer))
         : error ? t.error
         : filled ? t.onSurfaceVariant : t.outline
-    let hoverInk = error ? t.error : t.onSurface
+    let hoverInk = error ? t.onErrorContainer : t.onSurface
+    // The label on hover: on_surface on an outlined field, on_error_container in error, and the
+    // resting on_surface_variant on a filled one.
+    let labelHover = error ? t.onErrorContainer : filled ? t.onSurfaceVariant : t.onSurface
     let supportInk = disabled ? t.onSurface.alpha(disabledContent)
         : error ? t.error : t.onSurfaceVariant
     let textInk = disabled ? t.onSurface.alpha(disabledContent) : t.onSurface
     let iconInk = disabled ? t.onSurface.alpha(disabledContent) : error ? t.error : t.onSurfaceVariant
+    // Material keeps the leading icon on_surface_variant in the error state; only the trailing one turns red.
+    let leadInk = disabled ? t.onSurface.alpha(disabledContent) : t.onSurfaceVariant
 
     let shown = error && error_text != "" ? error_text : supporting_text
     let hasFooter = shown != "" || max_length > 0
@@ -102,7 +107,7 @@ View TextField(bind value: Str, label: Str, variant: TextFieldVariant = .filled,
                 }
 
                 when leading_icon != "" {
-                    Icon(leading_icon, color: iconInk) #[mt: multi ? 16 : 0]
+                    Icon(leading_icon, color: leadInk) #[mt: multi ? 16 : 0]
                 }
                 Row #[
                     grow: 1,
@@ -199,6 +204,7 @@ View TextField(bind value: Str, label: Str, variant: TextFieldVariant = .filled,
                     wrap: false,
                     a11y_hidden: true,
                 ] {
+                    on box.hover { color: labelHover with t.springEffectsFast }
                     on field.focused { color: focusInk with t.springEffectsFast }
                 }
             }

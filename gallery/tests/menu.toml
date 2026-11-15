@@ -116,3 +116,8 @@ name = "the same in the dark scheme"
 scheme = "dark"
 steps = [{ tap = 'Button "Actions"' }]
 expect = ['MenuItem "Cut" [focusable focused]']
+
+[[test]]
+name = "an item is 44 high, and a group has 4 around its items"
+steps = [{ tap = 'Button "Actions"' }, { wait = 600 }]
+expect = ['MenuItem "Cut" [focusable focused] @ 28,70 137x44', 'MenuItem "Copy" [focusable] @ 28,114 137x44']
