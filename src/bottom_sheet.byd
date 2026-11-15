@@ -15,7 +15,7 @@
 //
 // Measurements (starred: not sure of them)
 //   container surface_container_low, top corners 28, level 1 (modal)*, width up to 640
-//   handle    32 x 4, on_surface_variant at 40%*, in a 48 high strip
+//   handle    32 x 4, on_surface_variant, in a 48 high strip
 //   thresholds 80 down to dismiss*, 40 up to expand*, expanded height 400*
 
 View BottomSheet(bind open: Bool, modal: Bool = true, drag_handle: Bool = true,
@@ -49,7 +49,7 @@ private View BottomSheetPanel(bind open: Bool, modal: Bool, drag_handle: Bool,
         align_self: stretch,
         bg: t.surfaceContainerLow,
         radius: (t.cornerXl, t.cornerXl, 0, 0),
-        shadow: modal ? "md" : "sm",
+        shadow: "sm",
         min_width: 320,
         max_width: 640,
         min_height: tall ? 400 : 0,
@@ -102,7 +102,7 @@ private View BottomSheetPanel(bind open: Bool, modal: Bool, drag_handle: Bool,
                     outline_width: focusRingWidth
                     outline_offset: -focusRingWidth
                 }
-                Box #[width: 32, height: 4, radius: 2, bg: t.onSurfaceVariant.alpha(0.4)]
+                Box #[width: 32, height: 4, radius: 2, bg: t.onSurfaceVariant]
             }
         }
         Column #[p: (drag_handle ? 0 : 16, 24, 24, 24), gap: 16] { content }
