@@ -35,7 +35,7 @@
 //   group    container surface_container_low, corner large (16), padding 4, level 2, width 112 to 280
 //            2 dp between groups; the label label_large* in on_surface_variant, 12 inside*
 //   item     height 44, padding 16 each side, 8 above and below, gap 12, corner extra small (4),
-//            medium (12) when selected, icons 20
+//            medium (12) when selected, or on the group-edge side of a `first` / `last` item, icons 20
 //            label body_large on_surface; trailing text label_small on_surface_variant
 //            selected: tertiary_container with on_tertiary_container
 //   states   on_surface at 8, 10 and 10 percent (on_tertiary_container for the selected one)
@@ -100,10 +100,18 @@ View MenuDivider() {
 }
 
 View MenuItem(label: Str, icon: Str = "", trailing_icon: Str = "", trailing_text: Str = "",
-    selected: Bool = false, disabled: Bool = false, submenu: Slot = none, on_tap: Fn() = {}) {
+    selected: Bool = false, disabled: Bool = false, first: Bool = false, last: Bool = false,
+    submenu: Slot = none, on_tap: Fn() = {}) {
     inject Theme as t
 
     var sub = false
+
+    // Segmented menu: the corners of an item are small (4) and those of the group's first and
+    // last item, on the side of the group's edge, medium (12, which is the group's 16 less its
+    // padding). A group cannot see which of its items come first and last, so the caller says.
+    let up = (first || selected) ? 12 : 4
+    let down = (last || selected) ? 12 : 4
+    let corners = (up, up, down, down)
 
     let container = selected ? t.tertiaryContainer : t.surfaceContainerLow.alpha(0.0)
     let ink = disabled ? t.onSurface.alpha(disabledContent)
@@ -113,7 +121,7 @@ View MenuItem(label: Str, icon: Str = "", trailing_icon: Str = "", trailing_text
 
     Row #[
         bg: container with t.springEffectsFast,
-        radius: selected ? t.cornerMd : t.cornerXs with t.springSpatialFast,
+        radius: corners with t.springSpatialFast,
         min_height: 44,
         p: (8, 16),
         gap: 12,

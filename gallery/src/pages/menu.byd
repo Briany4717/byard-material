@@ -14,25 +14,25 @@ View MenuPage() {
                     m.Button("Edit", variant: .tonal, icon: "edit", on_tap: { open = !open })
                 }) {
                     m.MenuGroup {
-                        m.MenuItem("Cut", icon: "content_cut", trailing_text: "Ctrl+X", on_tap: { open = false
+                        m.MenuItem("Cut", first: true, icon: "content_cut", trailing_text: "Ctrl+X", on_tap: { open = false
                             last = "cut" })
                         m.MenuItem("Copy", icon: "content_copy", trailing_text: "Ctrl+C", on_tap: { open = false
                             last = "copy" })
-                        m.MenuItem("Paste", icon: "content_paste", disabled: true)
+                        m.MenuItem("Paste", last: true, icon: "content_paste", disabled: true)
                     }
                     m.MenuGroup(label: "View") {
-                        m.MenuItem("Wrap lines", icon: "wrap_text", selected: wrap, on_tap: { wrap = !wrap
+                        m.MenuItem("Wrap lines", first: true, icon: "wrap_text", selected: wrap, on_tap: { wrap = !wrap
                             open = false })
                         m.MenuDivider()
                         m.MenuItem("Share", icon: "share", submenu: {
                             m.MenuGroup {
-                                m.MenuItem("Email", icon: "mail", on_tap: { open = false
+                                m.MenuItem("Email", first: true, icon: "mail", on_tap: { open = false
                                     last = "email" })
-                                m.MenuItem("Copy link", icon: "link", on_tap: { open = false
+                                m.MenuItem("Copy link", last: true, icon: "link", on_tap: { open = false
                                     last = "link" })
                             }
                         })
-                        m.MenuItem("Settings", icon: "settings", trailing_icon: "open_in_new", on_tap: { open = false
+                        m.MenuItem("Settings", last: true, icon: "settings", trailing_icon: "open_in_new", on_tap: { open = false
                             last = "settings" })
                     }
                 }
@@ -56,24 +56,24 @@ View MenuScenarios() {
             m.Button("Actions", on_tap: { open = !open })
         }) {
             m.MenuGroup {
-                m.MenuItem("Cut", icon: "content_cut", trailing_text: "Ctrl+X", on_tap: { open = false
+                m.MenuItem("Cut", first: true, icon: "content_cut", trailing_text: "Ctrl+X", on_tap: { open = false
                     last = "cut" })
                 m.MenuItem("Copy", icon: "content_copy", on_tap: { open = false
                     last = "copy" })
-                m.MenuItem("Paste", disabled: true)
+                m.MenuItem("Paste", last: true, disabled: true)
             }
             m.MenuGroup {
-                m.MenuItem("Wrap", selected: wrap, on_tap: { wrap = !wrap
+                m.MenuItem("Wrap", first: true, selected: wrap, on_tap: { wrap = !wrap
                     open = false })
                 m.MenuItem("Share", icon: "share", submenu: {
                     m.MenuGroup {
-                        m.MenuItem("Email", on_tap: { open = false
+                        m.MenuItem("Email", first: true, on_tap: { open = false
                             last = "email" })
-                        m.MenuItem("Copy link", on_tap: { open = false
+                        m.MenuItem("Copy link", last: true, on_tap: { open = false
                             last = "link" })
                     }
                 })
-                m.MenuItem("Delete", icon: "delete", on_tap: { open = false
+                m.MenuItem("Delete", last: true, icon: "delete", on_tap: { open = false
                     last = "delete" })
             }
         }
