@@ -96,3 +96,49 @@ name = "the items are one list item each, and only the carousel is a Tab stop"
 steps = [{ key = "Tab" }]
 expect = ['Group "Places" description "Arrow keys move between items" [focusable focused]', 'ListItem "Dunes" [selected]']
 not = ['ListItem "Harbour" [focusable', 'Button (unnamed)']
+
+# The center-aligned hero (CarouselCenterScenarios): the large item between two small ones.
+[[test]]
+name = "center hero: the first item is large, with its right neighbour small and nothing before it"
+view = "CarouselCenterScenarios"
+expect = [
+    'ListItem "Dunes" [selected] @ 104,30 240x200',
+    'ListItem "Harbour" @ 352,30 56x200',
+]
+
+[[test]]
+name = "center hero: Right centres the next item with a small one on either side"
+view = "CarouselCenterScenarios"
+steps = [{ key = "Tab" }, { key = "Right" }, { wait = 800 }]
+expect = [
+    'ScrollView = scroll 176,0',
+    'ListItem "Dunes" @ 40,30 56x200',
+    'ListItem "Harbour" [selected] @ 104,30 240x200',
+    'ListItem "Forest" @ 352,30 56x200',
+]
+
+[[test]]
+name = "center hero: End and Home go to the ends and the last item has no right neighbour"
+view = "CarouselCenterScenarios"
+steps = [{ key = "Tab" }, { key = "End" }, { wait = 800 }]
+expect = ['ListItem "Lagoon" @ 40,30 56x200', 'ListItem "Summit" [selected] @ 104,30 240x200']
+
+[[test]]
+name = "center hero: Enter picks the centred item, a tap picks a small one"
+view = "CarouselCenterScenarios"
+steps = [{ key = "Tab" }, { key = "Right" }, { key = "Enter" }, { expect = ['Label "Picked: 1"'] }, { tap = 'ListItem "Forest"' }]
+expect = ['Label "Picked: 2"']
+
+[[test]]
+name = "center hero: Tab reaches the carousel once, the next Tab leaves it"
+view = "CarouselCenterScenarios"
+steps = [{ key = "Tab" }, { key = "Tab" }]
+expect = ['Button "After" [focusable focused]']
+not = ['ListItem "Harbour" [focusable']
+
+[[test]]
+name = "center hero in the dark scheme"
+view = "CarouselCenterScenarios"
+scheme = "dark"
+steps = [{ key = "Tab" }, { key = "Right" }, { key = "Right" }, { wait = 800 }]
+expect = ['ListItem "Forest" [selected] @ 104,30 240x200']
