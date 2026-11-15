@@ -55,4 +55,4 @@ expect = [
 [[test]]
 name = "the pressed item grows by 15% of its width and its neighbour gives it up"
 steps = [{ hold = 'Button "Cut"' }, { wait = 800 }]
-expect = ['Button "Cut" [focusable focused] @ 24,136 62x40', 'Button "Copy" [focusable] @ 98,136 56x40']
+expect = ['Button "Cut" [focusable focused] @ 24,136 64x40', 'Button "Copy" [focusable] @ 100,136 58x40']

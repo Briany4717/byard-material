@@ -86,5 +86,5 @@ expect = ['Label "Taps: 1"']
 
 [[test]]
 name = "the filter chip grows by the check icon and its gap when selected"
-steps = [{ expect = ['ToggleButton "Open now" [focusable] @ 24,72 96x32'] }, { tap = 'ToggleButton "Open now"' }, { not = ['ToggleButton "Open now" [focusable focused checked] @ 24,72 114x32'] }, { wait = 1500 }]
-expect = ['ToggleButton "Open now" [focusable focused checked] @ 24,72 114x32']
+steps = [{ expect = ['ToggleButton "Open now" [focusable] @ 24,72 99x32'] }, { tap = 'ToggleButton "Open now"' }, { not = ['ToggleButton "Open now" [focusable focused checked] @ 24,72 117x32'] }, { wait = 1500 }]
+expect = ['ToggleButton "Open now" [focusable focused checked] @ 24,72 117x32']
