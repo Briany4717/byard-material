@@ -3,11 +3,11 @@ name = "material"
 version = "0.1.0"
 
 # Material Symbols Rounded draws the icons (ligatures; `icons = true` lets `byard bundle` keep
-# only the ones an app uses). Roboto Flex is the text face. From outside they are
+# only the ones an app uses). Google Sans Flex is the text face. From outside they are
 # "material/symbols" and "material/text".
 [assets.fonts]
 symbols = { path = "fonts/MaterialSymbolsRounded.ttf", icons = true }
-text = "fonts/RobotoFlex.ttf"
+text = "fonts/GoogleSansFlex.ttf"
 
 # The Material 3 baseline scheme, light and dark. A consumer's `[theme] extends = "material"`
 # takes all of it, and a `seed` on top recolours every role.
@@ -117,7 +117,7 @@ tertiary_fixed_dim = "#EFB8C8"
 on_tertiary_fixed = "#31111D"
 on_tertiary_fixed_variant = "#633B48"
 
-# The Material 3 type scale in Roboto Flex, then the emphasized styles of Material 3 Expressive
+# The Material 3 type scale in Google Sans Flex, then the emphasized styles of Material 3 Expressive
 # (same size and spacing; regular becomes medium, medium becomes bold).
 [theme.typography]
 display_large = { size = 57, family = "text", weight = "regular", tracking = -0.25, line_height = 64 }

@@ -74,5 +74,11 @@ Two fonts ship in `fonts/`, each with its licence:
 - **Material Symbols Rounded**, Google's icon font, under the Apache License 2.0
   (`fonts/LICENSE-MaterialSymbols`). It is declared as an icon font, so `byard bundle` keeps
   only the icons an app uses.
-- **Roboto Flex**, the text face, under the SIL Open Font License 1.1
-  (`fonts/OFL-RobotoFlex.txt`).
+- **Google Sans Flex**, the text face of Material 3 Expressive, unmodified, under the SIL Open
+  Font License 1.1 (`fonts/OFL-GoogleSansFlex.txt`). "Google Sans Flex" is a trademark of Google
+  LLC; its notice is in `fonts/NOTICE-GoogleSansFlex-trademarks.md`.
+
+Google Sans Flex covers Latin, Latin Extended and Vietnamese, but not Cyrillic or Greek. Text in
+those scripts falls back to a system face. An app written in them can give its type styles a face
+that has them, such as Roboto Flex: declare it in the app's `[assets.fonts]` and set `family` on
+the styles in its own `[theme.typography]`.
