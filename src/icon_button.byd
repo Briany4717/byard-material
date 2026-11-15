@@ -34,6 +34,9 @@ private fn iconButtonWidth(size: ButtonSize, width: IconButtonWidth) -> Int =>
     : size == ButtonSize.l ? (width == IconButtonWidth.narrow ? 64 : width == IconButtonWidth.wide ? 128 : 96)
     : (width == IconButtonWidth.narrow ? 104 : width == IconButtonWidth.wide ? 184 : 136)
 
+// The glyph: Material's icon button is 24 from size s up (a Button's icon is 20 at s).
+private fn iconButtonGlyph(size: ButtonSize) -> Int => size == ButtonSize.s ? 24 : buttonIconSize(size)
+
 View IconButton(icon: Str, label: Str, variant: IconButtonVariant = .standard,
     size: ButtonSize = .s, width: IconButtonWidth = .default, shape: ButtonShape = .round,
     toggle: Bool = false, selected: Bool = false, disabled: Bool = false, color: Color? = none,
@@ -96,6 +99,6 @@ View IconButton(icon: Str, label: Str, variant: IconButtonVariant = .standard,
             radius: buttonPressedRadius(size) with t.springSpatialFast
         }
 
-        Icon(icon, fill: on ? 1.0 : 0.0, size: buttonIconSize(size), color: ink)
+        Icon(icon, fill: on ? 1.0 : 0.0, size: iconButtonGlyph(size), color: ink)
     }
 }
