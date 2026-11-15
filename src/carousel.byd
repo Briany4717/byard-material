@@ -7,6 +7,8 @@
 //   changes as you scroll: an item grows from small to medium to large as it moves to the
 //   start, and the first one shrinks away.
 // - hero: one large item and one small.
+// - center-aligned hero: the large item in the middle with a small one on either side; the item
+//   at the start has no neighbour before it, so its left stays empty at rest.
 // - uncontained: every item keeps its size, and the edge cuts the last one.
 // - full screen: one item at a time, edge to edge, scrolling up and down.
 //
@@ -20,6 +22,7 @@
 enum CarouselLayout {
     multiBrowse,
     hero,
+    centerHero,
     uncontained,
     fullScreen,
 }
@@ -42,6 +45,23 @@ private fn keyLeft(j: Int, nl: Int, big: Float, mid: Float, small: Float, gap: F
     : j <= nl ? j * (big + gap)
     : j == nl + 1 ? nl * (big + gap) + (mid > 0.0 ? mid : small) + gap
     : nl * (big + gap) + (mid > 0.0 ? mid + gap + small : small) + gap
+
+// The center-aligned hero's keylines: an item `j` places from the middle is nothing (2 or more
+// away), a small one beside the large one (1), or the large one (0). Left edges are the small
+// item, a gap, the large one, a gap and the small one.
+private fn centerSize(j: Int, big: Float, small: Float) -> Float =>
+    (j == -1 || j == 1) ? small : j == 0 ? big : 0.0
+
+private fn centerLeft(j: Int, big: Float, small: Float, gap: Float, view: Float) -> Float =>
+    j <= -1 ? 0.0 : j == 0 ? small + gap : j == 1 ? small + gap + big + gap : view
+
+private fn centerWidth(d: Float, big: Float, small: Float) -> Float =>
+    centerSize(d.floor(), big, small)
+    + (centerSize(d.floor() + 1, big, small) - centerSize(d.floor(), big, small)) * (d - d.floor())
+
+private fn centerX(d: Float, big: Float, small: Float, gap: Float, view: Float) -> Float =>
+    centerLeft(d.floor(), big, small, gap, view)
+    + (centerLeft(d.floor() + 1, big, small, gap, view) - centerLeft(d.floor(), big, small, gap, view)) * (d - d.floor())
 
 // An item `d` places from the start (fractional while scrolling): its width and left edge are
 // the keylines on either side of it, blended.
@@ -70,21 +90,29 @@ View Carousel(items: List<CarouselItem>, layout: CarouselLayout = .multiBrowse, 
     let multi = layout == CarouselLayout.multiBrowse
     let hero = layout == CarouselLayout.hero
     let full = layout == CarouselLayout.fullScreen
-    let masked = multi || hero
+    let ctr = layout == CarouselLayout.centerHero
+    let masked = multi || hero || ctr
     let pref = item_width.toFloat()
 
     // The arrangement at rest: how many large items fit beside a medium and a small one, and
     // the large width that makes them fill the view exactly.
     let mid = multi ? (pref + small) / 2.0 : 0.0
-    let nl = hero ? 1 : ((view - mid - small - gap) / (pref + gap)).round().max(1)
-    let big = hero ? view - small - gap : (view - mid - small - (nl + 1) * gap) / nl
+    let nl = (hero || ctr) ? 1 : ((view - mid - small - gap) / (pref + gap)).round().max(1)
+    let big = ctr ? view - 2.0 * small - 2.0 * gap : hero ? view - small - gap : (view - mid - small - (nl + 1) * gap) / nl
+    let maskW = (d: Float) => ctr ? centerWidth(d, big, small) : maskWidth(d, nl, big, mid, small)
+    let maskX = (d: Float) => ctr ? centerX(d, big, small, gap, view) : maskLeft(d, nl, big, mid, small, gap)
     let lo = multi ? mid : small
-    let stride = masked ? big + gap : pref + gap
+    // The center-aligned hero draws the small item before the large one, which lies out of
+    // the view at the slot it would have (a slot is where the scroll view snaps). So its items
+    // sit one slot later, behind an empty first slot, and its slots are narrower than a large
+    // item so that those of the neighbours are in view.
+    let shift = ctr ? 1.0 : 0.0
+    let stride = ctr ? (width / 2 - 24).toFloat() : masked ? big + gap : pref + gap
 
     // Items are laid out on a constant stride, so the scroll offset says where the carousel is
     // (`pos`, in items); each masked item is then drawn at the width and place its keyline says.
     let pos = x / stride
-    let spare = masked ? width - nl * stride : 0.0
+    let spare = masked ? width - (nl + shift) * stride : 0.0
     let lastMasked = (n - nl).max(0) * stride
     let lastFree = (n * stride - gap + margin - width).max(0.0)
 
@@ -92,8 +120,8 @@ View Carousel(items: List<CarouselItem>, layout: CarouselLayout = .multiBrowse, 
     // card is, for the ring.
     let current = full ? (y / height).round() : masked ? pos.round() : (x / stride).round()
     let cd = current - pos
-    let ringW = full ? width : masked ? maskWidth(cd, nl, big, mid, small) : pref
-    let ringX = full ? 0.0 : masked ? margin + maskLeft(cd, nl, big, mid, small, gap) : margin + current * stride - x
+    let ringW = full ? width : masked ? maskW(cd) : pref
+    let ringX = full ? 0.0 : masked ? margin + maskX(cd) : margin + current * stride - x
     let ringY = full ? current * height - y : ring
     let step = (k: Int) => {
         let to = (current + k).max(0).min(n - 1)
@@ -161,13 +189,16 @@ View Carousel(items: List<CarouselItem>, layout: CarouselLayout = .multiBrowse, 
                     height: height + 2 * ring,
                 ] {
                     Row {
+                        when ctr {
+                            Box #[width: stride, height: 1, shrink: 0] {}
+                        }
                         for i, item in items {
                             let d = i - pos
-                            let w = maskWidth(d, nl, big, mid, small)
+                            let w = maskW(d)
                             Box #[width: stride, height: height + 2 * ring, shrink: 0] {
                                 CarouselCard(item: item, index: i, width: w, height: height,
                                     radius: 28,
-                                    pad: w > 0.5 ? margin + maskLeft(d, nl, big, mid, small, gap) - d * stride : 0.0,
+                                    pad: w > 0.5 ? margin + maskX(d) - (d + shift) * stride : 0.0,
                                     lift: ring,
                                     label_alpha: ((w - lo) / (big - lo)).max(0.0).min(1.0),
                                     current: current == i,

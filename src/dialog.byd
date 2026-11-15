@@ -43,6 +43,9 @@ View Dialog(bind open: Bool, headline: Str, supporting_text: Str = "", icon: Str
                     a11y_role: dialog,
                     a11y_label: headline,
                     a11y_described_by: body,
+                    // A press on a bare part of the page is not a press on the scrim: without a
+                    // handler the overlay takes it for one and dismisses.
+                    tap => {},
                 ] {
                     on enter { opacity: 0.0, translate: (0, 48) }
                     on leave { opacity: 0.0, translate: (0, 48) }

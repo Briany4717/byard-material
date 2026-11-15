@@ -114,3 +114,8 @@ not = ['Button "Delete" [focusable focused]']
 name = "Enter on the autofocused action keeps the photo"
 steps = [{ tap = 'Button "Delete photo"' }, { key = "Enter" }]
 expect = ['Label "Result: kept"']
+
+[[test]]
+name = "a tap on the headline or a bare part of the full-screen dialog leaves it open"
+steps = [{ tap = 'Button "Open full"' }, { wait = 600 }, { tap = 'Label "New event"' }, { wait = 400 }, { expect = ['Dialog "New event"'] }, { tap = [200, 300] }, { wait = 400 }]
+expect = ['Dialog "New event"', 'Button "Close" [focusable focused]']

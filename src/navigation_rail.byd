@@ -17,8 +17,18 @@
 // two widths. What the rail decides (expanded or not, the selected index, how to select) it hands
 // down in a context, so an item is written with only what is its own; an item outside a rail is
 // collapsed with nothing selected. The expanded rail
-// is what Expressive uses in place of a standard navigation drawer; a modal one (over a scrim,
-// closing on a tap outside) is not made here, see the notes.
+// is what Expressive uses in place of a standard navigation drawer.
+//
+// `modal: true` with `open` and `on_close` adds Expressive's modal expanded rail, its replacement for the
+// modal drawer: the collapsed rail stays in the layout, and while `open` is true an expanded one
+// slides in over a scrim (an `Overlay`). The header slot is drawn in both, so one menu button
+// that toggles `open` opens it and, inside, closes it. A tap on the scrim, Escape or choosing a
+// destination closes it; it is a focus scope (focus goes in, Tab stays inside, and back to the
+// menu button on close), and it slides and fades in and out.
+//
+//     m.NavigationRail(bind current: screen, modal: true, open: open, on_close: { open = false },
+//         label: "Main",
+//         header: { m.IconButton("menu", label: "Menu", on_tap: { open = !open }) }) { ... }
 //
 // Roles and keys are the navigation bar's: a `navigation` landmark around a `tab_list`, one Tab
 // stop, the arrows move (Up and Down here, Left and Right too), Enter or Space selects. The
@@ -30,6 +40,8 @@
 //   expanded    56 high, the pill is the whole item (fully round), 16 before the icon, 8 between
 //               icon and label, `label_large`
 //   colours     as the bar's
+//   modal       220 wide* (Material allows 220 to 360), surface_container*, end corners large (16)*,
+//               level 2 shadow*, 32% scrim (the engine's); * not checked against the spec
 
 private let railCollapsedWidth = 96
 private let railExpandedWidth = 220
@@ -53,21 +65,52 @@ private context NavigationRailStyle {
 }
 
 View NavigationRail(content, bind current: Int = 0, header: Slot = none, expanded: Bool = false,
-    label: Str = "Navigation") {
+    label: Str = "Navigation", modal: Bool = false, open: Bool = false, on_close: Fn() = {}) {
+    inject Theme as t
+
+    RailColumn(bind current: current, header: header, expanded: expanded && !modal, label: label,
+        modal: false) { content }
+
+    // The modal expanded rail: over a scrim, from the start edge. A tap on the scrim or Escape
+    // closes it, so does choosing a destination; it is a focus scope, and focus goes back to
+    // what opened it.
+    when modal && open {
+        Overlay #[dismiss => on_close()] {
+            RailColumn(bind current: current, on_close: on_close, header: header, expanded: true,
+                label: label, modal: true) { content }
+        }
+    }
+}
+
+// The rail's column, collapsed, expanded or the modal panel (which is expanded, over the scrim).
+private View RailColumn(content, bind current: Int = 0, on_close: Fn() = {}, header: Slot = none,
+    expanded: Bool, label: Str, modal: Bool) {
     inject Theme as t
 
     provide NavigationRailStyle(expanded: expanded, current: current,
-        select: {|i| current = i })
+        select: {|i|
+            current = i
+            if modal {
+                on_close()
+            }
+        })
 
     Column #[
-        bg: t.surface,
+        anchor: modal ? start : (),
+        bg: modal ? t.surfaceContainer : t.surface,
+        radius: modal ? (0, t.cornerLg, t.cornerLg, 0) : 0,
+        shadow: modal ? "md" : (),
         width: (expanded ? railExpandedWidth : railCollapsedWidth) with t.springSpatialDefault,
+        grow: modal ? 1 : 0,
         shrink: 0,
+        translate: (0, 0) with t.springSpatialDefault,
         p: (railTop, expanded ? 20 : 0, 16, expanded ? 20 : 0),
         align: expanded ? stretch : center,
-        a11y_role: navigation,
+        a11y_role: modal ? dialog : navigation,
         a11y_label: label,
     ] {
+        on enter { translate: (modal ? 0 - railExpandedWidth : 0, 0) }
+        on leave { translate: (modal ? 0 - railExpandedWidth : 0, 0) }
         when header != none {
             Box #[mb: railHeaderGap - railItemGap, align_self: expanded ? start : center] {
                 header

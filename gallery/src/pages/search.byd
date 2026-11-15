@@ -99,6 +99,7 @@ View CarouselPage() {
     Column #[p: 24, gap: 24, bg: t.surface, grow: 1] {
         Section("Multi-browse") { m.Carousel(items: Photos(), width: 400) }
         Section("Hero") { m.Carousel(items: Photos(), layout: .hero, width: 400) }
+        Section("Center-aligned hero") { m.Carousel(items: Photos(), layout: .centerHero, width: 400) }
         Section("Uncontained") { m.Carousel(items: Photos(), layout: .uncontained, width: 400) }
     }
 }
@@ -119,6 +120,18 @@ View CarouselFullPage() {
     inject Theme as t
     Column #[bg: t.surface, grow: 1] {
         m.Carousel(items: Photos(), layout: .fullScreen, width: 360, height: 420)
+    }
+}
+
+// The center-aligned hero on its own, for the scenarios and shots.
+View CarouselCenterScenarios() {
+    inject Theme as t
+    var picked = -1
+    Column #[p: 24, gap: 16, bg: t.surface, grow: 1] {
+        m.Carousel(items: Photos(), layout: .centerHero, width: 400, label: "Places",
+            on_pick: {|i| picked = i })
+        Text("Picked: {picked}") #[color: t.onSurface]
+        m.Button("After")
     }
 }
 

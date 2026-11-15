@@ -56,3 +56,68 @@ name = "the same in the dark scheme"
 scheme = "dark"
 steps = [{ key = "Tab" }, { key = "Tab" }, { key = "Down" }, { key = "Enter" }]
 expect = ['Label "Screen is 1, rail closed"']
+
+# The modal expanded rail (RailModalScenarios): over a scrim, a focus scope.
+[[test]]
+name = "modal rail: closed, only the collapsed rail is there"
+view = "RailModalScenarios"
+expect = ['Navigation "Main"', 'Label "Screen is 0, rail closed"']
+not = ['Dialog "Main"']
+
+[[test]]
+name = "modal rail: the menu button opens an expanded rail as a modal dialog with focus inside"
+view = "RailModalScenarios"
+steps = [{ tap = 'Button "Menu"' }, { wait = 600 }]
+expect = ['Dialog "Main" [modal]', 'Label "Screen is 0, rail open"', 'Tab "Library" [focusable]', 'Button "Menu" [focusable focused]']
+
+[[test]]
+name = "modal rail: the expanded rail's items are 180 wide"
+view = "RailModalScenarios"
+steps = [{ tap = 'Button "Menu"' }, { wait = 600 }]
+expect = ['Dialog "Main" [modal] @ 0,0 220x400', 'Tab "Home" [focusable selected] @ 20,120 180x56']
+
+[[test]]
+name = "modal rail: choosing a destination selects it and closes the rail"
+view = "RailModalScenarios"
+steps = [{ tap = 'Button "Menu"' }, { wait = 600 }, { tap = [100, 328] }, { wait = 600 }]
+expect = ['Label "Screen is 3, rail closed"']
+not = ['Dialog "Main"']
+
+[[test]]
+name = "modal rail: Escape closes it and focus goes back to the menu button"
+view = "RailModalScenarios"
+steps = [{ key = "Tab" }, { key = "Enter" }, { wait = 600 }, { expect = ['Dialog "Main" [modal]'] }, { key = "Escape" }, { wait = 600 }]
+expect = ['Label "Screen is 0, rail closed"', 'Button "Menu" [focusable focused]']
+not = ['Dialog "Main"']
+
+[[test]]
+name = "modal rail: a tap on the scrim closes it"
+view = "RailModalScenarios"
+steps = [{ tap = 'Button "Menu"' }, { wait = 600 }, { tap = [400, 300] }, { wait = 600 }]
+expect = ['Label "Screen is 0, rail closed"']
+not = ['Dialog "Main"']
+
+[[test]]
+name = "modal rail: Tab stays inside the rail and never reaches the page behind"
+view = "RailModalScenarios"
+steps = [{ tap = 'Button "Menu"' }, { wait = 600 }, { key = "Tab" }, { key = "Tab" }, { key = "Tab" }]
+not = ['Button "Done" [focusable focused]']
+
+[[test]]
+name = "modal rail: the menu button inside closes it too"
+view = "RailModalScenarios"
+steps = [{ tap = 'Button "Menu"' }, { wait = 600 }, { key = "Enter" }, { wait = 600 }]
+expect = ['Label "Screen is 0, rail closed"']
+
+[[test]]
+name = "modal rail: the same in the dark scheme"
+view = "RailModalScenarios"
+scheme = "dark"
+steps = [{ tap = 'Button "Menu"' }, { wait = 600 }, { tap = [100, 208] }, { wait = 600 }]
+expect = ['Label "Screen is 1, rail closed"']
+
+[[test]]
+name = "modal rail: it slides in from the start edge, not already in place"
+view = "RailModalScenarios"
+steps = [{ tap = 'Button "Menu"' }, { wait = 40 }]
+expect = ['Dialog "Main" [modal] @ -']

@@ -12,9 +12,14 @@
 // The docked one is two text fields, a start and an end, with the calendar under both; it closes
 // when the end is chosen. The modal's OK waits for both dates.
 //
-// The range is the modal dialog's own frame, 360 wide with the start and end as its headline.
-// Material's phone range picker is a full-screen list of months to scroll through, which this is
-// not (the starred measurements are the date picker's).
+// The modal range is the date dialog's own frame, 360 wide with the start and end as its
+// headline. `fullscreen: true` on `DateRangePickerModal` is Material's phone range picker instead:
+// a full-screen dialog (close button, title, Save) over a headline with the range and a column of
+// months to scroll, each a label and its days, the range a band across them (see
+// `FullscreenRange` below). `months` (12) of them are drawn from the month before the start (or today),
+// or from `earliest`, and none after `latest`. Material's docked picker is for one date only;
+// there is no docked range calendar in its spec, so the docked range here stays two fields with
+// the calendar under them.
 
 View DateRangePicker(bind start: Str = "", bind end: Str = "", week_start: Weekday = .sunday,
     earliest: Str = "", latest: Str = "", first_year: Int = 1900) {
@@ -78,6 +83,7 @@ View DateRangePickerModal(bind open: Bool, bind start: Str = "", bind end: Str =
     input: Bool = false, title: Str = "Select dates", input_title: Str = "Enter dates",
     week_start: Weekday = .sunday, format: DateFormat = .mdy, earliest: Str = "", latest: Str = "",
     first_year: Int = 1900, cancel_label: Str = "Cancel", ok_label: Str = "OK",
+    fullscreen: Bool = false, months: Int = 12, close_label: Str = "Close", save_label: Str = "Save",
     on_confirm: Fn() = {}) {
     var draftStart = start
     var draftEnd = end
@@ -89,30 +95,281 @@ View DateRangePickerModal(bind open: Bool, bind start: Str = "", bind end: Str =
         entering = input
     }
 
-    DateDialog(bind open: open, bind entering: entering, compact: true, title: entering ? input_title : title,
-        headline: (draftStart != "" ? (draftStart.formatDate("MMM D") ?? "") : "Start date")
-            + " – " + (draftEnd != "" ? (draftEnd.formatDate("MMM D") ?? "") : "End date"),
-        cancel_label: cancel_label, ok_label: ok_label,
-        ok_disabled: draftStart == "" || draftEnd == "" || draftEnd < draftStart,
-        on_ok: {
-            start = draftStart
-            end = draftEnd
-            open = false
-            on_confirm()
-        }) {
-        when entering {
-            Row #[p: 24, gap: 16] {
-                DateField(bind: draftStart, label: "Start date", format: format, width: 148,
-                    autofocus: true,
-                    earliest: earliest, latest: latest)
-                DateField(bind: draftEnd, label: "End date", format: format, width: 148,
-                    earliest: earliest, latest: latest)
+    when fullscreen {
+        FullscreenRange(bind open: open, bind entering: entering, bind start: draftStart,
+            bind end: draftEnd, title: entering ? input_title : title, week_start: week_start,
+            format: format, earliest: earliest, latest: latest, months: months,
+            close_label: close_label, save_label: save_label,
+            on_save: {
+                start = draftStart
+                end = draftEnd
+                open = false
+                on_confirm()
+            })
+    } else {
+        DateDialog(bind open: open, bind entering: entering, compact: true, title: entering ? input_title : title,
+            headline: (draftStart != "" ? (draftStart.formatDate("MMM D") ?? "") : "Start date")
+                + " – " + (draftEnd != "" ? (draftEnd.formatDate("MMM D") ?? "") : "End date"),
+            cancel_label: cancel_label, ok_label: ok_label,
+            ok_disabled: draftStart == "" || draftEnd == "" || draftEnd < draftStart,
+            on_ok: {
+                start = draftStart
+                end = draftEnd
+                open = false
+                on_confirm()
+            }) {
+            when entering {
+                Row #[p: 24, gap: 16] {
+                    DateField(bind: draftStart, label: "Start date", format: format, width: 148,
+                        autofocus: true,
+                        earliest: earliest, latest: latest)
+                    DateField(bind: draftEnd, label: "End date", format: format, width: 148,
+                        earliest: earliest, latest: latest)
+                }
+            } else {
+                Box #[p: (12, 12, 0, 12)] {
+                    CalendarPane(bind start: draftStart, bind end: draftEnd, range: true, week_start: week_start,
+                        earliest: earliest, latest: latest, first_year: first_year, grab: true)
+                }
             }
-        } else {
-            Box #[p: (12, 12, 0, 12)] {
-                CalendarPane(bind start: draftStart, bind end: draftEnd, range: true, week_start: week_start,
-                    earliest: earliest, latest: latest, first_year: first_year, grab: true)
+        }
+    }
+}
+
+private let rangeMonthIndexes = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21,
+    22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46,
+    47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59]
+
+// A month's block in the list: its label (56) and six weeks of 48, always six so that the scroll
+// offset of a month is a product (a month of four or five weeks leaves the rest empty).
+private let rangeMonthHeight = 56 + 6 * 48
+
+// The full-screen range picker: a dialog over the whole window with the draft range in a
+// headline and the months in a scrolling column. A focus scope like every modal; Escape or the
+// close button leave without saving, Save writes the draft (it waits for both dates).
+//
+// Keys: as the calendar's, one Tab stop with a cursor (arrows by a day or a week, PageUp and
+// PageDown by a month, Home and End to the ends of the week, Enter or Space choose) that scrolls
+// the list to its month. Material values (starred: not checked against the spec): header 56,
+// title title_large*, headline headline_medium* in a 72 high row, month label title_small* 56
+// high with 16 before it*, container `surface`, band `secondary_container`, 48 by 48 days.
+private View FullscreenRange(bind open: Bool, bind entering: Bool, bind start: Str, bind end: Str,
+    title: Str, week_start: Weekday, format: DateFormat, earliest: Str, latest: Str, months: Int,
+    close_label: Str, save_label: Str, on_save: Fn()) {
+    inject Theme as t
+
+    var today = ""
+    var first = ""
+    var cursor = ""
+    var y = 0.0
+    var focus = false
+    var ring = true
+
+    let ws = weekdayIndex(week_start)
+    let ready = first != ""
+    let cursorName = (cursor.formatDate("dddd, MMMM D, YYYY") ?? "") + (cursor == today ? ", today" : "")
+    let place = (s: Str) => (monthsTotal(s, 0) - monthsTotal(first, 0)).toFloat() * rangeMonthHeight
+    let choose = (d: Str) => {
+        if !beyond(d, earliest, latest) {
+            if start == "" || end != "" || d < start {
+                start = d
+                end = ""
+            } else {
+                end = d
             }
+        }
+    }
+
+    on mount => {
+        today = now().slice(0, 10)
+        let base = start != "" ? start : today
+        first = earliest != "" ? monthStart(earliest, 0) : monthStart(base, -1)
+        cursor = clampDate(base, earliest, latest)
+        y = (monthsTotal(cursor, 0) - monthsTotal(first, 0)).toFloat() * rangeMonthHeight
+    }
+
+    when open {
+        Overlay #[dismiss => open = false] {
+            Column #[
+                bg: t.surface,
+                grow: 1,
+                opacity: 1.0 with t.springEffectsFast,
+                translate: (0, 0) with t.springSpatialDefault,
+                a11y_role: dialog,
+                a11y_label: title,
+                // A press on a bare part of the page is not a press outside it: without a
+                // handler the overlay reads it as a tap on the scrim and dismisses.
+                tap => {},
+            ] {
+                on enter { opacity: 0.0, translate: (0, 48) }
+                on leave { opacity: 0.0, translate: (0, 48) }
+                Row #[height: 56, p: (0, 12, 0, 8), gap: 8, align: center, shrink: 0] {
+                    IconButton("close", label: close_label, on_tap: { open = false })
+                    Text(title) #[typo: t.titleLarge, color: t.onSurface, grow: 1, wrap: false]
+                    material.Button(save_label, variant: .text, disabled: start == "" || end == "" || end < start,
+                        on_tap: on_save)
+                }
+                Row #[height: 72, p: (0, 12, 0, 24), align: center, shrink: 0] {
+                    Text((start != "" ? (start.formatDate("MMM D") ?? "") : "Start date")
+                            + " – " + (end != "" ? (end.formatDate("MMM D") ?? "") : "End date")) #[
+                        typo: t.headlineMedium,
+                        color: t.onSurface,
+                        grow: 1,
+                        wrap: false,
+                    ]
+                    IconButton(entering ? "calendar_today" : "edit",
+                        label: entering ? "Switch to calendar" : "Switch to text input",
+                        on_tap: { entering = !entering })
+                }
+                Box #[height: 1, bg: t.outlineVariant, shrink: 0]
+                when entering {
+                    Row #[p: 24, gap: 16] {
+                        DateField(bind: start, label: "Start date", format: format, width: 148, autofocus: true,
+                            earliest: earliest, latest: latest)
+                        DateField(bind: end, label: "End date", format: format, width: 148,
+                            earliest: earliest, latest: latest)
+                    }
+                } else {
+                    Row #[height: 40, align_self: center, shrink: 0] {
+                        for c in gridDays {
+                            Box #[width: 48, height: 40, align: center, justify: center] {
+                                Text(weekdayLetters[(ws + c) % 7]) #[
+                                    typo: t.bodyLarge,
+                                    color: t.onSurface,
+                                    a11y_hidden: true,
+                                ]
+                            }
+                        }
+                    }
+                    // The keyboard's one stop, as in the calendar: no area, named for the
+                    // day under the cursor.
+                    Box #[
+                        width: 0,
+                        height: 0,
+                        a11y_role: button,
+                        a11y_label: cursorName,
+                        a11y_selected: cursor == start || cursor == end,
+                        autofocus: true,
+                        focused: focus,
+                        key_down(k) => {
+                            cursor = keyMove(cursor, k, ws, earliest, latest)
+                            ring = true
+                            y = place(cursor)
+                        },
+                        tap => choose(cursor),
+                    ] {}
+                    ScrollView #[grow: 1, offset: (0.0, y)] {
+                        Column #[align_self: center, a11y_role: group, a11y_label: "Months"] {
+                            when ready {
+                                for k in rangeMonthIndexes {
+                                    when k < months && !beyond(monthStart(first, k), "", latest) {
+                                        RangeMonth(first: monthStart(first, k), start: start, end: end, today: today,
+                                            cursor: cursor, ring: focus && ring, ws: ws, earliest: earliest, latest: latest,
+                                            on_pick: {|d|
+                                                cursor = d
+                                                focus = true
+                                                ring = false
+                                                choose(d)
+                                            })
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// One month of the list: its label and its weeks of days, with the band across the range.
+private View RangeMonth(first: Str, start: Str, end: Str, today: Str, cursor: Str, ring: Bool,
+    ws: Int, earliest: Str, latest: Str, on_pick: Fn(Str)) {
+    inject Theme as t
+
+    let cy = isoYear(first)
+    let cm = isoMonth(first)
+    let dim = daysIn(cy, cm)
+    let lead = weekColumn(first, ws)
+    let name = first.formatDate("MMMM YYYY") ?? ""
+
+    Column #[width: 336, height: rangeMonthHeight, a11y_role: group, a11y_label: name] {
+        Box #[height: 56, p: (0, 0, 0, 16), justify: end, shrink: 0] {
+            Text(name) #[
+                typo: t.titleSmall,
+                color: t.onSurfaceVariant,
+                wrap: false,
+                mb: 12,
+                a11y_hidden: true,
+            ]
+        }
+        for w in gridWeeks {
+            Row #[height: 48] {
+                for c in gridDays {
+                    let n = w * 7 + c - lead + 1
+                    let date = n >= 1 && n <= dim ? isoOf(cy, cm, n) : ""
+                    when date == "" {
+                        Box #[width: 48, height: 48, shrink: 0]
+                    } else {
+                        RangeDay(date: date, start: start, end: end, today: today, here: date == cursor && ring,
+                            blocked: beyond(date, earliest, latest), on_pick: { on_pick(date) })
+                    }
+                }
+            }
+        }
+    }
+}
+
+// One day: a 40 round cell in a 48 box, with the half bands that join it to its neighbours.
+private View RangeDay(date: Str, start: Str, end: Str, today: Str, here: Bool, blocked: Bool, on_pick: Fn()) {
+    inject Theme as t
+
+    let chosen = date == start || (end != "" && date == end)
+    let between = start != "" && end != "" && date > start && date < end
+    let spans = start != "" && end != "" && start != end
+    let isToday = date == today
+    let ink = blocked ? t.onSurface.alpha(disabledContent)
+        : chosen ? t.onPrimary
+        : between ? t.onSecondaryContainer
+        : isToday ? t.primary
+        : t.onSurface
+
+    ZStack #[width: 48, height: 48, shrink: 0, alignment: center] {
+        Row #[width: 48, height: 40] {
+            Box #[
+                grow: 1,
+                bg: (between || (spans && date == end)) ? t.secondaryContainer : t.secondaryContainer.alpha(0.0) with t.springEffectsFast,
+            ]
+            Box #[
+                grow: 1,
+                bg: (between || (spans && date == start)) ? t.secondaryContainer : t.secondaryContainer.alpha(0.0) with t.springEffectsFast,
+            ]
+        }
+        Box #[
+            width: 40,
+            height: 40,
+            radius: 20,
+            bg: chosen ? t.primary : t.primary.alpha(0.0) with t.springEffectsFast,
+            border: t.outline,
+            border_width: isToday && !chosen ? 1 : 0,
+            outline: t.secondary,
+            outline_width: here ? focusRingWidth : 0,
+            outline_offset: focusRingOffset,
+            align: center,
+            justify: center,
+            a11y_role: group,
+            a11y_label: (date.formatDate("dddd, MMMM D, YYYY") ?? "") + (isToday ? ", today" : ""),
+            a11y_selected: chosen,
+            disabled: blocked,
+            tap => on_pick(),
+        ] {
+            on hover { overlay: ink.alpha(stateHover) with t.springEffectsFast }
+            on pressed { overlay: ink.alpha(statePress) with t.springEffectsFast }
+            Text("{date.slice(8, 10).toInt() ?? 0}") #[
+                typo: t.bodyLarge,
+                color: ink with t.springEffectsFast,
+                a11y_hidden: true,
+            ]
         }
     }
 }

@@ -34,13 +34,13 @@ group:
 | Actions | `Button` (also the toggle button), `IconButton`, `ButtonGroup`, `MultiButtonGroup` (standard and connected), `SplitButton`, `Fab`, `ExtendedFab`, `FabMenu` | main with RFC-0061 to 0063 (motion in layout, slots, input); `FabMenu` also 0066 |
 | Selection | `Switch`, `Checkbox`, `Radio`, `RadioGroup`, `Slider`, `RangeSlider`, `AssistChip`, `FilterChip`, `InputChip`, `SuggestionChip`, `ChipSet` | 0062, 0063 |
 | Input | `TextField`, `SearchBar`, `SearchView` | 0064 (multiline, border gap) |
-| Containment | `Card`, `ListItem` with `List`, `ListItemIcon`, `ListItemAvatar`, `ListItemImage`, `ListItemText`, `Divider`, `Badge`, `BadgedIcon`, `Carousel` | 0063 |
-| Navigation | `NavigationBar`, `NavigationRail`, `Tabs` (with their items), `TopAppBar` | 0065 (context) |
+| Containment | `Card`, `ListItem` with `List`, `ListItemIcon`, `ListItemAvatar`, `ListItemImage`, `ListItemText`, `Divider`, `Badge`, `BadgedIcon`, `Carousel` (multi-browse, hero, center-aligned hero, uncontained, full screen) | 0063 |
+| Navigation | `NavigationBar`, `NavigationRail` (collapsed, expanded, modal expanded), `Tabs` (with their items), `TopAppBar` | 0065 (context) |
 | Toolbars | `BottomAppBar`, `DockedToolbar`, `FloatingToolbar` | 0062 |
 | Overlays | `Dialog`, `Menu` (with `MenuGroup`, `MenuItem`, `MenuDivider`), `BottomSheet`, `SideSheet`, `Tooltip`, `Snackbar`, `SnackbarHost` | 0066 (focus scopes, `on enter`/`on leave`, live regions) |
 | Progress | `LinearProgressIndicator`, `CircularProgressIndicator`, `LoadingIndicator` | 0064 (`sin`/`cos` in 0066) |
 | Layout | `Scaffold` | 0065 |
-| Pickers | `DatePicker`, `DatePickerDocked`, `DatePickerModal`, `DateRangePicker`, `DateRangePickerDocked`, `DateRangePickerModal`, `TimePicker`, `TimePickerDialog` | 0065, 0066 |
+| Pickers | `DatePicker`, `DatePickerDocked`, `DatePickerModal`, `DateRangePicker`, `DateRangePickerDocked`, `DateRangePickerModal` (also full screen), `TimePicker`, `TimePickerDialog` | 0065, 0066 |
 | Icons | `Icon` (Material Symbols Rounded) | icon font axes |
 
 "Needs Byard" is the oldest Byard that has what the group uses: all of it needs Byard's `main`

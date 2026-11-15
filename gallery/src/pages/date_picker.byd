@@ -12,6 +12,7 @@ View DatePickerPage() {
     var typed = false
     var rangeModal = false
     var rangeTyped = false
+    var rangeFull = false
     var due = "2026-12-01"
     var dockOpen = false
     Column #[p: 24, gap: 32, bg: t.surface, grow: 1] {
@@ -33,6 +34,7 @@ View DatePickerPage() {
                 m.Button("Date, typed", variant: .tonal, on_tap: { typed = true })
                 m.Button("Range", variant: .tonal, on_tap: { rangeModal = true })
                 m.Button("Range, typed", variant: .tonal, on_tap: { rangeTyped = true })
+                m.Button("Range, full screen", variant: .tonal, on_tap: { rangeFull = true })
             }
         }
     }
@@ -40,6 +42,19 @@ View DatePickerPage() {
     m.DatePickerModal(bind open: typed, bind value: day, input: true)
     m.DateRangePickerModal(bind open: rangeModal, bind start: from, bind end: to)
     m.DateRangePickerModal(bind open: rangeTyped, bind start: from, bind end: to, input: true)
+    m.DateRangePickerModal(bind open: rangeFull, bind start: from, bind end: to, fullscreen: true)
+}
+
+// The full-screen range picker on its own, open, for shots.
+View DateRangeFullPage() {
+    inject Theme as t
+    var from = "2026-11-16"
+    var to = "2026-11-20"
+    var open = true
+    Column #[p: 24, bg: t.surface, grow: 1] {
+        Text("{from} to {to}") #[color: t.onSurface]
+    }
+    m.DateRangePickerModal(bind open: open, bind start: from, bind end: to, fullscreen: true)
 }
 
 // For `tests/date_picker.toml`.
@@ -51,6 +66,7 @@ View DatePickerScenarios() {
     var open = false
     var typed = false
     var ranged = false
+    var full = false
     var due = ""
     var dockOpen = false
     Column #[p: 24, gap: 16, align: start, bg: t.surface, grow: 1] {
@@ -60,6 +76,7 @@ View DatePickerScenarios() {
             m.Button("Open range", variant: .tonal, on_tap: { ranged = true })
         }
         m.DatePickerDocked(bind value: due, bind open: dockOpen, label: "Due")
+        m.Button("Open full", variant: .tonal, on_tap: { full = true })
         Text("Day: {day}")
         Text("Range: {from} to {to}")
         Text("Due: {due}")
@@ -67,4 +84,5 @@ View DatePickerScenarios() {
     m.DatePickerModal(bind open: open, bind value: day)
     m.DatePickerModal(bind open: typed, bind value: day, input: true)
     m.DateRangePickerModal(bind open: ranged, bind start: from, bind end: to)
+    m.DateRangePickerModal(bind open: full, bind start: from, bind end: to, fullscreen: true)
 }
