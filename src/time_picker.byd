@@ -1,0 +1,169 @@
+// Material 3 Expressive time pickers: the clock dial and the input form, in 12-hour time with AM/PM
+// or in 24-hour time, laid out vertically or horizontally, inline or as a modal dialog.
+//
+//     m.TimePickerDialog(bind: open, bind hour: start_hour, bind minute: start_minute, is24: false)
+//     m.TimePicker(bind hour: hour, bind minute: minute, is24: true, layout: .horizontal)
+//
+// `hour` is always 0 to 23, whatever the clock says, and `minute` 0 to 59. Both are bindable
+// and both may be left out (the picker then keeps its own, starting at 00:00). The dial picks the
+// hour and, on release, moves on to the minutes; a press or a drag anywhere on it picks the value
+// under the pointer, and the handle turns to it on a spatial spring. In 24-hour time the dial has
+// an inner ring (00 and 13 to 23).
+//
+// The hour and minute boxes are spin buttons: Up and Down change the value by one, PageUp and
+// PageDown by three hours or five minutes, Home and End go to the ends; they wrap. Tab goes
+// hour, minute, AM, PM, the mode toggle and the actions. A reader is told name, value and range.
+// (Byard has no spin-button role, so each is a `slider` with `a11y_value_min`, `_max` and `_step`.)
+//
+// The toggle at the bottom swaps the dial for the input form: two numeric fields, each outlined in
+// `error` for a value that is not an hour or a minute (a bad value is not written).
+//
+// `TimePickerDialog` is the modal: an overlay holding a dialog with a draft of the time, which OK
+// writes back and Cancel, Escape or a tap on the scrim throw away. Focus goes to the hour box when
+// it opens and back to the opener when it closes. `TimePicker` alone has no container and no
+// actions of its own; `actions` is a slot for them, drawn at the end of the bottom row.
+//
+// Measurements are in `time_picker_family.byd`. Dialog container: surface_container_high, corner
+// 28, padding 24, level 3; the headline is label_medium on_surface_variant, 20 above the boxes;
+// the boxes and the dial are 36 apart* and the actions 24 under the dial*.
+
+enum TimePickerLayout {
+    vertical,
+    horizontal,
+}
+
+// Which of the two the dial is picking.
+enum TimePickerPart {
+    hour,
+    minute,
+}
+
+View TimePicker(bind hour: Int = 0, bind minute: Int = 0, is24: Bool = false,
+    layout: TimePickerLayout = .vertical, headline: Str = "Select time",
+    bind part: TimePickerPart = .hour, bind input: Bool = false, autofocus: Bool = false,
+    actions: Slot = none) {
+    inject Theme as t
+
+    let wide = layout == TimePickerLayout.horizontal
+    let hours = part == TimePickerPart.hour
+    let pm = hour >= 12
+
+    Column #[width: wide ? (input ? 216 : 496) : 280, shrink: 0] {
+        when wide {
+            Row #[gap: 24, align: start] {
+                Column #[width: 216, shrink: 0] {
+                    Text(headline) #[typo: t.labelMedium, color: t.onSurfaceVariant, mb: 20]
+                    when input {
+                        TimeFields(bind hour: hour, bind minute: minute, is24: is24, hours: hours,
+                            on_part: {|h| part = h ? TimePickerPart.hour : TimePickerPart.minute })
+                    } else {
+                        TimeBoxes(bind hour: hour, bind minute: minute, is24: is24, hours: hours,
+                            autofocus: autofocus,
+                            on_part: {|h| part = h ? TimePickerPart.hour : TimePickerPart.minute })
+                    }
+                    when !is24 {
+                        PeriodSelector(pm, false, on_pick: {|p| hour = hour % 12 + (p ? 12 : 0) })
+                            #[mt: 12]
+                    }
+                }
+                when !input {
+                    Dial(hour, minute, is24, hours,
+                        on_hour: {|h| hour = h },
+                        on_minute: {|m| minute = m },
+                        on_done: { part = TimePickerPart.minute })
+                }
+            }
+        } else {
+            Text(headline) #[typo: t.labelMedium, color: t.onSurfaceVariant, mb: 20]
+            Row #[align: start, justify: is24 ? center : start, gap: 12] {
+                when input {
+                    TimeFields(bind hour: hour, bind minute: minute, is24: is24, hours: hours,
+                        on_part: {|h| part = h ? TimePickerPart.hour : TimePickerPart.minute })
+                } else {
+                    TimeBoxes(bind hour: hour, bind minute: minute, is24: is24, hours: hours,
+                        autofocus: autofocus,
+                        on_part: {|h| part = h ? TimePickerPart.hour : TimePickerPart.minute })
+                }
+                when !is24 {
+                    PeriodSelector(pm, true, on_pick: {|p| hour = hour % 12 + (p ? 12 : 0) })
+                }
+            }
+            when !input {
+                Dial(hour, minute, is24, hours,
+                    on_hour: {|h| hour = h },
+                    on_minute: {|m| minute = m },
+                    on_done: { part = TimePickerPart.minute }) #[mt: 36, align_self: center]
+            }
+        }
+
+        Row #[mt: 24, align: center] {
+            IconButton(input ? "schedule" : "keyboard",
+                label: input ? "Switch to dial" : "Switch to text input",
+                on_tap: { input = !input })
+            Box #[grow: 1]
+            when actions != none {
+                Row #[gap: 8, align: center] { actions }
+            }
+        }
+    }
+}
+
+View TimePickerDialog(bind open: Bool = false, bind hour: Int = 0, bind minute: Int = 0,
+    is24: Bool = false, layout: TimePickerLayout = .vertical, headline: Str = "Select time",
+    cancel_label: Str = "Cancel", ok_label: Str = "OK", on_confirm: Fn() = {},
+    on_cancel: Fn() = {}) {
+    inject Theme as t
+
+    // What the picker edits: only OK writes it to `hour` and `minute`.
+    var h = hour
+    var m = minute
+    var part = TimePickerPart.hour
+    var input = false
+
+    on change(open) => {
+        if open {
+            h = hour
+            m = minute
+            part = TimePickerPart.hour
+            input = false
+        }
+    }
+
+    when open {
+        Overlay #[
+            dismiss => {
+                open = false
+                on_cancel()
+            },
+        ] {
+            Column #[
+                anchor: center,
+                bg: t.surfaceContainerHigh,
+                radius: t.cornerXl,
+                shadow: "lg",
+                p: 24,
+                opacity: 1.0 with t.springEffectsFast,
+                scale: 1.0 with t.springSpatialFast,
+                a11y_role: dialog,
+                a11y_label: headline,
+            ] {
+                on enter { opacity: 0.0, scale: 0.8 }
+                on leave { opacity: 0.0, scale: 0.8 }
+                TimePicker(bind hour: h, bind minute: m, is24: is24, layout: layout,
+                    headline: headline, bind part: part, bind input: input, autofocus: true,
+                    actions: {
+                        material.Button(cancel_label, variant: .text, on_tap: {
+                            open = false
+                            on_cancel()
+                        })
+                        material.Button(ok_label, variant: .text, on_tap: {
+                            hour = h
+                            minute = m
+                            open = false
+                            on_confirm()
+                        })
+                    })
+            }
+        }
+    }
+}
