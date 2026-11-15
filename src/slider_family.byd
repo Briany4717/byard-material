@@ -78,8 +78,8 @@ private View SliderDrawing(size: SliderSize, span: Float, lead: Float, stop: Flo
 
     let active = disabled ? t.onSurface.alpha(disabledContent) : t.primary
     let inactive = disabled ? t.onSurface.alpha(disabledContainer) : t.secondaryContainer
-    let dotOnActive = disabled ? t.surface : t.onPrimary
-    let dotOnInactive = disabled ? t.onSurface.alpha(disabledContent) : t.onSecondaryContainer
+    let dotOnActive = disabled ? t.onSurface.alpha(disabledContainer) : t.secondaryContainer
+    let dotOnInactive = disabled ? t.onSurface.alpha(disabledContent) : t.primary
 
     // Where the handles are, and which ends of the active part they cut.
     let cutFrom = both || lower
