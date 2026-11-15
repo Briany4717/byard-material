@@ -24,8 +24,6 @@ private let rad30 = 0.5235988
 
 private fn hour12(h: Int) -> Int => h % 12 == 0 ? 12 : h % 12
 
-private fn pad2(n: Int) -> Str => n < 10 ? "0{n}" : "{n}"
-
 // `v` wrapped into lo..hi, both ends included.
 private fn wrapTo(v: Int, lo: Int, hi: Int) -> Int =>
     lo + ((v - lo) % (hi - lo + 1) + (hi - lo + 1)) % (hi - lo + 1)
