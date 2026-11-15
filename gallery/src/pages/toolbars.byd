@@ -82,5 +82,9 @@ View ToolbarScenarios() {
             m.IconButton("share", label: "Share")
             m.IconButton("delete", label: "Delete")
         }
+        m.DockedToolbar(label: "Pinned", fixed: true) {
+            m.IconButton("push_pin", label: "Pin")
+            m.IconButton("archive", label: "Archive")
+        }
     }
 }

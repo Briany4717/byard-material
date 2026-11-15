@@ -44,3 +44,11 @@ name = "the same in the dark scheme"
 scheme = "dark"
 steps = [{ tap = 'ToggleButton "Bold"' }]
 expect = ['Label "Bold: on"']
+
+[[test]]
+name = "the docked toolbar spreads its items edge to edge, with 16 at each end"
+expect = ['ToggleButton "Bold" [focusable] @ 32,126 40x40', 'Button "Italic" [focusable] @ 328,126 40x40']
+
+[[test]]
+name = "a fixed docked toolbar keeps its items 32 apart, centred"
+expect = ['Button "Pin" [focusable] @ 144,402 40x40', 'Button "Archive" [focusable] @ 216,402 40x40']
