@@ -15,9 +15,12 @@
 // `MultiButtonGroup` is the same group where any number are on, bound to a list of indices
 // (empty to start). `icon_only` hides the labels but keeps them for a screen reader.
 //
-// A standard group's pressed item widens by `groupWiden` on each side and the ones beside it
-// narrow by `groupNarrow`, on a spatial spring (padding with motion). In a connected group the
-// corners between items, and those of a selected item, move on the same spring.
+// A standard group's pressed item grows by 15% of its width (Compose's `ExpandedRatio`) and the
+// ones beside it give that width up, on a spatial spring (padding with motion), as Compose does:
+// a middle item grows half the ratio on each side and takes it from both neighbours, the first
+// or last item grows the whole ratio on its inner side; no neighbour gives up more than its own
+// side padding. In a connected group the corners between items, and those of a selected item,
+// move on the same spring.
 //
 // The items are toggle buttons in a `group`. Material says nothing I could find about arrow
 // keys in a button group, so Tab walks the items and Space or Enter presses one.
@@ -49,18 +52,11 @@ private fn groupInnerRadius(size: ButtonSize) -> Int =>
     : size == ButtonSize.xl ? 20
     : 8
 
-// How much a standard group's pressed item widens, and its neighbours narrow, on each side.
-//   size  widen  narrow
-//   xs      4       2
-//   s       4       2
-//   m       6       3
-//   l      12       6
-//   xl     16       8
-private fn groupWiden(size: ButtonSize) -> Int =>
-    size == ButtonSize.xs ? 4 : size == ButtonSize.s ? 4 : size == ButtonSize.m ? 6 : size == ButtonSize.l ? 12 : 16
-
-private fn groupNarrow(size: ButtonSize) -> Int =>
-    size == ButtonSize.xs ? 2 : size == ButtonSize.s ? 2 : size == ButtonSize.m ? 3 : size == ButtonSize.l ? 6 : 8
+// How much wider the pressed item gets (half on each side) and its neighbours narrower: 15% of
+// the pressed item's width (halved for a middle one, which grows both ways), at most the side
+// padding of a neighbour (Compose's `compressionLimit`).
+private fn groupGrowth(width: Float, middle: Bool, limit: Float) -> Float =>
+    (middle ? 0.075 : 0.15) * width > limit ? limit : (middle ? 0.075 : 0.15) * width
 
 // An icon-only item is as wide as it is tall: (height - icon) / 2 on each side.
 private fn groupIconPad(size: ButtonSize) -> Int =>
@@ -99,12 +95,14 @@ View MultiButtonGroup(items: List<Str>, bind chosen: List<Int> = [], icons: List
 private View GroupRow(items: List<Str>, marked: List<Int>, icons: List<Str>, type: ButtonGroupType,
     variant: ButtonVariant, size: ButtonSize, shape: ButtonShape, toggle: Bool, icon_only: Bool,
     disabled: Bool, on_pick: Fn(Int)) {
-    // The item the pointer is down on, or -1: a standard group reads it to widen that item.
+    // The item the pointer is down on, or -1, and its width at rest: a standard group reads them
+    // to narrow the neighbours.
     var down = -1
+    var downW = 0.0
 
     Row #[gap: groupGap(size, type), align: center, a11y_role: group] {
         for i, label in items {
-            GroupItem(label, icons.len > i ? icons[i] : "", i, items.len, bind down: down,
+            GroupItem(label, icons.len > i ? icons[i] : "", i, items.len, bind down: down, bind downW: downW,
                 type: type, variant: variant, size: size, shape: shape, toggle: toggle,
                 on: marked.contains(i), icon_only: icon_only, disabled: disabled,
                 on_tap: { on_pick(i) })
@@ -114,7 +112,7 @@ private View GroupRow(items: List<Str>, marked: List<Int>, icons: List<Str>, typ
 
 // One item. A view so that its `let`s and the pointer var it shares with its neighbours stay
 // out of the `for`.
-private View GroupItem(label: Str, icon: Str, index: Int, count: Int, bind down: Int,
+private View GroupItem(label: Str, icon: Str, index: Int, count: Int, bind down: Int, bind downW: Float,
     type: ButtonGroupType, variant: ButtonVariant, size: ButtonSize, shape: ButtonShape,
     toggle: Bool, on: Bool, icon_only: Bool, disabled: Bool, on_tap: Fn() = none) {
     inject Theme as t
@@ -154,11 +152,19 @@ private View GroupItem(label: Str, icon: Str, index: Int, count: Int, bind down:
     let corners = connected ? (cornerL, cornerR, cornerR, cornerL) : (single, single, single, single)
 
     // Standard group: the pressed item widens (its own `on pressed`, so a key press does too) and
-    // the ones beside it, which read `down`, narrow.
-    let beside = !connected && down >= 0 && (down == index - 1 || down == index + 1)
-    let side = beside ? buttonPadding(size) - groupNarrow(size) : buttonPadding(size)
-    let padX = icon_only ? groupIconPad(size) : side
-    let widen = (connected || icon_only) ? 0 : groupWiden(size)
+    // the ones beside it, which read `down` and `downW`, narrow. `cw` is what the item holds, so
+    // its width at rest is `cw` and a side padding on each side.
+    var cw = 0.0
+    let base = (icon_only ? groupIconPad(size) : buttonPadding(size)) * 1.0
+    let restW = cw + 2.0 * base
+    let grows = !connected && count > 1
+    let beside = grows && down >= 0 && (down == index - 1 || down == index + 1)
+    let downMiddle = down > 0 && down < count - 1
+    let narrow = beside ? groupGrowth(downW, downMiddle, base) / 2.0 : 0.0
+    let selfMiddle = index > 0 && index < count - 1
+    let own = groupGrowth(restW, selfMiddle, base)
+    let widen = grows ? (selfMiddle ? own : own / 2.0) : 0.0
+    let padX = base - narrow
 
     let restShadow = !disabled && variant == ButtonVariant.elevated ? "sm" : ()
     let hoverShadow = flat ? () : variant == ButtonVariant.elevated ? "md" : "sm"
@@ -171,7 +177,6 @@ private View GroupItem(label: Str, icon: Str, index: Int, count: Int, bind down:
         shadow: restShadow,
         height: h,
         p: (0, padX) with t.springSpatialFast,
-        gap: buttonGap(size),
         align: center,
         justify: center,
         shrink: 0,
@@ -179,7 +184,10 @@ private View GroupItem(label: Str, icon: Str, index: Int, count: Int, bind down:
         a11y_checked: on,
         a11y_label: label,
         disabled: disabled,
-        pointer_down => down = index,
+        pointer_down => {
+            down = index
+            downW = restW
+        },
         pointer_up => down = -1,
         tap => on_tap(),
     ] {
@@ -196,15 +204,18 @@ private View GroupItem(label: Str, icon: Str, index: Int, count: Int, bind down:
             radius: pressedCorners with t.springSpatialFast
         }
 
-        when icon != "" {
-            Icon(icon, fill: on ? 1.0 : 0.0, size: buttonIconSize(size), color: ink)
-        }
-        when !icon_only {
-            Text(label) #[
-                typo: (size == ButtonSize.xs || size == ButtonSize.s) ? t.labelLarge : size == ButtonSize.m ? t.titleMedium : size == ButtonSize.l ? t.headlineSmall : t.headlineLarge,
-                color: ink with t.springEffectsFast,
-                wrap: false,
-            ]
+        Row #[gap: buttonGap(size), align: center, shrink: 0] {
+            on measure => cw = it.w
+            when icon != "" {
+                Icon(icon, fill: on ? 1.0 : 0.0, size: buttonIconSize(size), color: ink)
+            }
+            when !icon_only {
+                Text(label) #[
+                    typo: (size == ButtonSize.xs || size == ButtonSize.s) ? t.labelLarge : size == ButtonSize.m ? t.titleMedium : size == ButtonSize.l ? t.headlineSmall : t.headlineLarge,
+                    color: ink with t.springEffectsFast,
+                    wrap: false,
+                ]
+            }
         }
     }
 }
