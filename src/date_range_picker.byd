@@ -1,0 +1,118 @@
+// Material 3 date range picker: the date picker's calendar with a start and an end. The first
+// tap chooses the start, the second the end, and the days between are a band; a tap before the
+// start, or a third tap, begins again.
+//
+//     m.DateRangePickerDocked(bind start: from, bind end: to)
+//     m.DateRangePickerModal(bind open: open, bind start: from, bind end: to)
+//     m.DateRangePickerModal(bind open: open, bind start: from, bind end: to, input: true)
+//     m.DateRangePicker(bind start: from, bind end: to)
+//
+// `start` and `end` are ISO texts, `""` for none, and unbound pickers keep their own. All the
+// parameters, the keyboard and the announcements are the date picker's (see date_picker.byd).
+// The docked one is two text fields, a start and an end, with the calendar under both; it closes
+// when the end is chosen. The modal's OK waits for both dates.
+//
+// The range is the modal dialog's own frame, 360 wide with the start and end as its headline.
+// Material's phone range picker is a full-screen list of months to scroll through, which this is
+// not (the starred measurements are the date picker's).
+
+View DateRangePicker(bind start: Str = "", bind end: Str = "", week_start: Weekday = .sunday,
+    earliest: Str = "", latest: Str = "", first_year: Int = 1900) {
+    inject Theme as t
+
+    Column #[
+        bg: t.surfaceContainerHigh,
+        radius: t.cornerLg,
+        shadow: "lg",
+        p: 12,
+        width: 360,
+        shrink: 0,
+    ] {
+        CalendarPane(bind start: start, bind end: end, range: true, week_start: week_start, earliest: earliest, latest: latest,
+            first_year: first_year)
+    }
+}
+
+View DateRangePickerDocked(bind start: Str = "", bind end: Str = "", bind open: Bool = false,
+    start_label: Str = "Start date", end_label: Str = "End date", variant: TextFieldVariant = .outlined,
+    week_start: Weekday = .sunday, format: DateFormat = .mdy, earliest: Str = "", latest: Str = "",
+    first_year: Int = 1900) {
+    inject Theme as t
+
+    Row #[gap: 16, shrink: 0, width: 360] as anchorFields {
+        DateField(bind: start, label: start_label, format: format, variant: variant, width: 172,
+            earliest: earliest, latest: latest)
+        DateField(bind: end, label: end_label, format: format, variant: variant, width: 172,
+            earliest: earliest, latest: latest, trailing_icon: "calendar_today", trailing_label: "Choose dates",
+            on_trailing_tap: { open = !open })
+    }
+
+    when open {
+        Overlay #[modal: false] {
+            Column #[
+                anchor_to: anchorFields,
+                anchor_edge: below,
+                anchor_align: start,
+                anchor_gap: 4,
+                bg: t.surfaceContainerHigh,
+                radius: t.cornerLg,
+                shadow: "lg",
+                p: 12,
+                width: 360,
+                opacity: 1.0 with t.springEffectsFast,
+                translate: (0, 0) with t.springSpatialFast,
+                a11y_role: dialog,
+                a11y_label: "Choose dates",
+                dismiss => open = false,
+            ] {
+                on enter { opacity: 0.0, translate: (0, -8) }
+                on leave { opacity: 0.0, translate: (0, -8) }
+                CalendarPane(bind start: start, bind end: end, range: true, week_start: week_start, earliest: earliest,
+                    latest: latest, first_year: first_year, grab: true, on_done: { open = false })
+            }
+        }
+    }
+}
+
+View DateRangePickerModal(bind open: Bool, bind start: Str = "", bind end: Str = "",
+    input: Bool = false, title: Str = "Select dates", input_title: Str = "Enter dates",
+    week_start: Weekday = .sunday, format: DateFormat = .mdy, earliest: Str = "", latest: Str = "",
+    first_year: Int = 1900, cancel_label: Str = "Cancel", ok_label: Str = "OK",
+    on_confirm: Fn() = {}) {
+    var draftStart = start
+    var draftEnd = end
+    var entering = input
+
+    on change(open) => {
+        draftStart = start
+        draftEnd = end
+        entering = input
+    }
+
+    DateDialog(bind open: open, bind entering: entering, compact: true, title: entering ? input_title : title,
+        headline: (draftStart != "" ? (draftStart.formatDate("MMM D") ?? "") : "Start date")
+            + " – " + (draftEnd != "" ? (draftEnd.formatDate("MMM D") ?? "") : "End date"),
+        cancel_label: cancel_label, ok_label: ok_label,
+        ok_disabled: draftStart == "" || draftEnd == "" || draftEnd < draftStart,
+        on_ok: {
+            start = draftStart
+            end = draftEnd
+            open = false
+            on_confirm()
+        }) {
+        when entering {
+            Row #[p: 24, gap: 16] {
+                DateField(bind: draftStart, label: "Start date", format: format, width: 148,
+                    autofocus: true,
+                    earliest: earliest, latest: latest)
+                DateField(bind: draftEnd, label: "End date", format: format, width: 148,
+                    earliest: earliest, latest: latest)
+            }
+        } else {
+            Box #[p: (12, 12, 0, 12)] {
+                CalendarPane(bind start: draftStart, bind end: draftEnd, range: true, week_start: week_start,
+                    earliest: earliest, latest: latest, first_year: first_year, grab: true)
+            }
+        }
+    }
+}

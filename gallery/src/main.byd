@@ -36,6 +36,7 @@ enum Page {
     badge,
     scaffold,
     timePicker,
+    datePicker,
 }
 
 View Main() {
@@ -113,6 +114,8 @@ View Main() {
                 ScaffoldPage()
             } else when page == Page.timePicker {
                 TimePickerPage()
+            } else when page == Page.datePicker {
+                DatePickerPage()
             } else {
                 Column #[p: 24, gap: 16, align: start] {
                     Text("Components") #[typo: t.titleMedium, color: t.primary]
@@ -147,6 +150,7 @@ View Main() {
                     m.Button("Badge", variant: .tonal, on_tap: { page = Page.badge })
                     m.Button("Scaffold", variant: .tonal, on_tap: { page = Page.scaffold })
                     m.Button("TimePicker", variant: .tonal, on_tap: { page = Page.timePicker })
+                    m.Button("DatePicker", variant: .tonal, on_tap: { page = Page.datePicker })
                 }
             }
         }

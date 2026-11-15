@@ -1,0 +1,70 @@
+use material as m
+
+// m.DatePicker in its three forms (docked, modal, modal with typing), for one date and for a
+// range. The calendars are drawn in place first, then each opens from its button.
+
+View DatePickerPage() {
+    inject Theme as t
+    var day = "2026-11-18"
+    var from = "2026-11-16"
+    var to = "2026-11-20"
+    var modal = false
+    var typed = false
+    var rangeModal = false
+    var rangeTyped = false
+    var due = "2026-12-01"
+    var dockOpen = false
+    Column #[p: 24, gap: 32, bg: t.surface, grow: 1] {
+        Section("Calendar") {
+            Row #[gap: 24, align: start] {
+                m.DatePicker(bind: day)
+                m.DateRangePicker(bind start: from, bind end: to, week_start: .monday)
+            }
+            Text("{day}, {from} to {to}") #[typo: t.bodyMedium, color: t.onSurfaceVariant]
+        }
+        Section("Docked") {
+            Row #[gap: 24, align: start] {
+                m.DatePickerDocked(bind value: due, bind open: dockOpen, label: "Due date")
+            }
+        }
+        Section("Modal") {
+            Row #[gap: 16, align: center] {
+                m.Button("Date", variant: .tonal, on_tap: { modal = true })
+                m.Button("Date, typed", variant: .tonal, on_tap: { typed = true })
+                m.Button("Range", variant: .tonal, on_tap: { rangeModal = true })
+                m.Button("Range, typed", variant: .tonal, on_tap: { rangeTyped = true })
+            }
+        }
+    }
+    m.DatePickerModal(bind open: modal, bind value: day)
+    m.DatePickerModal(bind open: typed, bind value: day, input: true)
+    m.DateRangePickerModal(bind open: rangeModal, bind start: from, bind end: to)
+    m.DateRangePickerModal(bind open: rangeTyped, bind start: from, bind end: to, input: true)
+}
+
+// For `tests/date_picker.toml`.
+View DatePickerScenarios() {
+    inject Theme as t
+    var day = "2026-11-18"
+    var from = ""
+    var to = ""
+    var open = false
+    var typed = false
+    var ranged = false
+    var due = ""
+    var dockOpen = false
+    Column #[p: 24, gap: 16, align: start, bg: t.surface, grow: 1] {
+        Row #[gap: 16, align: center] {
+            m.Button("Open picker", on_tap: { open = true })
+            m.Button("Open typed", variant: .tonal, on_tap: { typed = true })
+            m.Button("Open range", variant: .tonal, on_tap: { ranged = true })
+        }
+        m.DatePickerDocked(bind value: due, bind open: dockOpen, label: "Due")
+        Text("Day: {day}")
+        Text("Range: {from} to {to}")
+        Text("Due: {due}")
+    }
+    m.DatePickerModal(bind open: open, bind value: day)
+    m.DatePickerModal(bind open: typed, bind value: day, input: true)
+    m.DateRangePickerModal(bind open: ranged, bind start: from, bind end: to)
+}
