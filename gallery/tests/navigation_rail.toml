@@ -115,3 +115,9 @@ view = "RailModalScenarios"
 scheme = "dark"
 steps = [{ tap = 'Button "Menu"' }, { wait = 600 }, { tap = [100, 208] }, { wait = 600 }]
 expect = ['Label "Screen is 1, rail closed"']
+
+[[test]]
+name = "modal rail: it slides in from the start edge, not already in place"
+view = "RailModalScenarios"
+steps = [{ tap = 'Button "Menu"' }, { wait = 40 }]
+expect = ['Dialog "Main" [modal] @ -']

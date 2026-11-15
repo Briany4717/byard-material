@@ -103,7 +103,7 @@ private View RailColumn(content, bind current: Int = 0, on_close: Fn() = {}, hea
         width: (expanded ? railExpandedWidth : railCollapsedWidth) with t.springSpatialDefault,
         grow: modal ? 1 : 0,
         shrink: 0,
-        translate: modal ? (0, 0) with t.springSpatialDefault : (),
+        translate: (0, 0) with t.springSpatialDefault,
         p: (railTop, expanded ? 20 : 0, 16, expanded ? 20 : 0),
         align: expanded ? stretch : center,
         a11y_role: modal ? dialog : navigation,
