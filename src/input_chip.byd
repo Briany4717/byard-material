@@ -20,12 +20,12 @@ View InputChip(label: Str, selected: Bool = false, icon: Str = "", avatar: Str =
     let ink = disabled ? t.onSurface.alpha(disabledContent)
         : selected ? t.onSecondaryContainer : t.onSurfaceVariant
     let iconInk = disabled ? t.onSurface.alpha(disabledContent)
-        : selected ? t.onSecondaryContainer : t.primary
+        : selected ? t.primary : t.onSurfaceVariant
     let line = disabled ? t.onSurface.alpha(disabledContainer) : t.outlineVariant
 
     Row #[
         bg: container with t.springEffectsFast,
-        radius: hasAvatar ? chipHeight / 2 : t.cornerSm,
+        radius: t.cornerSm,
         border: line,
         border_width: selected ? 0 : chipLineWidth,
         height: chipHeight,
