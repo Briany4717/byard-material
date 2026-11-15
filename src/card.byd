@@ -28,16 +28,21 @@ View Card(variant: CardVariant = .elevated, disabled: Bool = false, dragged: Boo
     let outlined = variant == CardVariant.outlined
 
     // Containers: elevated surface_container_low, filled surface_container_highest, outlined
-    // surface. Disabled: the same roles at 38% (my reading of the spec, see the notes).
+    // surface. Disabled (card tokens): elevated is surface at 38%, filled surface_variant at 38%,
+    // outlined keeps surface and dims its outline to 12%.
     let container = variant == CardVariant.filled ? t.surfaceContainerHighest
         : outlined ? t.surface : t.surfaceContainerLow
-    let shown = disabled ? container.alpha(0.38) : container
+    let shown = !disabled ? container
+        : variant == CardVariant.filled ? t.surfaceVariant.alpha(0.38)
+        : outlined ? container : t.surface.alpha(0.38)
     let line = disabled ? t.outline.alpha(disabledContainer) : t.outlineVariant
 
     // Elevation: elevated rests at level 1 and rises to 2 under the pointer; filled rises from
-    // 0 to 1; outlined stays flat. "sm" is level 1, "md" level 2. No state needs 3 to 5.
-    let restShadow = elevated && !disabled ? "sm" : ()
-    let hoverShadow = elevated ? "md" : outlined ? () : "sm"
+    // 0 to 1, and so does outlined; dragged is level 4 (elevated) or 3. "sm" is level 1, "md" 2,
+    // "lg" 3, "xl" 4. A disabled elevated card keeps level 1.
+    let restShadow = elevated ? "sm" : ()
+    let hoverShadow = elevated ? "md" : "sm"
+    let dragShadow = elevated ? "xl" : "lg"
 
     when on_tap != none {
         Column #[
@@ -45,7 +50,7 @@ View Card(variant: CardVariant = .elevated, disabled: Bool = false, dragged: Boo
             radius: t.cornerMd,
             border: line,
             border_width: outlined ? 1 : 0,
-            shadow: dragged ? "lg" : restShadow,
+            shadow: dragged ? dragShadow : restShadow,
             overlay: t.onSurface.alpha(dragged ? stateDragged : 0.0) with t.springEffectsFast,
             p: padding,
             a11y_role: button,
@@ -73,7 +78,7 @@ View Card(variant: CardVariant = .elevated, disabled: Bool = false, dragged: Boo
             radius: t.cornerMd,
             border: line,
             border_width: outlined ? 1 : 0,
-            shadow: dragged ? "lg" : restShadow,
+            shadow: dragged ? dragShadow : restShadow,
             overlay: t.onSurface.alpha(dragged ? stateDragged : 0.0) with t.springEffectsFast,
             p: padding,
         ] {

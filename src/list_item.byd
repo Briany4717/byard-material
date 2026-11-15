@@ -16,7 +16,7 @@
 // on hover, focus and press and a keyboard ring; any other is inert, still announced as a list
 // item named by its headline. Controls in a slot keep their own taps. `selected` takes the
 // secondary container colour. `dragged: true` is the item while an app moves it: a 16% state layer
-// and level 3. A disabled item dims its text and its slots to 38%.
+// and level 4. A disabled item dims its text and its slots to 38%.
 //
 // The helpers below give the leading kinds Material's sizes and colours: an icon of 24, an
 // avatar of 40, an image of 56 square, and trailing supporting text. Anything else goes in the
@@ -34,19 +34,19 @@ View ListItem(headline: Str, supporting: Str = "", overline: Str = "", lines: In
     let top = n >= 3
 
     // Material: 56 dp for one line, 72 for two, 88 for three at least; 16 dp before the
-    // leading part and 24 after the trailing one, 16 between parts, 8 above and below (12 for
+    // leading part and 16 after the trailing one, 16 between parts, 8 above and below (12 for
     // three lines).
-    let container = selected && !disabled ? t.secondaryContainer : t.surface
+    let container = selected ? (disabled ? t.onSurface.alpha(0.38) : t.secondaryContainer) : t.surface
     let ink = disabled ? t.onSurface.alpha(disabledContent) : selected ? t.onSecondaryContainer : t.onSurface
     let quiet = disabled ? t.onSurface.alpha(disabledContent) : selected ? t.onSecondaryContainer : t.onSurfaceVariant
 
     when on_tap != none {
         Row #[
             bg: container with t.springEffectsFast,
-            shadow: dragged ? "lg" : (),
+            shadow: dragged ? "xl" : (),
             overlay: t.onSurface.alpha(dragged ? stateDragged : 0.0) with t.springEffectsFast,
             min_height: n == 1 ? 56 : n == 2 ? 72 : 88,
-            p: (top ? 12 : 8, 24, top ? 12 : 8, 16),
+            p: (top ? 12 : 8, 16, top ? 12 : 8, 16),
             gap: 16,
             align: top ? start : center,
             a11y_role: list_item,
@@ -69,10 +69,10 @@ View ListItem(headline: Str, supporting: Str = "", overline: Str = "", lines: In
     } else {
         Row #[
             bg: container with t.springEffectsFast,
-            shadow: dragged ? "lg" : (),
+            shadow: dragged ? "xl" : (),
             overlay: t.onSurface.alpha(dragged ? stateDragged : 0.0) with t.springEffectsFast,
             min_height: n == 1 ? 56 : n == 2 ? 72 : 88,
-            p: (top ? 12 : 8, 24, top ? 12 : 8, 16),
+            p: (top ? 12 : 8, 16, top ? 12 : 8, 16),
             gap: 16,
             align: top ? start : center,
             a11y_role: list_item,
