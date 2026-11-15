@@ -81,7 +81,7 @@ View TimePicker(bind hour: Int = 0, bind minute: Int = 0, is24: Bool = false,
                         on_part: {|h| part = h ? TimePickerPart.hour : TimePickerPart.minute })
                 } else {
                     TimeBoxes(bind hour: hour, bind minute: minute, is24: is24, hours: hours,
-                        autofocus: autofocus,
+                        autofocus: autofocus, wide24: is24,
                         on_part: {|h| part = h ? TimePickerPart.hour : TimePickerPart.minute })
                 }
                 when !is24 {

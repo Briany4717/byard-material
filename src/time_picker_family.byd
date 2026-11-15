@@ -5,7 +5,7 @@
 //   dial           256 across, surface_container_highest; labels body_large on_surface, 101 from
 //                  the centre (24-hour inner ring 69*); handle 48 across, primary, its label
 //                  on_primary; track 2 wide, primary; centre dot 8 across, primary
-//   time boxes     96 x 80, corner 8, display_large; selected primary_container /
+//   time boxes     96 x 80 (114 x 80 in 24-hour time under a vertical layout), corner 8, display_large; selected primary_container /
 //                  on_primary_container, else surface_container_highest / on_surface
 //   separator      24 wide, display_large, on_surface
 //   period (AM/PM) vertical 52 x 80, horizontal 216 x 38, corner 8, outline 1; label title_medium;
@@ -185,13 +185,13 @@ private View Dial(hour: Int, minute: Int, is24: Bool, hours: Bool, on_hour: Fn(I
 // one and PageUp and PageDown by more. A spin button to a reader, which has no role for it here,
 // so it is a `slider` with its range.
 private View TimeBox(text: Str, label: Str, value: Int, lo: Int, hi: Int, selected: Bool,
-    autofocus: Bool, on_select: Fn(), on_key: Fn(Str)) {
+    autofocus: Bool, on_select: Fn(), on_key: Fn(Str), box_width: Int = 96) {
     inject Theme as t
 
     let ink = selected ? t.onPrimaryContainer : t.onSurface
 
     Row #[
-        width: 96,
+        width: box_width,
         height: 80,
         radius: t.cornerSm,
         bg: (selected ? t.primaryContainer : t.surfaceContainerHighest) with t.springEffectsFast,
@@ -229,18 +229,18 @@ private View TimeBox(text: Str, label: Str, value: Int, lo: Int, hi: Int, select
 
 // The hour box, the colon and the minute box.
 private View TimeBoxes(bind hour: Int, bind minute: Int, is24: Bool, hours: Bool, autofocus: Bool,
-    on_part: Fn(Bool)) {
+    on_part: Fn(Bool), wide24: Bool = false) {
     inject Theme as t
 
     Row #[align: center, shrink: 0] {
         TimeBox(pad2(is24 ? hour : hour12(hour)), "Hour", is24 ? hour : hour12(hour),
             is24 ? 0 : 1, is24 ? 23 : 12, hours, autofocus, on_select: { on_part(true) },
-            on_key: {|k| hour = hourKey(k, hour, is24) })
+            on_key: {|k| hour = hourKey(k, hour, is24) }, box_width: wide24 ? 114 : 96)
         Box #[width: 24, align: center, justify: center, a11y_hidden: true] {
             Text(":") #[typo: t.displayLarge, color: t.onSurface, wrap: false]
         }
         TimeBox(pad2(minute), "Minute", minute, 0, 59, !hours, false, on_select: { on_part(false) },
-            on_key: {|k| minute = minuteKey(k, minute) })
+            on_key: {|k| minute = minuteKey(k, minute) }, box_width: wide24 ? 114 : 96)
     }
 }
 
