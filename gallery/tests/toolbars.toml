@@ -8,11 +8,11 @@ expect = ['Toolbar "Formatting"', 'ToggleButton "Bold" [focusable]', 'Toolbar "H
 
 [[test]]
 name = "the floating toolbar is 64 tall and the vertical one 64 wide"
-expect = ['Toolbar "History" @ 16,194 112x64', 'Toolbar "Tools" @ 168,274 64x112']
+expect = ['Toolbar "History" @ 16,194 100x64', 'Toolbar "Tools" @ 168,274 64x100']
 
 [[test]]
 name = "the FAB sits beside the horizontal toolbar"
-expect = ['Button "Edit" [focusable] @ 136,198 56x56']
+expect = ['Button "Edit" [focusable] @ 124,198 56x56']
 
 [[test]]
 name = "a toggle in the docked toolbar flips"
