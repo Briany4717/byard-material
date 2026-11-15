@@ -42,7 +42,8 @@ private fn groupGap(size: ButtonSize, type: ButtonGroupType) -> Int =>
     : 8
 
 // The corner between two items of a connected group.
-//   xs 8, s 8, m 8, l 16, xl 20
+//   xs 8, s 8, m 8, l 16, xl 20 (Compose has a token for the small size only: 8; the rest are
+//   not in any token file). Pressed, an inner corner is 4.
 private fn groupInnerRadius(size: ButtonSize) -> Int =>
     size == ButtonSize.l ? 16
     : size == ButtonSize.xl ? 20
@@ -147,7 +148,9 @@ private View GroupItem(label: Str, icon: Str, index: Int, count: Int, bind down:
     let cornerL = (on || index == 0) ? h / 2 : inner
     let cornerR = (on || index == count - 1) ? h / 2 : inner
     let pr = buttonPressedRadius(size)
-    let pressedCorners = connected ? (inner, inner, inner, inner) : (pr, pr, pr, pr)
+    let pressL = index == 0 ? h / 2 : 4
+    let pressR = index == count - 1 ? h / 2 : 4
+    let pressedCorners = connected ? (pressL, pressR, pressR, pressL) : (pr, pr, pr, pr)
     let corners = connected ? (cornerL, cornerR, cornerR, cornerL) : (single, single, single, single)
 
     // Standard group: the pressed item widens (its own `on pressed`, so a key press does too) and

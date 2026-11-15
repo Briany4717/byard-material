@@ -73,7 +73,7 @@ View FabMenu(items: List<Str>, bind open: Bool, icons: List<Str> = [], icon: Str
         on pressed { overlay: ink.alpha(statePress) with t.springEffectsFast }
 
         Box #[origin: center, rotate: (open ? 90deg : 0deg) with t.springSpatialFast] {
-            Icon(open ? "close" : icon, size: fabIconSize(size), color: ink)
+            Icon(open ? "close" : icon, size: open ? 20 : fabIconSize(size), color: ink)
         }
     }
 
@@ -99,7 +99,7 @@ View FabMenu(items: List<Str>, bind open: Bool, icons: List<Str> = [], icon: Str
                         bg: itemContainer,
                         radius: 28,
                         height: 56,
-                        p: (0, 20),
+                        p: (0, 24),
                         gap: 8,
                         align: center,
                         a11y_role: menu_item,

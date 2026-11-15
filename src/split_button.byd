@@ -9,13 +9,13 @@
 // Sizes xs to xl, filled, tonal, outlined and elevated. `menu_label` is what a screen reader
 // calls the trailing button.
 //
-// Measurements (starred: not sure of them)
-//   size  trailing width*  inner corner*
-//   xs         22              4
-//   s          22              4
-//   m          26              4
-//   l          38              8
-//   xl         50             12
+// Measurements (Compose Material 3 SplitButton*Tokens)
+//   size  leading pad  trailing button  chevron  inner corner  hovered, pressed
+//   xs      12 / 10        13 + 22 + 13      22         4             8
+//   s       16 / 12        13 + 22 + 13      22         4            12
+//   m       24 / 24        15 + 26 + 15      26         4            12
+//   l       48 / 48        29 + 38 + 29      38         8            20
+//   xl      64 / 64        43 + 50 + 43      50        12            20
 
 enum SplitButtonVariant {
     filled,
@@ -24,8 +24,21 @@ enum SplitButtonVariant {
     elevated,
 }
 
-private fn splitTrailingWidth(size: ButtonSize) -> Int =>
+private fn splitChevronSize(size: ButtonSize) -> Int =>
     size == ButtonSize.xs ? 22 : size == ButtonSize.s ? 22 : size == ButtonSize.m ? 26 : size == ButtonSize.l ? 38 : 50
+
+private fn splitTrailingWidth(size: ButtonSize) -> Int =>
+    size == ButtonSize.xs ? 48 : size == ButtonSize.s ? 48 : size == ButtonSize.m ? 56 : size == ButtonSize.l ? 96 : 136
+
+private fn splitLeadStart(size: ButtonSize) -> Int =>
+    size == ButtonSize.xs ? 12 : size == ButtonSize.s ? 16 : size == ButtonSize.m ? 24 : size == ButtonSize.l ? 48 : 64
+
+private fn splitLeadEnd(size: ButtonSize) -> Int =>
+    size == ButtonSize.xs ? 10 : size == ButtonSize.s ? 12 : size == ButtonSize.m ? 24 : size == ButtonSize.l ? 48 : 64
+
+// The inner corners while hovered or pressed.
+private fn splitActiveRadius(size: ButtonSize) -> Int =>
+    size == ButtonSize.xs ? 8 : size == ButtonSize.s ? 12 : size == ButtonSize.m ? 12 : 20
 
 private fn splitInnerRadius(size: ButtonSize) -> Int =>
     size == ButtonSize.l ? 8 : size == ButtonSize.xl ? 12 : 4
@@ -38,6 +51,7 @@ View SplitButton(label: Str, variant: SplitButtonVariant = .filled, size: Button
     let h = buttonHeight(size)
     let full = h / 2
     let inner = splitInnerRadius(size)
+    let active = splitActiveRadius(size)
     let outlined = variant == SplitButtonVariant.outlined
     let lineWidth = size == ButtonSize.l ? 2 : size == ButtonSize.xl ? 3 : 1
     let line = disabled ? t.onSurface.alpha(disabledContainer) : t.outlineVariant
@@ -58,6 +72,7 @@ View SplitButton(label: Str, variant: SplitButtonVariant = .filled, size: Button
 
     // The trailing button's inner corners, and its outer ones: round when the menu is open.
     let trailInner = open ? full : inner
+    let trailActive = open ? full : active
 
     Row #[gap: 2, align: center, shrink: 0] {
         Row #[
@@ -67,7 +82,8 @@ View SplitButton(label: Str, variant: SplitButtonVariant = .filled, size: Button
             border_width: outlined ? lineWidth : 0,
             shadow: restShadow,
             height: h,
-            p: (0, buttonPadding(size)),
+            pl: splitLeadStart(size),
+            pr: splitLeadEnd(size),
             gap: buttonGap(size),
             align: center,
             justify: center,
@@ -75,7 +91,11 @@ View SplitButton(label: Str, variant: SplitButtonVariant = .filled, size: Button
             disabled: disabled,
             tap => on_tap(),
         ] {
-            on hover { overlay: ink.alpha(stateHover) with t.springEffectsFast, shadow: hoverShadow }
+            on hover {
+                overlay: ink.alpha(stateHover) with t.springEffectsFast
+                shadow: hoverShadow
+                radius: (full, active, active, full) with t.springSpatialFast
+            }
             on focus_visible {
                 overlay: ink.alpha(stateFocus) with t.springEffectsFast
                 outline: t.secondary
@@ -84,7 +104,7 @@ View SplitButton(label: Str, variant: SplitButtonVariant = .filled, size: Button
             }
             on pressed {
                 overlay: ink.alpha(statePress) with t.springEffectsFast
-                radius: (inner, inner, inner, inner) with t.springSpatialFast
+                radius: (full, active, active, full) with t.springSpatialFast
             }
 
             when icon != "" {
@@ -113,7 +133,11 @@ View SplitButton(label: Str, variant: SplitButtonVariant = .filled, size: Button
             disabled: disabled,
             tap => on_menu(),
         ] {
-            on hover { overlay: ink.alpha(stateHover) with t.springEffectsFast, shadow: hoverShadow }
+            on hover {
+                overlay: ink.alpha(stateHover) with t.springEffectsFast
+                shadow: hoverShadow
+                radius: (trailActive, full, full, trailActive) with t.springSpatialFast
+            }
             on focus_visible {
                 overlay: ink.alpha(stateFocus) with t.springEffectsFast
                 outline: t.secondary
@@ -122,16 +146,16 @@ View SplitButton(label: Str, variant: SplitButtonVariant = .filled, size: Button
             }
             on pressed {
                 overlay: ink.alpha(statePress) with t.springEffectsFast
-                radius: (trailInner, trailInner, trailInner, trailInner) with t.springSpatialFast
+                radius: (trailActive, full, full, trailActive) with t.springSpatialFast
             }
 
             Box #[
-                width: buttonIconSize(size),
-                height: buttonIconSize(size),
+                width: splitChevronSize(size),
+                height: splitChevronSize(size),
                 origin: center,
                 rotate: open ? 180deg : 0deg with t.springSpatialFast,
             ] {
-                Icon("keyboard_arrow_down", size: buttonIconSize(size), color: ink)
+                Icon("keyboard_arrow_down", size: splitChevronSize(size), color: ink)
             }
         }
     }
