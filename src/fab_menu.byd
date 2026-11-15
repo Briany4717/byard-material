@@ -18,7 +18,7 @@
 // sure of this pairing, nor of the 4 dp between items; see the notes.
 
 View FabMenu(items: List<Str>, bind open: Bool, icons: List<Str> = [], icon: Str = "add",
-    label: Str = "Menu", color: FabColor = .primaryContainer, size: FabSize = .medium,
+    label: Str = "Menu", color: FabColor = .primaryContainer, size: FabSize = .baseline,
     on_select: Fn(Int) = none) {
     inject Theme as t
 
@@ -48,10 +48,10 @@ View FabMenu(items: List<Str>, bind open: Bool, icons: List<Str> = [], icon: Str
 
     Box #[
         bg: container with t.springEffectsFast,
-        radius: (open ? d / 2 : fabRadius(size)) with t.springSpatialFast,
+        radius: (open ? 28 : fabRadius(size)) with t.springSpatialFast,
         shadow: ("lg") with t.springEffectsFast,
-        width: d,
-        height: d,
+        width: (open ? 56 : d) with t.springSpatialFast,
+        height: (open ? 56 : d) with t.springSpatialFast,
         shrink: 0,
         align: center,
         justify: center,

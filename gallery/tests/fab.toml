@@ -81,3 +81,7 @@ name = "the same in the dark scheme"
 scheme = "dark"
 steps = [{ tap = 'Button "Add"' }]
 expect = ['MenuItem "Photo"']
+
+[[test]]
+name = "a medium fab is 80 across, the baseline one 56"
+expect = ['Button "Medium" [focusable] @ 260,24 80x80', 'Button "Compose" [focusable] @ 24,36 56x56']

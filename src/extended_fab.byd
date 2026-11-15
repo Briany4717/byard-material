@@ -69,7 +69,7 @@ View ExtendedFab(label: Str, icon: Str, size: FabSize = .medium, color: FabColor
             Row #[pl: extendedGap(size), height: h, align: center] {
                 on measure => labelW = it.w - extendedGap(size)
                 Text(label) #[
-                    typo: size == FabSize.small ? t.titleMedium : size == FabSize.medium ? t.titleLarge : t.headlineSmall,
+                    typo: size == FabSize.medium ? t.titleLarge : size == FabSize.large ? t.headlineSmall : t.titleMedium,
                     color: ink,
                     wrap: false,
                     opacity: (expanded ? 1.0 : 0.0) with t.springEffectsFast,

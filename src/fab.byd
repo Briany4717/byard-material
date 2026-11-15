@@ -11,7 +11,7 @@
 // Elevation, Material's levels: a FAB rests at level 3 ("lg"), lifts to 4 ("xl") under the pointer
 // and is at 3 again focused or pressed; lowered, level 1 ("sm") and 2 ("md") under the pointer.
 
-View Fab(icon: Str, label: Str, size: FabSize = .medium, color: FabColor = .primaryContainer,
+View Fab(icon: Str, label: Str, size: FabSize = .baseline, color: FabColor = .primaryContainer,
     lowered: Bool = false, on_tap: Fn() = none) {
     inject Theme as t
 

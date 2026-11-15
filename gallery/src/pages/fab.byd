@@ -5,7 +5,7 @@ use material as m
 View FabPage() {
     inject Theme as t
     Column #[p: 24, gap: 32, bg: t.surface, grow: 1] {
-        Section("Fab: small, medium, large") {
+        Section("Fab: small, baseline, medium, large") {
             Line("primary c.") { FabRow(color: m.FabColor.primaryContainer, lowered: false) }
             Line("secondary c.") { FabRow(color: m.FabColor.secondaryContainer, lowered: false) }
             Line("tertiary c.") { FabRow(color: m.FabColor.tertiaryContainer, lowered: false) }
@@ -14,7 +14,7 @@ View FabPage() {
             Line("tertiary") { FabRow(color: m.FabColor.tertiary, lowered: false) }
             Line("lowered") { FabRow(color: m.FabColor.primaryContainer, lowered: true) }
         }
-        Section("ExtendedFab: small, medium, large") {
+        Section("ExtendedFab: small, baseline, medium, large") {
             Line("primary c.") { ExtendedRow(color: m.FabColor.primaryContainer) }
             Line("secondary c.") { ExtendedRow(color: m.FabColor.secondaryContainer) }
             Line("tertiary c.") { ExtendedRow(color: m.FabColor.tertiaryContainer) }
@@ -36,6 +36,7 @@ View FabRow(color: m.FabColor, lowered: Bool) {
     Row #[gap: 24, align: center] {
         m.Fab("edit", label: "Compose", size: .small, color: color, lowered: lowered)
         m.Fab("edit", label: "Compose", color: color, lowered: lowered)
+        m.Fab("edit", label: "Compose", size: .medium, color: color, lowered: lowered)
         m.Fab("edit", label: "Compose", size: .large, color: color, lowered: lowered)
     }
 }
@@ -86,6 +87,7 @@ View FabScenarios() {
         Row #[gap: 16, align: center] {
             m.Fab("edit", label: "Compose", on_tap: { taps += 1 })
             m.ExtendedFab("Share", icon: "share", expanded: expanded, on_tap: { expanded = !expanded })
+            m.Fab("add", label: "Medium", size: .medium)
         }
         Text("Taps: {taps}")
         Text("Picked: {picked}")
